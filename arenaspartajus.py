@@ -108,7 +108,6 @@ DEFAULT_USER_DATA = {
 # -----------------------------------------------------------------------------
 # 3. BASE DE DADOS DOCTORE (TREINAMENTO)
 # -----------------------------------------------------------------------------
-# AQUI VOCÊ VAI ADICIONAR SUAS QUESTÕES
 DOCTORE_DB = {
     "Direito Constitucional": [
         {
@@ -239,11 +238,17 @@ def process_battle(tempo, acertos, erros, opponent):
 
 def initialize_doctore_session(niche):
     """Inicializa ou reinicia a sessão de treino para um nicho."""
-    st.session_state['doctore_questions'] = DOCTORE_DB[niche].copy()
-    random.shuffle(st.session_state['doctore_questions']) # Embaralha
+    # Proteção: Verifica se o nicho existe no DB
+    if niche not in DOCTORE_DB:
+        st.session_state['doctore_questions'] = []
+    else:
+        st.session_state['doctore_questions'] = DOCTORE_DB[niche].copy()
+        if st.session_state['doctore_questions']: # Só embaralha se não estiver vazio
+            random.shuffle(st.session_state['doctore_questions']) 
+    
     st.session_state['doctore_idx'] = 0
     st.session_state['doctore_revealed'] = False
-    st.session_state['doctore_result'] = None # "correto" ou "errado"
+    st.session_state['doctore_choice'] = None # Corrigido para inicializar a chave
 
 # -----------------------------------------------------------------------------
 # 7. APP PRINCIPAL
@@ -268,7 +273,11 @@ def main():
         c1, c2 = st.columns(2)
         c1.metric("Nível", user['nivel'])
         c2.metric("XP", user['xp'])
-        st.progress(min(user['xp'] / (user['nivel']*1000), 1.0))
+        
+        # Proteção contra Divisão por Zero no nível
+        nivel_atual = max(user['nivel'], 1)
+        st.progress(min(user['xp'] / (nivel_atual*1000), 1.0))
+        
         st.markdown("---")
         st.write(f"Vitórias: {user['vitorias']}")
         if st.button("Resetar App"):
@@ -339,86 +348,95 @@ def main():
                 st.rerun()
 
     # -------------------------------------------------------------------------
-    # ABA 2: DOCTORE (NOVA FUNCIONALIDADE)
+    # ABA 2: DOCTORE (CORREÇÃO DE BUGS)
     # -------------------------------------------------------------------------
     with tab_doctore:
         st.markdown("### 🦉 Treinamento com o Doctore")
-        st.markdown("O Doctore apresenta uma assertiva. Você deve julgar se está **Certa** ou **Errada**.")
         
         # 1. Seleção de Nicho
         nichos_disponiveis = list(DOCTORE_DB.keys())
         nicho_selecionado = st.selectbox("Escolha o Nicho de Treinamento:", nichos_disponiveis)
         
-        # Inicializa se mudou o nicho ou se não existe
-        if 'current_niche' not in st.session_state or st.session_state['current_niche'] != nicho_selecionado:
+        # Lógica de Inicialização Blindada
+        # Se mudou o nicho OU se a chave 'doctore_questions' não existe (crash anterior), inicializa
+        if ('current_niche' not in st.session_state or 
+            st.session_state['current_niche'] != nicho_selecionado or
+            'doctore_questions' not in st.session_state):
+            
             st.session_state['current_niche'] = nicho_selecionado
             initialize_doctore_session(nicho_selecionado)
         
-        # 2. Mostra Questão Atual
+        # 2. Verifica se existem questões no nicho
         questions = st.session_state['doctore_questions']
-        idx = st.session_state['doctore_idx']
         
-        if idx < len(questions):
-            q_atual = questions[idx]
+        if not questions:
+            st.warning(f"Ainda não há questões cadastradas para {nicho_selecionado}. Alimente o banco de dados!")
+        else:
+            idx = st.session_state['doctore_idx']
             
-            # Barra de Progresso do Treino
-            st.progress((idx) / len(questions), text=f"Questão {idx + 1} de {len(questions)}")
-            
-            # O Cartão da Questão
-            st.markdown(f"""
-            <div class="training-card">
-                {q_atual['texto']}
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Área de Interação
-            if not st.session_state['doctore_revealed']:
-                col_c, col_e = st.columns(2)
-                with col_c:
-                    if st.button("✅ CERTO", use_container_width=True):
-                        st.session_state['doctore_revealed'] = True
-                        st.session_state['doctore_choice'] = "Certo"
-                        st.rerun()
-                with col_e:
-                    if st.button("❌ ERRADO", use_container_width=True):
-                        st.session_state['doctore_revealed'] = True
-                        st.session_state['doctore_choice'] = "Errado"
-                        st.rerun()
-            
-            else:
-                # 3. Resultado e Justificativa
-                escolha = st.session_state['doctore_choice']
-                gabarito = q_atual['gabarito']
-                acertou = escolha == gabarito
+            if idx < len(questions):
+                q_atual = questions[idx]
                 
-                if acertou:
-                    st.success(f"🎯 GOLPE CERTEIRO! O gabarito é **{gabarito.upper()}**.")
-                    # Pequeno bônus de XP por treino (opcional)
-                    # user['xp'] += 10 
-                else:
-                    st.error(f"💀 GUARDA BAIXA! Você marcou {escolha}, mas é **{gabarito.upper()}**.")
+                # Proteção contra divisão por zero na barra de progresso
+                total_q = len(questions)
+                progresso = (idx) / total_q if total_q > 0 else 0
+                st.progress(progresso, text=f"Questão {idx + 1} de {total_q}")
                 
-                # Exibição da Justificativa
+                # O Cartão da Questão
                 st.markdown(f"""
-                <div class="justificativa-box">
-                    <h4>⚖️ Justificativa do Doctore:</h4>
-                    <p>{q_atual['explicacao']}</p>
-                    <span class="origem-tag">📌 Origem: {q_atual['origem']}</span>
+                <div class="training-card">
+                    {q_atual['texto']}
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown("")
-                if st.button("Próximo Desafio ➡️", type="primary"):
-                    st.session_state['doctore_idx'] += 1
-                    st.session_state['doctore_revealed'] = False
+                # Área de Interação
+                if not st.session_state['doctore_revealed']:
+                    col_c, col_e = st.columns(2)
+                    with col_c:
+                        if st.button("✅ CERTO", use_container_width=True):
+                            st.session_state['doctore_revealed'] = True
+                            st.session_state['doctore_choice'] = "Certo"
+                            st.rerun()
+                    with col_e:
+                        if st.button("❌ ERRADO", use_container_width=True):
+                            st.session_state['doctore_revealed'] = True
+                            st.session_state['doctore_choice'] = "Errado"
+                            st.rerun()
+                
+                else:
+                    # 3. Resultado e Justificativa
+                    # Verifica se 'doctore_choice' existe para evitar KeyError se o app reiniciou
+                    escolha = st.session_state.get('doctore_choice', 'N/A')
+                    gabarito = q_atual['gabarito']
+                    acertou = escolha == gabarito
+                    
+                    if acertou:
+                        st.success(f"🎯 GOLPE CERTEIRO! O gabarito é **{gabarito.upper()}**.")
+                    else:
+                        st.error(f"💀 GUARDA BAIXA! Você marcou {escolha}, mas é **{gabarito.upper()}**.")
+                    
+                    # Exibição da Justificativa
+                    st.markdown(f"""
+                    <div class="justificativa-box">
+                        <h4>⚖️ Justificativa do Doctore:</h4>
+                        <p>{q_atual['explicacao']}</p>
+                        <span class="origem-tag">📌 Origem: {q_atual['origem']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("")
+                    if st.button("Próximo Desafio ➡️", type="primary"):
+                        st.session_state['doctore_idx'] += 1
+                        st.session_state['doctore_revealed'] = False
+                        st.session_state['doctore_choice'] = None
+                        st.rerun()
+            
+            else:
+                st.markdown("### 🎉 Treino Concluído!")
+                st.write(f"Você finalizou todas as questões de {nicho_selecionado}.")
+                if st.button("Reiniciar Treino"):
+                    initialize_doctore_session(nicho_selecionado)
                     st.rerun()
-        
-        else:
-            st.markdown("### 🎉 Treino Concluído!")
-            st.write(f"Você finalizou todas as questões de {nicho_selecionado}.")
-            if st.button("Reiniciar Treino"):
-                initialize_doctore_session(nicho_selecionado)
-                st.rerun()
 
     # -------------------------------------------------------------------------
     # ABA 3: HISTÓRICO
@@ -431,20 +449,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
-### Como Alimentar o Doctore
-
-Para adicionar suas questões extraídas, basta editar a variável `DOCTORE_DB` no topo do código. Use este formato:
-
-```python
-    "Nome da Matéria": [
-        {
-            "id": 1, # Número único
-            "texto": "Coloque a assertiva aqui...",
-            "gabarito": "Certo", # ou "Errado"
-            "origem": "Cobrado em: MPE/SP 2024",
-            "explicacao": "A justificativa técnica aqui."
-        },
-        # ... próxima questão ...
-    ],
