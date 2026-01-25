@@ -252,7 +252,7 @@ DOCTORE_DB = {
     "enam_criscis": {
         "nome": "Enam Criscis",
         "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.",
-        "imagem": "enam-criscis.png", # Deve estar no repositório
+        "imagem": "enam-criscis.png",
         "materias": {
             "Direitos Humanos": [
                 {
@@ -270,6 +270,31 @@ DOCTORE_DB = {
                     "gabarito": "Errado",
                     "origem": "Doutrina Majoritária",
                     "explicacao": "No caso de omissão, a responsabilidade é subjetiva (teoria da 'faute du service'), salvo em casos de custódia onde o Estado é garante."
+                }
+            ]
+        }
+    },
+    "parquet_tribunus": {
+        "nome": "Parquet Tribunus",
+        "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.",
+        "imagem": "parquet.jpg", # Deve estar no repositório
+        "materias": {
+            "Direito Processual Coletivo": [
+                {
+                    "id": 501,
+                    "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.",
+                    "gabarito": "Certo",
+                    "origem": "Tema Repetitivo STJ",
+                    "explicacao": "A relevância social do bem jurídico tutelado legitima a atuação do MP."
+                }
+            ],
+            "Direito Penal": [
+                {
+                    "id": 502,
+                    "texto": "Na ação penal pública condicionada, a representação do ofendido é condição de procedibilidade, mas pode ser retratada até o oferecimento da denúncia.",
+                    "gabarito": "Certo",
+                    "origem": "Art. 25 CPP",
+                    "explicacao": "A retratação é permitida até o oferecimento da denúncia, não até o recebimento."
                 }
             ]
         }
@@ -428,7 +453,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status Centralizada (Sem seta, 400px, e centralizada no card)
+            # Imagem de Status Centralizada (400px)
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
