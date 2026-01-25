@@ -29,9 +29,12 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
 
-# Arquivos de Imagem
+# Arquivos de Imagem (Certifique-se de que estão no repositório)
+# Capa principal (Banner)
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
+# Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
+# Imagem de espera
 PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
@@ -348,30 +351,30 @@ def main():
             st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
             c_img, c_info, c_action = st.columns([1, 2, 1])
             with c_img:
-                # 1. AVATAR DO OPONENTE (AUMENTADO EM 150%)
-                # Tamanho anterior era 120, agora 180
-                st.image(opp['avatar_url'], width=180)
+                # 1. AVATAR DO OPONENTE (AUMENTADO PARA 200px)
+                st.image(opp['avatar_url'], width=200)
                 
-                st.markdown("<br>", unsafe_allow_html=True) # Espaçamento
+                # SETA DIRECIONAL (Visual Flow)
+                st.markdown("<div style='text-align:center; color:#8B4513; font-size:30px; font-weight:bold; line-height:1; margin:10px 0;'>⬇</div>", unsafe_allow_html=True)
 
-                # 2. IMAGEM DE STATUS (ESPAÇO ABAIXO)
+                # 2. IMAGEM DE STATUS (ESPAÇO ABAIXO DA SETA - 200px)
                 # Lógica: Se venceu -> Vitoria. Se perdeu -> Derrota. Senão -> Prepare-se.
-                
                 status_img_path = None
                 
                 if is_completed:
                     status_img_path = opp['img_vitoria']
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
                     status_img_path = opp['img_derrota']
-                elif not is_locked: # Se estiver disponível ou atual, mostra "Prepare-se"
-                    # Verifica se prepare-se existe localmente, senão usa ícone genérico
+                else: 
+                    # Estado Inicial / Disponível / Bloqueado
+                    # Usa 'prepare-se.jpg' se existir, senão fallback
                     if os.path.exists(PREPARE_SE_FILE):
                         status_img_path = PREPARE_SE_FILE
                     else:
                         status_img_path = "https://img.icons8.com/color/96/shield.png" # Fallback
                 
                 if status_img_path:
-                    st.image(status_img_path, width=120)
+                    st.image(status_img_path, width=200)
 
             with c_info:
                 st.markdown(f"### {opp['nome']}")
