@@ -30,8 +30,8 @@ st.set_page_config(
 TEST_USER = "fux_concurseiro"
 
 # Arquivos de Imagem (Certifique-se de que estão no repositório)
-# Capa principal (Banner) - Atualizado para versão 2
-HERO_IMG_FILE = "Arena_Spartajus_Logo_2.png"
+# Capa principal (Banner) - Atualizado para .jpg conforme solicitado
+HERO_IMG_FILE = "Arena_Spartajus_Logo_2.jpg"
 # Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
 
@@ -289,29 +289,29 @@ def main():
     
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
-        # Exibe a imagem como um banner extendido
+        # Exibe a imagem como um banner extendido em width:100%
         st.markdown(f"""
         <style>
         .hero-container {{
             width: 100%;
-            padding: 0; /* Sem padding para ocupar tudo */
-            border-bottom: 4px solid #DAA520;
+            padding: 0;
             margin-bottom: 30px;
             background-color: #FFF8DC;
+            border-bottom: 4px solid #DAA520;
             border-radius: 0 0 15px 15px;
-            overflow: hidden; /* Corta o que passar das bordas arredondadas */
+            overflow: hidden; /* Garante que a imagem respeite as bordas arredondadas inferiores */
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            line-height: 0; /* Remove espaço extra embaixo da imagem */
+            line-height: 0;
         }}
         .hero-img {{
-            width: 100%; /* Ocupa toda a largura horizontal */
-            height: auto; /* Mantém a proporção */
-            object-fit: cover; /* Garante cobertura */
+            width: 100%;
+            height: auto; /* Mantém a proporção e resolução própria da imagem */
+            object-fit: cover;
             display: block;
         }}
         </style>
         <div class="hero-container">
-            <img src="data:image/png;base64,{img_b64}" class="hero-img" alt="Arena SpartaJus">
+            <img src="data:image/jpg;base64,{img_b64}" class="hero-img" alt="Arena SpartaJus">
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -319,7 +319,7 @@ def main():
         st.markdown("""
         <div style="text-align: center; padding: 40px; background-color: #FFF8DC; border-bottom: 4px solid #DAA520; margin-bottom: 30px;">
             <h1 style="color: #8B4513; font-family: 'Helvetica Neue', sans-serif;">ARENA SPARTAJUS</h1>
-            <p style="color: #5C4033;">(Imagem 'Arena_Spartajus_Logo_2.png' não encontrada)</p>
+            <p style="color: #5C4033;">(Imagem 'Arena_Spartajus_Logo_2.jpg' não encontrada)</p>
         </div>
         """, unsafe_allow_html=True)
 
