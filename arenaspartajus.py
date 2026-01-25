@@ -125,14 +125,21 @@ DEFAULT_USER_DATA = {
 # -----------------------------------------------------------------------------
 # 4. BASE DE DADOS (COM O LEÃO VELHO)
 # -----------------------------------------------------------------------------
+# A lógica aqui verifica se o arquivo local existe. Se não, usa um link de backup.
+def get_avatar_image(local_file, fallback_url):
+    if os.path.exists(local_file):
+        return local_file
+    return fallback_url
+
 OPONENTS_DB = [
     {
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        "avatar_url": "https://img.icons8.com/color/96/lion.png", # Avatar do Leão
-        "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png", # Placeholder (Virá depois)
-        "img_derrota": "https://img.icons8.com/color/96/skull.png", # Placeholder (Virá depois)
+        # Tenta carregar '1_leao_velho.png', senão usa o ícone online
+        "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
+        "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
+        "img_derrota": "https://img.icons8.com/color/96/skull.png",
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial",
         "max_tempo": 60, # 60 minutos
@@ -341,7 +348,9 @@ def main():
                 if is_completed: st.image(opp['img_vitoria'], width=80)
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
                      st.image(opp['img_derrota'], width=80)
-                else: st.image(opp['avatar_url'], width=80)
+                else: 
+                    # Tenta carregar imagem local, se falhar usa URL (pelo helper function)
+                    st.image(opp['avatar_url'], width=120)
 
             with c_info:
                 st.markdown(f"### {opp['nome']}")
