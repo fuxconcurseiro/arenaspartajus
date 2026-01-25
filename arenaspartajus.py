@@ -139,7 +139,6 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Tenta carregar '1_leao_velho.png'
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
         "img_derrota": "https://img.icons8.com/color/96/skull.png",
@@ -277,72 +276,68 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER ---
-    # Prepara o background (COLISEU)
-    bg_css = "background-color: #FFF8DC;"
+    # --- HERO HEADER (LAYOUT CORRIGIDO) ---
+    
+    # 1. Background Logic
+    bg_style = "background-color: #FFF8DC;" # Fallback seguro
     if os.path.exists(BG_FILE):
         img_b64_bg = get_base64_of_bin_file(BG_FILE)
         if img_b64_bg:
-            bg_css = f"""
+            bg_style = f"""
             background-image: linear-gradient(rgba(255, 255, 240, 0.3), rgba(255, 255, 240, 0.8)), url("data:image/jpg;base64,{img_b64_bg}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             """
 
-    # Prepara o Avatar (FUX) - Portrait 3:4 com fallback seguro
+    # 2. Avatar Logic
     avatar_src = "https://img.icons8.com/color/240/roman-soldier.png"
     if os.path.exists(USER_AVATAR_FILE):
         avatar_b64 = get_base64_of_bin_file(USER_AVATAR_FILE)
         if avatar_b64:
             avatar_src = f"data:image/png;base64,{avatar_b64}"
 
-    # Layout HTML/CSS Flexbox
+    # 3. HTML Structure (Sem f-strings complexas para CSS)
     st.markdown(f"""
     <style>
-    /* Container Principal - Flexbox Row */
-    .main-header-container {{
+    .header-wrapper {{
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: flex-start; /* Alinha tudo à ESQUERDA */
-        gap: 20px;
-        margin-bottom: 30px;
+        justify-content: flex-start;
+        gap: 25px;
         width: 100%;
+        margin-bottom: 30px;
     }}
-
-    /* Lado Esquerdo: Avatar */
-    .avatar-container {{
-        flex: 0 0 auto; /* Tamanho ajustado ao conteúdo */
+    
+    .avatar-area {{
+        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        margin-right: 15px;
     }}
-
+    
     .avatar-frame {{
-        width: 180px; /* Largura AUMENTADA */
-        height: 240px; /* Altura AUMENTADA (3:4) */
-        border: 6px double #DAA520; /* Borda Dourada */
-        padding: 4px;
+        width: 180px;
+        height: 240px; /* Portrait 3:4 */
+        border: 6px double #DAA520;
         background-color: #FFF;
         box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
         position: relative;
         overflow: hidden;
     }}
-
-    .avatar-img {{
+    
+    .avatar-frame img {{
         width: 100%;
         height: 100%;
         object-fit: cover;
     }}
     
-    /* Decoração de Louros (Texto Simulado no topo/base do frame) */
+    /* Louros decorativos */
     .avatar-frame::before {{
         content: '🌿';
         position: absolute;
-        top: -12px;
+        top: -15px;
         left: 50%;
         transform: translateX(-50%);
         font-size: 24px;
@@ -351,23 +346,32 @@ def main():
         color: #DAA520;
         z-index: 2;
     }}
-
-    /* Lado Direito: Título com Fundo do Coliseu */
-    .hero-content {{
-        flex: 1; /* Ocupa o resto do espaço */
-        {bg_css}
-        padding: 30px 20px;
-        text-align: center;
+    
+    .user-name {{
+        margin-top: 10px;
+        font-weight: bold;
+        color: #8B4513;
+        font-family: 'Georgia', serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }}
+    
+    .title-area {{
+        flex: 1;
+        {bg_style}
         border: 4px solid #DAA520;
         border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        height: 240px; /* Mesma altura do avatar */
         display: flex;
         flex-direction: column;
         justify-content: center;
-        min-height: 240px; /* Mesma altura do avatar */
+        align-items: center;
+        text-align: center;
+        padding: 20px;
     }}
-
-    .hero-title {{
+    
+    .main-title {{
         font-family: 'Helvetica Neue', sans-serif;
         color: #8B4513;
         font-size: 3.5rem;
@@ -376,9 +380,10 @@ def main():
         letter-spacing: 5px;
         text-shadow: 2px 2px 0px #FFF, 4px 4px 0px rgba(0,0,0,0.2);
         margin: 0;
+        line-height: 1.1;
     }}
-
-    .hero-subtitle {{
+    
+    .sub-title {{
         font-family: 'Georgia', serif;
         color: #3E2723;
         font-size: 1.2rem;
@@ -388,35 +393,22 @@ def main():
         text-shadow: 1px 1px 0px rgba(255,255,255,0.7);
     }}
     
-    /* Responsividade */
     @media (max-width: 768px) {{
-        .main-header-container {{
-            flex-direction: column;
-            align-items: center;
-        }}
-        .hero-content {{
-            width: 100%;
-        }}
-        .avatar-container {{
-            margin-right: 0;
-            margin-bottom: 20px;
-        }}
+        .header-wrapper {{ flex-direction: column; }}
+        .title-area {{ width: 100%; }}
     }}
     </style>
-
-    <div class="main-header-container">
-        <!-- Lado Esquerdo: Avatar -->
-        <div class="avatar-container">
+    
+    <div class="header-wrapper">
+        <div class="avatar-area">
             <div class="avatar-frame">
-                <img src="{avatar_src}" class="avatar-img" alt="Avatar">
+                <img src="{avatar_src}" alt="Avatar">
             </div>
-            <div style="margin-top:10px; font-weight:bold; color:#8B4513; font-size:1em; font-family:'Georgia', serif; text-transform:uppercase;">{TEST_USER}</div>
+            <div class="user-name">{TEST_USER}</div>
         </div>
-
-        <!-- Lado Direito: Arena Title -->
-        <div class="hero-content">
-            <h1 class="hero-title">Arena SpartaJus</h1>
-            <div class="hero-subtitle">"Onde a preparação encontra a glória"</div>
+        <div class="title-area">
+            <div class="main-title">Arena SpartaJus</div>
+            <div class="sub-title">"Onde a preparação encontra a glória"</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -448,7 +440,6 @@ def main():
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
                      st.image(opp['img_derrota'], width=80)
                 else: 
-                    # Tenta carregar imagem local, se falhar usa URL (pelo helper function)
                     st.image(opp['avatar_url'], width=120)
 
             with c_info:
@@ -457,7 +448,6 @@ def main():
                 if is_locked: st.markdown("🔒 **BLOQUEADO**")
                 elif is_completed: st.markdown("✅ **CONQUISTADO**")
                 else: 
-                    # Mostra as condições de vitória específicas
                     st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
                     st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
 
@@ -483,14 +473,10 @@ def main():
                         
                         if st.form_submit_button("📜 REPORTAR RESULTADO"):
                             erros_q = max(0, total_q - acertos_q)
-                            
-                            # Lógica de Vitória Específica do Oponente
                             limit_errors = opp.get('max_erros', 5)
                             limit_time = opp.get('max_tempo', 60)
-                            
                             passou_erros = erros_q <= limit_errors
                             passou_tempo = tempo_min <= limit_time
-                            
                             VITORIA = passou_erros and passou_tempo
                             
                             user_data['stats']['total_questoes'] += total_q
