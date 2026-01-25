@@ -29,12 +29,9 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
 
-# Arquivos de Imagem (Certifique-se de que estão no repositório)
-# Capa principal (Banner)
+# Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
-# Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
-# Imagem de espera
 PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
@@ -110,6 +107,22 @@ st.markdown("""
     .battle-card.victory { border-color: #228B22; background-color: #F0FFF0; }
     .battle-card.defeat { border-color: #B22222; background-color: #FFF0F0; }
     
+    /* CARD DO DOCTORE (SELEÇÃO) */
+    .master-card {
+        background-color: #FFF; 
+        border: 4px double #8B4513; 
+        border-radius: 15px; 
+        padding: 20px; 
+        text-align: center;
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .master-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        border-color: #DAA520;
+    }
+    
     /* ESTATÍSTICAS SIDEBAR */
     .stat-box {
         background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px;
@@ -118,7 +131,7 @@ st.markdown("""
     .stat-value { font-size: 1.5em; font-weight: bold; color: #8B4513; }
     .stat-label { font-size: 0.8em; color: #666; text-transform: uppercase; }
 
-    /* DOCTORE CARD */
+    /* DOCTORE QUESTION CARD */
     .doctore-card {
         background-color: #FFF; border-left: 5px solid #8B4513; padding: 25px;
         border-radius: 5px; font-family: 'Georgia', serif; font-size: 1.2rem;
@@ -147,7 +160,7 @@ DEFAULT_USER_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (COM IMAGENS DE CONSEQUÊNCIA)
+# 4. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
     """Verifica se a imagem local existe, caso contrário usa fallback."""
@@ -160,11 +173,8 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Avatar Inicial
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
-        # Imagem de Vitória (Consequência Positiva)
         "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", "https://img.icons8.com/color/96/laurel-wreath.png"),
-        # Imagem de Derrota (Consequência Negativa)
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", "https://img.icons8.com/color/96/skull.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial",
@@ -198,7 +208,62 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 5. CONEXÃO GOOGLE SHEETS
+# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE)
+# -----------------------------------------------------------------------------
+# Agora os Doctores são organizados por Carreiras/Mestres
+DOCTORE_DB = {
+    "praetorium": {
+        "nome": "Praetorium Legislativus",
+        "descricao": "O Guardião das Leis e do Processo Legislativo.",
+        "imagem": "praetorium.jpg", # Deve existir no repo
+        "materias": {
+            "Direito Constitucional": [
+                {
+                    "id": 101,
+                    "texto": "Segundo o STF, é inconstitucional lei estadual que determina fornecimento de dados cadastrais sem autorização judicial.",
+                    "gabarito": "Certo",
+                    "origem": "ADI 7777/DF",
+                    "explicacao": "Viola a cláusula de reserva de jurisdição."
+                },
+                {
+                    "id": 102,
+                    "texto": "Normas de eficácia limitada possuem aplicabilidade imediata e integral.",
+                    "gabarito": "Errado",
+                    "origem": "MPE/GO 2022",
+                    "explicacao": "Possuem aplicabilidade mediata e reduzida."
+                }
+            ],
+            "Processo Legislativo": [ # Nova matéria exemplo
+                {
+                    "id": 301,
+                    "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.",
+                    "gabarito": "Certo",
+                    "origem": "Súmula STF",
+                    "explicacao": "O vício de iniciativa é insanável pela sanção presidencial/governador."
+                }
+            ]
+        }
+    },
+    "magister_penalis": { # Exemplo de outro mestre futuro
+        "nome": "Magister Penalis",
+        "descricao": "O Mestre das Penas e Delitos.",
+        "imagem": "https://img.icons8.com/color/400/judge-male.png", # Placeholder
+        "materias": {
+            "Direito Penal": [
+                {
+                    "id": 201,
+                    "texto": "Aplica-se o princípio da insignificância aos crimes contra a administração pública.",
+                    "gabarito": "Errado",
+                    "origem": "Súmula 599 STJ",
+                    "explicacao": "É inaplicável aos crimes contra a administração pública."
+                }
+            ]
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# 6. CONEXÃO GOOGLE SHEETS
 # -----------------------------------------------------------------------------
 def connect_db():
     if not LIBS_INSTALLED: return None, "Libs ausentes"
@@ -233,7 +298,7 @@ def save_data(row_idx, data):
         except: pass
 
 # -----------------------------------------------------------------------------
-# 6. APP PRINCIPAL
+# 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
@@ -246,14 +311,11 @@ def main():
     user_data = st.session_state['user_data']
     stats = user_data['stats']
 
-    # --- SIDEBAR (AVATAR DO MENTORADO) ---
+    # --- SIDEBAR ---
     with st.sidebar:
-        # Verifica se o arquivo fux_concurseiro.png existe
         if os.path.exists(USER_AVATAR_FILE):
-            # Imagem completa
             st.image(USER_AVATAR_FILE, caption=TEST_USER, use_container_width=True)
         else:
-            # Fallback
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado (fux_concurseiro.png)")
         
@@ -276,12 +338,9 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (BANNER FULL WIDTH REAL) ---
-    
+    # --- HERO HEADER ---
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
-        
-        # Técnica CSS "Full Bleed" para estender a imagem 100% da largura da janela
         st.markdown(f"""
         <style>
         .full-width-hero {{
@@ -307,7 +366,6 @@ def main():
         </div>
         """, unsafe_allow_html=True)
     else:
-        # Fallback
         st.markdown("""
         <div style="text-align: center; padding: 40px; background-color: #FFF8DC; border-bottom: 4px solid #DAA520; margin-bottom: 30px;">
             <h1 style="color: #8B4513; font-family: 'Helvetica Neue', sans-serif;">ARENA SPARTAJUS</h1>
@@ -338,10 +396,8 @@ def main():
             st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
             c_img, c_info, c_action = st.columns([1, 2, 1])
             with c_img:
-                # 1. AVATAR DO OPONENTE (200px e Centralizado)
-                # Nota: Em colunas, o alinhamento padrão é esquerda/centro dependendo do width
                 render_centered_image(opp['avatar_url'], width=200)
-                
+            
             with c_info:
                 st.markdown(f"### {opp['nome']}")
                 st.markdown(f"*{opp['descricao']}*")
@@ -358,20 +414,13 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # --- IMAGEM DE STATUS (CENTRALIZADA FORA DAS COLUNAS) ---
-            # Lógica: Se venceu -> Vitoria. Se perdeu -> Derrota. Senão -> Prepare-se.
+            # Imagem de Status Centralizada
             status_img_path = None
-            
-            if is_completed:
-                status_img_path = opp['img_vitoria']
-            elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
-                status_img_path = opp['img_derrota']
+            if is_completed: status_img_path = opp['img_vitoria']
+            elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
             else: 
-                # Estado Inicial / Disponível / Bloqueado
-                if os.path.exists(PREPARE_SE_FILE):
-                    status_img_path = PREPARE_SE_FILE
-                else:
-                    status_img_path = "https://img.icons8.com/color/96/shield.png"
+                if os.path.exists(PREPARE_SE_FILE): status_img_path = PREPARE_SE_FILE
+                else: status_img_path = "https://img.icons8.com/color/96/shield.png"
             
             if status_img_path:
                 render_centered_image(status_img_path, width=400)
@@ -432,7 +481,7 @@ def main():
                             del st.session_state['active_battle_id']
                             st.rerun()
 
-            # Conector Discreto entre Oponentes (Lógica Simplificada)
+            # Conector Discreto
             if opp['id'] < len(OPONENTS_DB):
                 st.markdown("""
                 <div style="display:flex; justify-content:center; align-items:center; margin: 15px 0;">
@@ -443,57 +492,137 @@ def main():
                 """, unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE (Sem alterações na lógica, apenas mantendo consistência)
+    # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES - OPÇÃO 1)
     # -------------------------------------------------------------------------
     with tab_doctore:
-        st.markdown("### 🦉 Treinamento Técnico")
-        # ... (Código da aba Doctore mantido igual para brevidade, já que não houve pedido de alteração aqui) ...
-        # (O código original do Doctore deve ser inserido aqui para o app funcionar completo)
-        # Inserindo um bloco simplificado do Doctore para que o arquivo seja executável
-        DOCTORE_DB = { # MOCK PARA O EXEMPLO RODAR
-            "Direito Constitucional": [{"id":1, "texto":"Teste", "gabarito":"Certo", "origem":"STF", "explicacao":"..."}]
-        }
-        if 'doctore_session' not in st.session_state:
-            st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
-        ds = st.session_state['doctore_session']
+        # Estado para controlar navegação interna do Doctore (Seleção vs Treino)
+        if 'doctore_state' not in st.session_state:
+            st.session_state['doctore_state'] = 'selection' # 'selection' ou 'training'
+        if 'selected_master' not in st.session_state:
+            st.session_state['selected_master'] = None
 
-        if not ds['active']:
-            nicho = st.selectbox("Escolha a Matéria:", list(DOCTORE_DB.keys()))
-            c1, c2 = st.columns(2)
-            if c1.button("Iniciar Treino", type="primary", use_container_width=True):
-                qs = DOCTORE_DB[nicho].copy()
-                random.shuffle(qs)
-                ds.update({"questions": qs, "idx": 0, "active": True, "wrong_ids": [], "mode": "normal"})
+        # --- TELA 1: SELEÇÃO DE MESTRE (PANTEÃO) ---
+        if st.session_state['doctore_state'] == 'selection':
+            st.markdown("### 🏛️ O Panteão dos Mestres")
+            st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
+            
+            # Cria colunas para os cards (responsivo)
+            cols = st.columns(2)
+            
+            for idx, (key, master) in enumerate(DOCTORE_DB.items()):
+                with cols[idx % 2]:
+                    with st.container():
+                        st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
+                        
+                        # Renderiza Imagem do Mestre (400px solicitado, mas em coluna ajusta-se)
+                        # Aqui usamos width=100% para ocupar o card
+                        img_path = master['imagem']
+                        # Se for arquivo local
+                        if os.path.exists(img_path):
+                            render_centered_image(img_path, width=400)
+                        else:
+                            # Fallback para URL se for um link
+                            if img_path.startswith("http"):
+                                st.image(img_path, use_container_width=True)
+                            else:
+                                st.warning(f"Imagem {img_path} não encontrada.")
+                        
+                        st.markdown(f"### {master['nome']}")
+                        st.markdown(f"*{master['descricao']}*")
+                        
+                        if st.button(f"Treinar com {master['nome']}", key=f"sel_{key}"):
+                            st.session_state['selected_master'] = key
+                            st.session_state['doctore_state'] = 'training'
+                            st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
+                            st.rerun()
+                            
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+        # --- TELA 2: SALA DE TREINO (MATÉRIA E QUESTÕES) ---
+        elif st.session_state['doctore_state'] == 'training':
+            master_key = st.session_state['selected_master']
+            master_data = DOCTORE_DB[master_key]
+            
+            # Botão Voltar no Topo
+            if st.button("🔙 Voltar ao Panteão", type="secondary"):
+                st.session_state['doctore_state'] = 'selection'
                 st.rerun()
-        else:
-            q_list = ds['questions']
-            idx = ds['idx']
-            if idx < len(q_list):
-                q = q_list[idx]
-                st.markdown(f"**Modo:** {'REVISÃO' if ds['mode']=='retry' else 'TREINO'} | Q {idx+1}/{len(q_list)}")
-                st.progress((idx)/len(q_list))
-                st.markdown(f"<div class='doctore-card'>{q['texto']}</div>", unsafe_allow_html=True)
                 
-                if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
-                if not st.session_state['doc_revealed']:
-                    c_c, c_e = st.columns(2)
-                    if c_c.button("✅ CERTO", use_container_width=True):
-                        st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
-                        st.rerun()
-                    if c_e.button("❌ ERRADO", use_container_width=True):
-                        st.session_state.update({"doc_choice": "Errado", "doc_revealed": True})
-                        st.rerun()
-                else:
-                    st.info("Feedback...")
-                    if st.button("Próxima ➡️"):
-                        st.session_state['doc_revealed'] = False
-                        ds['idx'] += 1
-                        st.rerun()
-            else:
-                st.success("Fim do Treino")
-                if st.button("Voltar"):
-                    ds['active'] = False
+            st.markdown(f"## Treinamento: {master_data['nome']}")
+            st.markdown("---")
+
+            # Lógica de Sessão de Treino (Mantida da versão anterior, adaptada)
+            if 'doctore_session' not in st.session_state:
+                st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
+            ds = st.session_state['doctore_session']
+
+            if not ds['active']:
+                # Seleção de Matéria Específica deste Mestre
+                materias_disponiveis = list(master_data['materias'].keys())
+                nicho = st.selectbox("Escolha a Matéria do Mestre:", materias_disponiveis)
+                
+                c1, c2 = st.columns(2)
+                if c1.button("Iniciar Treino", type="primary", use_container_width=True):
+                    qs = master_data['materias'][nicho].copy()
+                    random.shuffle(qs)
+                    ds.update({"questions": qs, "idx": 0, "active": True, "wrong_ids": [], "mode": "normal"})
                     st.rerun()
+            else:
+                # Exibição das Questões
+                q_list = ds['questions']
+                idx = ds['idx']
+                
+                if idx < len(q_list):
+                    q = q_list[idx]
+                    st.markdown(f"**Modo:** {'REVISÃO' if ds['mode']=='retry' else 'TREINO'} | Q {idx+1}/{len(q_list)}")
+                    st.progress((idx)/len(q_list))
+                    st.markdown(f"<div class='doctore-card'>{q['texto']}</div>", unsafe_allow_html=True)
+                    
+                    if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
+                    if not st.session_state['doc_revealed']:
+                        c_c, c_e = st.columns(2)
+                        if c_c.button("✅ CERTO", use_container_width=True):
+                            st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
+                            st.rerun()
+                        if c_e.button("❌ ERRADO", use_container_width=True):
+                            st.session_state.update({"doc_choice": "Errado", "doc_revealed": True})
+                            st.rerun()
+                    else:
+                        acertou = (st.session_state['doc_choice'] == q['gabarito'])
+                        if acertou: 
+                            st.success(f"Correto! {q['gabarito']}")
+                            user_data['stats']['total_acertos'] += 1
+                        else: 
+                            st.error(f"Errou! É {q['gabarito']}")
+                            user_data['stats']['total_erros'] += 1
+                            if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
+                        user_data['stats']['total_questoes'] += 1
+                        
+                        st.markdown(f"<div class='feedback-box'><b>Justificativa:</b> {q['explicacao']}</div>", unsafe_allow_html=True)
+                        if st.button("Próxima ➡️"):
+                            st.session_state['doc_revealed'] = False
+                            ds['idx'] += 1
+                            save_data(st.session_state['row_idx'], user_data)
+                            st.rerun()
+                else:
+                    st.success("Treino Finalizado!")
+                    st.write(f"Erros: {len(ds['wrong_ids'])}")
+                    user_data['historico_atividades'].append({
+                        "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                        "tipo": "Doctore",
+                        "detalhe": f"{master_data['nome']} ({ds['mode']})",
+                        "resultado": f"{len(q_list)-len(ds['wrong_ids'])}/{len(q_list)} acertos",
+                        "tempo": "-"
+                    })
+                    save_data(st.session_state['row_idx'], user_data)
+                    
+                    c1, c2 = st.columns(2)
+                    if c1.button("🏠 Novo Treino"):
+                        ds['active'] = False
+                        st.rerun()
+                    if len(ds['wrong_ids']) > 0 and c2.button("🔄 Refazer Erradas"):
+                        ds.update({"questions": ds['wrong_ids'].copy(), "wrong_ids": [], "idx": 0, "mode": "retry"})
+                        st.rerun()
 
     # -------------------------------------------------------------------------
     # TAB 3: HISTÓRICO
