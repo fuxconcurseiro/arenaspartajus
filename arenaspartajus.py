@@ -37,9 +37,12 @@ USER_AVATAR_FILE = "fux_concurseiro.png"
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
     """Lê um arquivo de imagem local e converte para base64 para uso em CSS."""
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception:
+        return None
 
 # ESTILIZAÇÃO GERAL
 st.markdown("""
@@ -278,21 +281,21 @@ def main():
     # Prepara o background (COLISEU)
     bg_css = "background-color: #FFF8DC;"
     if os.path.exists(BG_FILE):
-        img_b64 = get_base64_of_bin_file(BG_FILE)
-        bg_css = f"""
-        background-image: linear-gradient(rgba(255, 255, 240, 0.3), rgba(255, 255, 240, 0.8)), url("data:image/jpg;base64,{img_b64}");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        """
+        img_b64_bg = get_base64_of_bin_file(BG_FILE)
+        if img_b64_bg:
+            bg_css = f"""
+            background-image: linear-gradient(rgba(255, 255, 240, 0.3), rgba(255, 255, 240, 0.8)), url("data:image/jpg;base64,{img_b64_bg}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            """
 
-    # Prepara o Avatar (FUX) - Portrait 3:4 (150px x 200px)
+    # Prepara o Avatar (FUX) - Portrait 3:4 com fallback seguro
+    avatar_src = "https://img.icons8.com/color/240/roman-soldier.png"
     if os.path.exists(USER_AVATAR_FILE):
         avatar_b64 = get_base64_of_bin_file(USER_AVATAR_FILE)
-        avatar_src = f"data:image/png;base64,{avatar_b64}"
-    else:
-        # Fallback se não tiver a imagem
-        avatar_src = "https://img.icons8.com/color/240/roman-soldier.png"
+        if avatar_b64:
+            avatar_src = f"data:image/png;base64,{avatar_b64}"
 
     # Layout HTML/CSS Flexbox
     st.markdown(f"""
@@ -302,28 +305,31 @@ def main():
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start; /* Alinha tudo à ESQUERDA */
         gap: 20px;
         margin-bottom: 30px;
+        width: 100%;
     }}
 
     /* Lado Esquerdo: Avatar */
     .avatar-container {{
-        flex: 0 0 160px; /* Largura fixa para não espremer */
+        flex: 0 0 auto; /* Tamanho ajustado ao conteúdo */
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        margin-right: 15px;
     }}
 
     .avatar-frame {{
-        width: 150px;
-        height: 200px; /* Portrait 3:4 */
-        border: 6px double #DAA520; /* Borda Dourada Estilo Moldura */
+        width: 180px; /* Largura AUMENTADA */
+        height: 240px; /* Altura AUMENTADA (3:4) */
+        border: 6px double #DAA520; /* Borda Dourada */
         padding: 4px;
         background-color: #FFF;
         box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
         position: relative;
+        overflow: hidden;
     }}
 
     .avatar-img {{
@@ -336,20 +342,21 @@ def main():
     .avatar-frame::before {{
         content: '🌿';
         position: absolute;
-        top: -15px;
+        top: -12px;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 20px;
+        font-size: 24px;
         background: #FFFFF0;
         padding: 0 5px;
         color: #DAA520;
+        z-index: 2;
     }}
 
     /* Lado Direito: Título com Fundo do Coliseu */
     .hero-content {{
         flex: 1; /* Ocupa o resto do espaço */
         {bg_css}
-        padding: 40px 20px;
+        padding: 30px 20px;
         text-align: center;
         border: 4px solid #DAA520;
         border-radius: 10px;
@@ -357,13 +364,13 @@ def main():
         display: flex;
         flex-direction: column;
         justify-content: center;
-        min-height: 200px; /* Mesma altura do avatar aprox */
+        min-height: 240px; /* Mesma altura do avatar */
     }}
 
     .hero-title {{
         font-family: 'Helvetica Neue', sans-serif;
         color: #8B4513;
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 5px;
@@ -385,6 +392,14 @@ def main():
     @media (max-width: 768px) {{
         .main-header-container {{
             flex-direction: column;
+            align-items: center;
+        }}
+        .hero-content {{
+            width: 100%;
+        }}
+        .avatar-container {{
+            margin-right: 0;
+            margin-bottom: 20px;
         }}
     }}
     </style>
@@ -395,7 +410,7 @@ def main():
             <div class="avatar-frame">
                 <img src="{avatar_src}" class="avatar-img" alt="Avatar">
             </div>
-            <div style="margin-top:8px; font-weight:bold; color:#8B4513; font-size:0.9em;">{TEST_USER.upper()}</div>
+            <div style="margin-top:10px; font-weight:bold; color:#8B4513; font-size:1em; font-family:'Georgia', serif; text-transform:uppercase;">{TEST_USER}</div>
         </div>
 
         <!-- Lado Direito: Arena Title -->
