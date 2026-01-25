@@ -30,8 +30,8 @@ st.set_page_config(
 TEST_USER = "fux_concurseiro"
 
 # Arquivos de Imagem (Certifique-se de que estão no repositório)
-# Capa principal (Banner)
-HERO_IMG_FILE = "Arena_Spartajus_Logo.png"
+# Capa principal (Banner) - Atualizado para versão 2
+HERO_IMG_FILE = "Arena_Spartajus_Logo_2.png"
 # Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
 
@@ -319,7 +319,7 @@ def main():
         st.markdown("""
         <div style="text-align: center; padding: 40px; background-color: #FFF8DC; border-bottom: 4px solid #DAA520; margin-bottom: 30px;">
             <h1 style="color: #8B4513; font-family: 'Helvetica Neue', sans-serif;">ARENA SPARTAJUS</h1>
-            <p style="color: #5C4033;">(Imagem 'Arena_Spartajus_Logo.png' não encontrada)</p>
+            <p style="color: #5C4033;">(Imagem 'Arena_Spartajus_Logo_2.png' não encontrada)</p>
         </div>
         """, unsafe_allow_html=True)
 
