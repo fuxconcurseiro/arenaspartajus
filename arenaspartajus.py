@@ -29,10 +29,8 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
 
-# Arquivos de Imagem (Certifique-se de que estão no repositório)
-# Capa principal (Banner) - Atualizado para Arena_Spartajus_Logo_3.jpg
+# Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
-# Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
 
 # -----------------------------------------------------------------------------
@@ -130,10 +128,10 @@ DEFAULT_USER_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (COM O LEÃO VELHO)
+# 4. BASE DE DADOS (COM IMAGENS DE CONSEQUÊNCIA)
 # -----------------------------------------------------------------------------
-# A lógica aqui verifica se o arquivo local existe. Se não, usa um link de backup.
 def get_avatar_image(local_file, fallback_url):
+    """Verifica se a imagem local existe, caso contrário usa fallback."""
     if os.path.exists(local_file):
         return local_file
     return fallback_url
@@ -143,10 +141,12 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Tenta carregar '1_leao_velho.png', senão usa o ícone online
+        # Avatar Inicial
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
-        "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
-        "img_derrota": "https://img.icons8.com/color/96/skull.png",
+        # Imagem de Vitória (Consequência Positiva)
+        "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", "https://img.icons8.com/color/96/laurel-wreath.png"),
+        # Imagem de Derrota (Consequência Negativa)
+        "img_derrota": get_avatar_image("derrota_leao_velho.jpg", "https://img.icons8.com/color/96/skull.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial",
         "max_tempo": 60, 
@@ -259,10 +259,10 @@ def main():
     with st.sidebar:
         # Verifica se o arquivo fux_concurseiro.png existe
         if os.path.exists(USER_AVATAR_FILE):
-            # Imagem completa (sem recorte circular/emojis)
+            # Imagem completa
             st.image(USER_AVATAR_FILE, caption=TEST_USER, use_container_width=True)
         else:
-            # Fallback (caso o arquivo não esteja no repo ainda)
+            # Fallback
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado (fux_concurseiro.png)")
         
@@ -316,7 +316,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
     else:
-        # Fallback caso a imagem não seja encontrada
+        # Fallback
         st.markdown("""
         <div style="text-align: center; padding: 40px; background-color: #FFF8DC; border-bottom: 4px solid #DAA520; margin-bottom: 30px;">
             <h1 style="color: #8B4513; font-family: 'Helvetica Neue', sans-serif;">ARENA SPARTAJUS</h1>
@@ -347,9 +347,17 @@ def main():
             st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
             c_img, c_info, c_action = st.columns([1, 2, 1])
             with c_img:
-                if is_completed: st.image(opp['img_vitoria'], width=80)
+                # LÓGICA DE EXIBIÇÃO DE IMAGEM (VITÓRIA/DERROTA)
+                # 1. Se venceu (is_completed): Mostra imagem de vitória
+                if is_completed: 
+                    # Usa st.image para carregar imagem local ou URL
+                    st.image(opp['img_vitoria'], width=120)
+                
+                # 2. Se acabou de perder (derrota atual): Mostra imagem de derrota
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
-                     st.image(opp['img_derrota'], width=80)
+                     st.image(opp['img_derrota'], width=120)
+                
+                # 3. Estado normal: Avatar do inimigo
                 else: 
                     st.image(opp['avatar_url'], width=120)
 
