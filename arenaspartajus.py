@@ -29,9 +29,12 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
 
-# Arquivos de Imagem
+# Arquivos de Imagem (Certifique-se de que estão no repositório)
+# Capa principal (Banner)
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
+# Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
+# Imagem de espera
 PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
@@ -173,8 +176,11 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
+        # Avatar Inicial
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
+        # Imagem de Vitória (Consequência Positiva)
         "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", "https://img.icons8.com/color/96/laurel-wreath.png"),
+        # Imagem de Derrota (Consequência Negativa)
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", "https://img.icons8.com/color/96/skull.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial",
@@ -210,12 +216,11 @@ OPONENTS_DB = [
 # -----------------------------------------------------------------------------
 # 5. BASE DE DADOS HIERÁRQUICA (DOCTORE)
 # -----------------------------------------------------------------------------
-# Agora os Doctores são organizados por Carreiras/Mestres
 DOCTORE_DB = {
     "praetorium": {
         "nome": "Praetorium Legislativus",
         "descricao": "O Guardião das Leis e do Processo Legislativo.",
-        "imagem": "praetorium.jpg", # Deve existir no repo
+        "imagem": "praetorium.jpg", 
         "materias": {
             "Direito Constitucional": [
                 {
@@ -233,7 +238,7 @@ DOCTORE_DB = {
                     "explicacao": "Possuem aplicabilidade mediata e reduzida."
                 }
             ],
-            "Processo Legislativo": [ # Nova matéria exemplo
+            "Processo Legislativo": [
                 {
                     "id": 301,
                     "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.",
@@ -244,18 +249,27 @@ DOCTORE_DB = {
             ]
         }
     },
-    "magister_penalis": { # Exemplo de outro mestre futuro
-        "nome": "Magister Penalis",
-        "descricao": "O Mestre das Penas e Delitos.",
-        "imagem": "https://img.icons8.com/color/400/judge-male.png", # Placeholder
+    "enam_criscis": {
+        "nome": "Enam Criscis",
+        "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.",
+        "imagem": "enam-criscis.png", # Deve estar no repositório
         "materias": {
-            "Direito Penal": [
+            "Direitos Humanos": [
                 {
-                    "id": 201,
-                    "texto": "Aplica-se o princípio da insignificância aos crimes contra a administração pública.",
+                    "id": 401,
+                    "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.",
+                    "gabarito": "Certo",
+                    "origem": "Jurisprudência Corte IDH",
+                    "explicacao": "O controle de convencionalidade é dever do Judiciário nacional."
+                }
+            ],
+            "Direito Administrativo": [
+                {
+                    "id": 402,
+                    "texto": "A responsabilidade civil do Estado por atos omissivos é, em regra, objetiva.",
                     "gabarito": "Errado",
-                    "origem": "Súmula 599 STJ",
-                    "explicacao": "É inaplicável aos crimes contra a administração pública."
+                    "origem": "Doutrina Majoritária",
+                    "explicacao": "No caso de omissão, a responsabilidade é subjetiva (teoria da 'faute du service'), salvo em casos de custódia onde o Estado é garante."
                 }
             ]
         }
@@ -414,7 +428,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status Centralizada
+            # Imagem de Status Centralizada (Sem seta, 400px, e centralizada no card)
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -492,21 +506,18 @@ def main():
                 """, unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES - OPÇÃO 1)
+    # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES)
     # -------------------------------------------------------------------------
     with tab_doctore:
-        # Estado para controlar navegação interna do Doctore (Seleção vs Treino)
         if 'doctore_state' not in st.session_state:
-            st.session_state['doctore_state'] = 'selection' # 'selection' ou 'training'
+            st.session_state['doctore_state'] = 'selection'
         if 'selected_master' not in st.session_state:
             st.session_state['selected_master'] = None
 
-        # --- TELA 1: SELEÇÃO DE MESTRE (PANTEÃO) ---
         if st.session_state['doctore_state'] == 'selection':
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             
-            # Cria colunas para os cards (responsivo)
             cols = st.columns(2)
             
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
@@ -514,14 +525,10 @@ def main():
                     with st.container():
                         st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
                         
-                        # Renderiza Imagem do Mestre (400px solicitado, mas em coluna ajusta-se)
-                        # Aqui usamos width=100% para ocupar o card
                         img_path = master['imagem']
-                        # Se for arquivo local
                         if os.path.exists(img_path):
                             render_centered_image(img_path, width=400)
                         else:
-                            # Fallback para URL se for um link
                             if img_path.startswith("http"):
                                 st.image(img_path, use_container_width=True)
                             else:
@@ -538,12 +545,10 @@ def main():
                             
                         st.markdown("</div>", unsafe_allow_html=True)
 
-        # --- TELA 2: SALA DE TREINO (MATÉRIA E QUESTÕES) ---
         elif st.session_state['doctore_state'] == 'training':
             master_key = st.session_state['selected_master']
             master_data = DOCTORE_DB[master_key]
             
-            # Botão Voltar no Topo
             if st.button("🔙 Voltar ao Panteão", type="secondary"):
                 st.session_state['doctore_state'] = 'selection'
                 st.rerun()
@@ -551,13 +556,11 @@ def main():
             st.markdown(f"## Treinamento: {master_data['nome']}")
             st.markdown("---")
 
-            # Lógica de Sessão de Treino (Mantida da versão anterior, adaptada)
             if 'doctore_session' not in st.session_state:
                 st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
             ds = st.session_state['doctore_session']
 
             if not ds['active']:
-                # Seleção de Matéria Específica deste Mestre
                 materias_disponiveis = list(master_data['materias'].keys())
                 nicho = st.selectbox("Escolha a Matéria do Mestre:", materias_disponiveis)
                 
@@ -568,7 +571,6 @@ def main():
                     ds.update({"questions": qs, "idx": 0, "active": True, "wrong_ids": [], "mode": "normal"})
                     st.rerun()
             else:
-                # Exibição das Questões
                 q_list = ds['questions']
                 idx = ds['idx']
                 
