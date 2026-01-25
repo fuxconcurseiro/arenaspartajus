@@ -30,6 +30,8 @@ st.set_page_config(
 TEST_USER = "fux_concurseiro"
 LOGO_FILE = "logo_spartajus.jpg"
 BG_FILE = "coliseu_bg.jpg"
+# Nome do arquivo do avatar do usuário principal
+USER_AVATAR_FILE = "fux_concurseiro.png"
 
 # -----------------------------------------------------------------------------
 # 2. FUNÇÕES VISUAIS (BASE64 E CSS)
@@ -123,9 +125,9 @@ DEFAULT_USER_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (COM O LEÃO VELHO)
+# 4. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
-# A lógica aqui verifica se o arquivo local existe. Se não, usa um link de backup.
+# Função auxiliar para imagens locais com fallback
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file):
         return local_file
@@ -136,14 +138,14 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Tenta carregar '1_leao_velho.png', senão usa o ícone online
+        # Tenta carregar '1_leao_velho.png'
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
         "img_derrota": "https://img.icons8.com/color/96/skull.png",
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial",
-        "max_tempo": 60, # 60 minutos
-        "max_erros": 7   # Perde se errar 8 (Max aceitável 7)
+        "max_tempo": 60, 
+        "max_erros": 7
     },
     {
         "id": 2,
@@ -274,8 +276,10 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER ---
-    bg_css = ""
+    # --- HERO HEADER (COM AVATAR DO USUÁRIO) ---
+    
+    # 1. Prepara o Background
+    bg_css = "background-color: #FFF8DC;"
     if os.path.exists(BG_FILE):
         img_b64 = get_base64_of_bin_file(BG_FILE)
         bg_css = f"""
@@ -284,19 +288,44 @@ def main():
         background-position: center;
         background-repeat: no-repeat;
         """
-    else:
-        bg_css = "background-color: #FFF8DC;"
 
+    # 2. Prepara o Avatar do Usuário
+    avatar_html = ""
+    # Verifica se o arquivo existe E se é o usuário correto (para testes)
+    if os.path.exists(USER_AVATAR_FILE) and TEST_USER == "fux_concurseiro":
+        avatar_b64 = get_base64_of_bin_file(USER_AVATAR_FILE)
+        avatar_html = f"""
+            <div class="hero-avatar-container">
+                <img src="data:image/png;base64,{avatar_b64}" class="hero-avatar-img" alt="{TEST_USER}">
+            </div>
+        """
+
+    # 3. Monta o CSS e HTML do Header
     st.markdown(f"""
     <style>
     .hero-container {{
         {bg_css}
-        padding: 80px 20px;
-        text-align: center;
+        padding: 60px 20px;
         border-bottom: 4px solid #DAA520;
         margin-bottom: 30px;
         border-radius: 0 0 15px 15px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        /* Flexbox para alinhar avatar e texto */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 30px; /* Espaço entre avatar e texto */
+    }}
+    .hero-avatar-img {{
+        width: 150px;
+        height: 150px;
+        border-radius: 50%; /* Redondo */
+        border: 5px solid #DAA520; /* Borda dourada estilo medalhão */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        object-fit: cover;
+    }}
+    .hero-text-container {{
+        text-align: left;
     }}
     .hero-title {{
         font-family: 'Helvetica Neue', sans-serif;
@@ -307,6 +336,7 @@ def main():
         letter-spacing: 5px;
         text-shadow: 2px 2px 0px #FFF, 4px 4px 0px rgba(0,0,0,0.2);
         margin: 0;
+        line-height: 1.1;
     }}
     .hero-subtitle {{
         font-family: 'Georgia', serif;
@@ -317,8 +347,11 @@ def main():
     }}
     </style>
     <div class="hero-container">
-        <h1 class="hero-title">Arena SpartaJus</h1>
-        <div class="hero-subtitle">"Onde a preparação encontra a glória"</div>
+        {avatar_html} <!-- Insere o avatar se existir -->
+        <div class="hero-text-container">
+            <h1 class="hero-title">Arena SpartaJus</h1>
+            <div class="hero-subtitle">"Onde a preparação encontra a glória"</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -349,7 +382,6 @@ def main():
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
                      st.image(opp['img_derrota'], width=80)
                 else: 
-                    # Tenta carregar imagem local, se falhar usa URL (pelo helper function)
                     st.image(opp['avatar_url'], width=120)
 
             with c_info:
@@ -358,7 +390,6 @@ def main():
                 if is_locked: st.markdown("🔒 **BLOQUEADO**")
                 elif is_completed: st.markdown("✅ **CONQUISTADO**")
                 else: 
-                    # Mostra as condições de vitória específicas
                     st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
                     st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
 
@@ -384,14 +415,10 @@ def main():
                         
                         if st.form_submit_button("📜 REPORTAR RESULTADO"):
                             erros_q = max(0, total_q - acertos_q)
-                            
-                            # Lógica de Vitória Específica do Oponente
                             limit_errors = opp.get('max_erros', 5)
                             limit_time = opp.get('max_tempo', 60)
-                            
                             passou_erros = erros_q <= limit_errors
                             passou_tempo = tempo_min <= limit_time
-                            
                             VITORIA = passou_erros and passou_tempo
                             
                             user_data['stats']['total_questoes'] += total_q
