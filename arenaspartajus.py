@@ -30,8 +30,8 @@ st.set_page_config(
 TEST_USER = "fux_concurseiro"
 
 # Arquivos de Imagem (Certifique-se de que estão no repositório)
-# Capa principal (Banner) - Atualizado para .jpg conforme solicitado
-HERO_IMG_FILE = "Arena_Spartajus_Logo_2.jpg"
+# Capa principal (Banner) - Atualizado para Arena_Spartajus_Logo_3.jpg
+HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
 # Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
 
@@ -285,37 +285,42 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (BANNER FULL WIDTH SEM ECRÃ) ---
+    # --- HERO HEADER (BANNER FULL WIDTH REAL) ---
     
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         
+        # Técnica CSS "Full Bleed" para estender a imagem 100% da largura da janela
         st.markdown(f"""
         <style>
-        /* Ajuste do container principal para remover padding superior */
-        .block-container {{
-            padding-top: 1rem;
-        }}
-        
-        .full-width-banner {{
-            width: 100%;
-            display: block;
+        .full-width-hero {{
+            position: relative;
+            width: 100vw;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
             margin-bottom: 20px;
-            /* Tentativa de extender além das margens padrão do container */
+            overflow: hidden;
+        }}
+        .full-width-hero img {{
             width: 100%;
             height: auto;
             object-fit: cover;
+            display: block;
             border-bottom: 4px solid #DAA520;
         }}
         </style>
-        <img src="data:image/jpg;base64,{img_b64}" class="full-width-banner" alt="Arena SpartaJus">
+        <div class="full-width-hero">
+            <img src="data:image/jpg;base64,{img_b64}" alt="Arena SpartaJus">
+        </div>
         """, unsafe_allow_html=True)
     else:
         # Fallback caso a imagem não seja encontrada
         st.markdown("""
         <div style="text-align: center; padding: 40px; background-color: #FFF8DC; border-bottom: 4px solid #DAA520; margin-bottom: 30px;">
             <h1 style="color: #8B4513; font-family: 'Helvetica Neue', sans-serif;">ARENA SPARTAJUS</h1>
-            <p style="color: #5C4033;">(Imagem 'Arena_Spartajus_Logo_2.jpg' não encontrada)</p>
+            <p style="color: #5C4033;">(Imagem 'Arena_Spartajus_Logo_3.jpg' não encontrada)</p>
         </div>
         """, unsafe_allow_html=True)
 
