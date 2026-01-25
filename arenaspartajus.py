@@ -285,37 +285,33 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (BANNER FULL WIDTH) ---
+    # --- HERO HEADER (BANNER FULL WIDTH SEM ECRÃ) ---
     
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
-        # Exibe a imagem como um banner extendido em width:100%
+        
         st.markdown(f"""
         <style>
-        .hero-container {{
-            width: 100%;
-            padding: 0;
-            margin-bottom: 30px;
-            background-color: #FFF8DC;
-            border-bottom: 4px solid #DAA520;
-            border-radius: 0 0 15px 15px;
-            overflow: hidden; /* Garante que a imagem respeite as bordas arredondadas inferiores */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            line-height: 0;
+        /* Ajuste do container principal para remover padding superior */
+        .block-container {{
+            padding-top: 1rem;
         }}
-        .hero-img {{
+        
+        .full-width-banner {{
             width: 100%;
-            height: auto; /* Mantém a proporção e resolução própria da imagem */
-            object-fit: cover;
             display: block;
+            margin-bottom: 20px;
+            /* Tentativa de extender além das margens padrão do container */
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            border-bottom: 4px solid #DAA520;
         }}
         </style>
-        <div class="hero-container">
-            <img src="data:image/jpg;base64,{img_b64}" class="hero-img" alt="Arena SpartaJus">
-        </div>
+        <img src="data:image/jpg;base64,{img_b64}" class="full-width-banner" alt="Arena SpartaJus">
         """, unsafe_allow_html=True)
     else:
-        # Fallback caso a imagem da logo não seja encontrada
+        # Fallback caso a imagem não seja encontrada
         st.markdown("""
         <div style="text-align: center; padding: 40px; background-color: #FFF8DC; border-bottom: 4px solid #DAA520; margin-bottom: 30px;">
             <h1 style="color: #8B4513; font-family: 'Helvetica Neue', sans-serif;">ARENA SPARTAJUS</h1>
