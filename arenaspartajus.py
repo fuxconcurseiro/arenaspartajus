@@ -40,7 +40,7 @@ def get_base64_of_bin_file(bin_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-# ESTILIZAÇÃO GERAL (Mantendo a identidade do MentorSpartaJus)
+# ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
     /* CORES GERAIS - IVORY (#FFFFF0) */
@@ -123,18 +123,20 @@ DEFAULT_USER_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (MOCK)
+# 4. BASE DE DADOS (COM O LEÃO VELHO)
 # -----------------------------------------------------------------------------
 OPONENTS_DB = [
     {
         "id": 1,
-        "nome": "Recruta da Banca",
-        "descricao": "O primeiro teste. Não subestime o básico.",
-        "avatar_url": "https://img.icons8.com/color/96/roman-soldier.png",
-        "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
-        "img_derrota": "https://img.icons8.com/color/96/skull.png",
-        "link_tec": "https://www.tecconcursos.com.br", 
-        "dificuldade": "Fácil"
+        "nome": "O Velho Leão",
+        "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
+        "avatar_url": "https://img.icons8.com/color/96/lion.png", # Avatar do Leão
+        "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png", # Placeholder (Virá depois)
+        "img_derrota": "https://img.icons8.com/color/96/skull.png", # Placeholder (Virá depois)
+        "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
+        "dificuldade": "Desafio Inicial",
+        "max_tempo": 60, # 60 minutos
+        "max_erros": 7   # Perde se errar 8 (Max aceitável 7)
     },
     {
         "id": 2,
@@ -144,7 +146,9 @@ OPONENTS_DB = [
         "img_vitoria": "https://img.icons8.com/color/96/trophy.png",
         "img_derrota": "https://img.icons8.com/color/96/dead-body.png",
         "link_tec": "https://www.tecconcursos.com.br",
-        "dificuldade": "Média"
+        "dificuldade": "Intermediário",
+        "max_tempo": 45,
+        "max_erros": 5
     },
     {
         "id": 3,
@@ -154,7 +158,9 @@ OPONENTS_DB = [
         "img_vitoria": "https://img.icons8.com/color/96/crown.png",
         "img_derrota": "https://img.icons8.com/color/96/grave.png",
         "link_tec": "https://www.tecconcursos.com.br",
-        "dificuldade": "Difícil"
+        "dificuldade": "Avançado",
+        "max_tempo": 30,
+        "max_erros": 3
     }
 ]
 
@@ -235,16 +241,14 @@ def main():
     user_data = st.session_state['user_data']
     stats = user_data['stats']
 
-    # --- SIDEBAR (LOGO + STATS) ---
+    # --- SIDEBAR ---
     with st.sidebar:
-        # LOGO DA SPARTAJUS
         if os.path.exists(LOGO_FILE):
             st.image(LOGO_FILE, use_column_width=True)
         else:
             st.header(f"🏛️ {TEST_USER}")
         
         st.markdown("---")
-        
         st.markdown("### 📊 Desempenho Global")
         c1, c2 = st.columns(2)
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
@@ -263,8 +267,7 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (COLISEU BACKGROUND) ---
-    # Verifica se a imagem existe para criar o CSS
+    # --- HERO HEADER ---
     bg_css = ""
     if os.path.exists(BG_FILE):
         img_b64 = get_base64_of_bin_file(BG_FILE)
@@ -275,7 +278,6 @@ def main():
         background-repeat: no-repeat;
         """
     else:
-        # Fallback sem imagem (apenas cor)
         bg_css = "background-color: #FFF8DC;"
 
     st.markdown(f"""
@@ -313,11 +315,11 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- TABS E CONTEÚDO ---
+    # --- TABS ---
     tab_batalha, tab_doctore, tab_historico = st.tabs(["🛡️ Linha do Tempo (Desafios)", "🦉 Doctore (Treino)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
-    # TAB 1: BATALHA
+    # TAB 1: BATALHA (Lógica Dinâmica)
     # -------------------------------------------------------------------------
     with tab_batalha:
         st.markdown("### 🗺️ A Jornada do Gladiador")
@@ -346,7 +348,10 @@ def main():
                 st.markdown(f"*{opp['descricao']}*")
                 if is_locked: st.markdown("🔒 **BLOQUEADO**")
                 elif is_completed: st.markdown("✅ **CONQUISTADO**")
-                else: st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
+                else: 
+                    # Mostra as condições de vitória específicas
+                    st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
+                    st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
 
             with c_action:
                 if is_current:
@@ -358,19 +363,27 @@ def main():
 
             if st.session_state.get('active_battle_id') == opp['id']:
                 with st.expander("⚔️ CAMPO DE BATALHA", expanded=True):
-                    st.info("Missão ativa. Execute e reporte.")
-                    st.link_button("🔗 ABRIR CADERNO TEC", opp['link_tec'], type="primary", use_container_width=True)
+                    st.info(f"Derrote {opp['nome']}. Você deve terminar em até {opp['max_tempo']} minutos e errar no máximo {opp['max_erros']} questões.")
+                    st.link_button("🔗 ABRIR CADERNO TEC CONCURSOS", opp['link_tec'], type="primary", use_container_width=True)
                     st.divider()
+                    
                     with st.form(f"form_bat_{opp['id']}"):
                         c_t, c_a, c_time = st.columns(3)
-                        total_q = c_t.number_input("Total", min_value=1, step=1)
-                        acertos_q = c_a.number_input("Acertos", min_value=0, step=1)
-                        tempo_min = c_time.number_input("Tempo (min)", min_value=0, step=1)
+                        total_q = c_t.number_input("Total de Questões Realizadas", min_value=1, step=1)
+                        acertos_q = c_a.number_input("Questões Acertadas", min_value=0, step=1)
+                        tempo_min = c_time.number_input("Tempo Gasto (minutos)", min_value=0, step=1)
                         
-                        if st.form_submit_button("📜 REPORTAR"):
+                        if st.form_submit_button("📜 REPORTAR RESULTADO"):
                             erros_q = max(0, total_q - acertos_q)
-                            perc = (acertos_q / total_q) * 100
-                            VITORIA = perc >= 70
+                            
+                            # Lógica de Vitória Específica do Oponente
+                            limit_errors = opp.get('max_erros', 5)
+                            limit_time = opp.get('max_tempo', 60)
+                            
+                            passou_erros = erros_q <= limit_errors
+                            passou_tempo = tempo_min <= limit_time
+                            
+                            VITORIA = passou_erros and passou_tempo
                             
                             user_data['stats']['total_questoes'] += total_q
                             user_data['stats']['total_acertos'] += acertos_q
@@ -390,11 +403,14 @@ def main():
                                     user_data['progresso_arena']['fases_vencidas'].append(opp['id'])
                                     if opp['id'] == user_data['progresso_arena']['fase_maxima_desbloqueada']:
                                         user_data['progresso_arena']['fase_maxima_desbloqueada'] += 1
-                                st.success("VITÓRIA!")
+                                st.success("VITÓRIA! Oponente derrotado com honra!")
                                 st.balloons()
                             else:
                                 st.session_state['last_result'] = 'derrota'
-                                st.error(f"DERROTA ({perc:.1f}%). Exige-se 70%.")
+                                motivos = []
+                                if not passou_erros: motivos.append(f"Errou {erros_q} (Máx: {limit_errors})")
+                                if not passou_tempo: motivos.append(f"Levou {tempo_min} min (Máx: {limit_time})")
+                                st.error(f"DERROTA. Motivo: {', '.join(motivos)}.")
                             
                             save_data(st.session_state['row_idx'], user_data)
                             time.sleep(2)
