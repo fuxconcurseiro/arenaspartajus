@@ -374,7 +374,7 @@ def main():
                     status_img_path = "https://img.icons8.com/color/96/shield.png"
             
             if status_img_path:
-                render_centered_image(status_img_path, width=200)
+                render_centered_image(status_img_path, width=400)
 
             st.markdown("</div>", unsafe_allow_html=True)
 
