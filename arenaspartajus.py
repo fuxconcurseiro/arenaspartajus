@@ -285,36 +285,33 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (LOGO/BANNER PRINCIPAL) ---
-    # Aqui substituímos o texto e o fundo antigo pela nova imagem Arena_Spartajus_Logo.png
+    # --- HERO HEADER (BANNER FULL WIDTH) ---
     
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
-        # Exibe a imagem como um banner centralizado
+        # Exibe a imagem como um banner extendido
         st.markdown(f"""
         <style>
         .hero-container {{
-            text-align: center;
-            padding: 20px 0;
+            width: 100%;
+            padding: 0; /* Sem padding para ocupar tudo */
             border-bottom: 4px solid #DAA520;
             margin-bottom: 30px;
-            background-color: #FFF8DC; /* Fundo suave caso a imagem tenha transparência */
+            background-color: #FFF8DC;
             border-radius: 0 0 15px 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow: hidden; /* Corta o que passar das bordas arredondadas */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            line-height: 0; /* Remove espaço extra embaixo da imagem */
         }}
         .hero-img {{
-            max-width: 100%;
-            height: auto;
-            max-height: 300px; /* Limite de altura para não ocupar a tela toda */
-            object-fit: contain;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+            width: 100%; /* Ocupa toda a largura horizontal */
+            height: auto; /* Mantém a proporção */
+            object-fit: cover; /* Garante cobertura */
+            display: block;
         }}
         </style>
         <div class="hero-container">
             <img src="data:image/png;base64,{img_b64}" class="hero-img" alt="Arena SpartaJus">
-            <div style="font-family: 'Georgia', serif; color: #5C4033; margin-top: 10px; font-style: italic;">
-                "Onde a preparação encontra a glória"
-            </div>
         </div>
         """, unsafe_allow_html=True)
     else:
