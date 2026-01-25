@@ -59,7 +59,7 @@ def render_centered_image(img_path, width=200):
             src = f"data:image/{ext};base64,{b64}"
     
     st.markdown(f"""
-    <div style="display: flex; justify-content: center; margin-top: 10px;">
+    <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px;">
         <img src="{src}" style="width: {width}px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
     </div>
     """, unsafe_allow_html=True)
@@ -339,29 +339,9 @@ def main():
             c_img, c_info, c_action = st.columns([1, 2, 1])
             with c_img:
                 # 1. AVATAR DO OPONENTE (200px e Centralizado)
+                # Nota: Em colunas, o alinhamento padrão é esquerda/centro dependendo do width
                 render_centered_image(opp['avatar_url'], width=200)
                 
-                # SETA DIRECIONAL (Visual Flow)
-                st.markdown("<div style='text-align:center; color:#8B4513; font-size:30px; font-weight:bold; line-height:1; margin:10px 0;'>⬇</div>", unsafe_allow_html=True)
-
-                # 2. IMAGEM DE STATUS (200px e Centralizado)
-                # Lógica: Se venceu -> Vitoria. Se perdeu -> Derrota. Senão -> Prepare-se.
-                status_img_path = None
-                
-                if is_completed:
-                    status_img_path = opp['img_vitoria']
-                elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
-                    status_img_path = opp['img_derrota']
-                else: 
-                    # Estado Inicial / Disponível / Bloqueado
-                    if os.path.exists(PREPARE_SE_FILE):
-                        status_img_path = PREPARE_SE_FILE
-                    else:
-                        status_img_path = "https://img.icons8.com/color/96/shield.png"
-                
-                if status_img_path:
-                    render_centered_image(status_img_path, width=200)
-
             with c_info:
                 st.markdown(f"### {opp['nome']}")
                 st.markdown(f"*{opp['descricao']}*")
@@ -378,6 +358,24 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
+            # --- IMAGEM DE STATUS (CENTRALIZADA FORA DAS COLUNAS) ---
+            # Lógica: Se venceu -> Vitoria. Se perdeu -> Derrota. Senão -> Prepare-se.
+            status_img_path = None
+            
+            if is_completed:
+                status_img_path = opp['img_vitoria']
+            elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
+                status_img_path = opp['img_derrota']
+            else: 
+                # Estado Inicial / Disponível / Bloqueado
+                if os.path.exists(PREPARE_SE_FILE):
+                    status_img_path = PREPARE_SE_FILE
+                else:
+                    status_img_path = "https://img.icons8.com/color/96/shield.png"
+            
+            if status_img_path:
+                render_centered_image(status_img_path, width=200)
+
             st.markdown("</div>", unsafe_allow_html=True)
 
             if st.session_state.get('active_battle_id') == opp['id']:
@@ -434,13 +432,13 @@ def main():
                             del st.session_state['active_battle_id']
                             st.rerun()
 
-            # Conector Discreto entre Oponentes (Substituindo o antigo grande)
+            # Conector Discreto entre Oponentes (Lógica Simplificada)
             if opp['id'] < len(OPONENTS_DB):
                 st.markdown("""
-                <div style="display:flex; justify-content:center; align-items:center; margin: 10px 0;">
-                    <div style="height: 1px; width: 50px; background-color: #DAA520;"></div>
-                    <div style="color: #DAA520; font-size: 14px; margin: 0 10px;">🔗</div>
-                    <div style="height: 1px; width: 50px; background-color: #DAA520;"></div>
+                <div style="display:flex; justify-content:center; align-items:center; margin: 15px 0;">
+                    <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
+                    <div style="color: #DAA520; font-size: 14px; margin: 0 10px; opacity: 0.8;">🔗</div>
+                    <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
                 </div>
                 """, unsafe_allow_html=True)
 
