@@ -277,7 +277,7 @@ DOCTORE_DB = {
     "parquet_tribunus": {
         "nome": "Parquet Tribunus",
         "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.",
-        "imagem": "parquet.jpg", # Deve estar no repositório
+        "imagem": "parquet.jpg",
         "materias": {
             "Direito Processual Coletivo": [
                 {
@@ -295,6 +295,31 @@ DOCTORE_DB = {
                     "gabarito": "Certo",
                     "origem": "Art. 25 CPP",
                     "explicacao": "A retratação é permitida até o oferecimento da denúncia, não até o recebimento."
+                }
+            ]
+        }
+    },
+    "noel_autarquicus": {
+        "nome": "Noel Autarquicus",
+        "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.",
+        "imagem": "noel.png",
+        "materias": {
+            "Direito Administrativo": [
+                {
+                    "id": 601,
+                    "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.",
+                    "gabarito": "Certo",
+                    "origem": "Tema 999 STF",
+                    "explicacao": "A exigência é válida se prevista em lei."
+                }
+            ],
+            "Legislação Municipal": [
+                {
+                    "id": 602,
+                    "texto": "Compete aos Municípios legislar sobre assuntos de interesse local, inclusive horário de funcionamento de estabelecimento comercial.",
+                    "gabarito": "Certo",
+                    "origem": "Súmula Vinculante 38",
+                    "explicacao": "É competência municipal definir horário do comércio local."
                 }
             ]
         }
