@@ -136,6 +136,7 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
+        # Tenta carregar '1_leao_velho.png'
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
         "img_derrota": "https://img.icons8.com/color/96/skull.png",
@@ -273,110 +274,132 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (COM AVATAR DO USUÁRIO) ---
-    
-    # 1. Prepara o Background
+    # --- HERO HEADER ---
+    # Prepara o background (COLISEU)
     bg_css = "background-color: #FFF8DC;"
     if os.path.exists(BG_FILE):
         img_b64 = get_base64_of_bin_file(BG_FILE)
         bg_css = f"""
-        background-image: linear-gradient(rgba(255, 255, 240, 0.4), rgba(255, 255, 240, 0.9)), url("data:image/jpg;base64,{img_b64}");
+        background-image: linear-gradient(rgba(255, 255, 240, 0.3), rgba(255, 255, 240, 0.8)), url("data:image/jpg;base64,{img_b64}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
         """
 
-    # 2. Prepara o Avatar do Usuário (Com fallback para não quebrar)
+    # Prepara o Avatar (FUX) - Portrait 3:4 (150px x 200px)
     if os.path.exists(USER_AVATAR_FILE):
         avatar_b64 = get_base64_of_bin_file(USER_AVATAR_FILE)
         avatar_src = f"data:image/png;base64,{avatar_b64}"
     else:
-        # Fallback para um ícone genérico se o arquivo não estiver lá
-        avatar_src = "https://img.icons8.com/color/144/roman-soldier.png"
+        # Fallback se não tiver a imagem
+        avatar_src = "https://img.icons8.com/color/240/roman-soldier.png"
 
-    avatar_html = f"""
-        <div class="hero-avatar-container">
-            <img src="{avatar_src}" class="hero-avatar-img" alt="{TEST_USER}">
-        </div>
-    """
-
-    # 3. Monta o CSS e HTML do Header (CORRIGIDO: Flexbox Robusto)
+    # Layout HTML/CSS Flexbox
     st.markdown(f"""
     <style>
-    .hero-container {{
-        {bg_css}
-        padding: 60px 20px;
-        border-bottom: 4px solid #DAA520;
-        margin-bottom: 30px;
-        border-radius: 0 0 15px 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        
-        /* Flexbox Centralizado */
+    /* Container Principal - Flexbox Row */
+    .main-header-container {{
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        gap: 30px; /* Distância entre avatar e texto */
-        min-height: 200px;
-    }}
-    
-    .hero-avatar-img {{
-        width: 140px;
-        height: 140px;
-        border-radius: 50%;
-        border: 5px solid #DAA520;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        object-fit: cover;
-        background-color: #FFF; /* Fundo branco caso png seja transparente */
-        transition: transform 0.3s;
-    }}
-    .hero-avatar-img:hover {{
-        transform: scale(1.05);
+        gap: 20px;
+        margin-bottom: 30px;
     }}
 
-    .hero-text-container {{
+    /* Lado Esquerdo: Avatar */
+    .avatar-container {{
+        flex: 0 0 160px; /* Largura fixa para não espremer */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }}
+
+    .avatar-frame {{
+        width: 150px;
+        height: 200px; /* Portrait 3:4 */
+        border: 6px double #DAA520; /* Borda Dourada Estilo Moldura */
+        padding: 4px;
+        background-color: #FFF;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        position: relative;
+    }}
+
+    .avatar-img {{
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }}
+    
+    /* Decoração de Louros (Texto Simulado no topo/base do frame) */
+    .avatar-frame::before {{
+        content: '🌿';
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 20px;
+        background: #FFFFF0;
+        padding: 0 5px;
+        color: #DAA520;
+    }}
+
+    /* Lado Direito: Título com Fundo do Coliseu */
+    .hero-content {{
+        flex: 1; /* Ocupa o resto do espaço */
+        {bg_css}
+        padding: 40px 20px;
+        text-align: center;
+        border: 4px solid #DAA520;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         display: flex;
         flex-direction: column;
         justify-content: center;
-        text-align: left;
+        min-height: 200px; /* Mesma altura do avatar aprox */
     }}
 
     .hero-title {{
         font-family: 'Helvetica Neue', sans-serif;
         color: #8B4513;
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 4px;
+        letter-spacing: 5px;
         text-shadow: 2px 2px 0px #FFF, 4px 4px 0px rgba(0,0,0,0.2);
         margin: 0;
-        line-height: 1.1;
     }}
-    
+
     .hero-subtitle {{
         font-family: 'Georgia', serif;
-        color: #5C4033;
-        font-size: 1.3rem;
+        color: #3E2723;
+        font-size: 1.2rem;
+        font-weight: bold;
         font-style: italic;
-        margin-top: 8px;
-        text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
+        margin-top: 10px;
+        text-shadow: 1px 1px 0px rgba(255,255,255,0.7);
     }}
     
-    /* Responsividade para celulares */
+    /* Responsividade */
     @media (max-width: 768px) {{
-        .hero-container {{
+        .main-header-container {{
             flex-direction: column;
-            gap: 15px;
-            padding: 40px 10px;
         }}
-        .hero-title {{ font-size: 2.2rem; text-align: center; }}
-        .hero-text-container {{ text-align: center; }}
     }}
     </style>
-    
-    <div class="hero-container">
-        {avatar_html}
-        <div class="hero-text-container">
+
+    <div class="main-header-container">
+        <!-- Lado Esquerdo: Avatar -->
+        <div class="avatar-container">
+            <div class="avatar-frame">
+                <img src="{avatar_src}" class="avatar-img" alt="Avatar">
+            </div>
+            <div style="margin-top:8px; font-weight:bold; color:#8B4513; font-size:0.9em;">{TEST_USER.upper()}</div>
+        </div>
+
+        <!-- Lado Direito: Arena Title -->
+        <div class="hero-content">
             <h1 class="hero-title">Arena SpartaJus</h1>
             <div class="hero-subtitle">"Onde a preparação encontra a glória"</div>
         </div>
@@ -410,6 +433,7 @@ def main():
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
                      st.image(opp['img_derrota'], width=80)
                 else: 
+                    # Tenta carregar imagem local, se falhar usa URL (pelo helper function)
                     st.image(opp['avatar_url'], width=120)
 
             with c_info:
@@ -418,6 +442,7 @@ def main():
                 if is_locked: st.markdown("🔒 **BLOQUEADO**")
                 elif is_completed: st.markdown("✅ **CONQUISTADO**")
                 else: 
+                    # Mostra as condições de vitória específicas
                     st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
                     st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
 
@@ -443,10 +468,14 @@ def main():
                         
                         if st.form_submit_button("📜 REPORTAR RESULTADO"):
                             erros_q = max(0, total_q - acertos_q)
+                            
+                            # Lógica de Vitória Específica do Oponente
                             limit_errors = opp.get('max_erros', 5)
                             limit_time = opp.get('max_tempo', 60)
+                            
                             passou_erros = erros_q <= limit_errors
                             passou_tempo = tempo_min <= limit_time
+                            
                             VITORIA = passou_erros and passou_tempo
                             
                             user_data['stats']['total_questoes'] += total_q
