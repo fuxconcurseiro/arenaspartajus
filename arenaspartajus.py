@@ -30,7 +30,6 @@ st.set_page_config(
 TEST_USER = "fux_concurseiro"
 LOGO_FILE = "logo_spartajus.jpg"
 BG_FILE = "coliseu_bg.jpg"
-# Nome do arquivo do avatar do usuário principal
 USER_AVATAR_FILE = "fux_concurseiro.png"
 
 # -----------------------------------------------------------------------------
@@ -127,7 +126,6 @@ DEFAULT_USER_DATA = {
 # -----------------------------------------------------------------------------
 # 4. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
-# Função auxiliar para imagens locais com fallback
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file):
         return local_file
@@ -138,7 +136,6 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Tenta carregar '1_leao_velho.png'
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
         "img_derrota": "https://img.icons8.com/color/96/skull.png",
@@ -289,18 +286,21 @@ def main():
         background-repeat: no-repeat;
         """
 
-    # 2. Prepara o Avatar do Usuário
-    avatar_html = ""
-    # Verifica se o arquivo existe E se é o usuário correto (para testes)
-    if os.path.exists(USER_AVATAR_FILE) and TEST_USER == "fux_concurseiro":
+    # 2. Prepara o Avatar do Usuário (Com fallback para não quebrar)
+    if os.path.exists(USER_AVATAR_FILE):
         avatar_b64 = get_base64_of_bin_file(USER_AVATAR_FILE)
-        avatar_html = f"""
-            <div class="hero-avatar-container">
-                <img src="data:image/png;base64,{avatar_b64}" class="hero-avatar-img" alt="{TEST_USER}">
-            </div>
-        """
+        avatar_src = f"data:image/png;base64,{avatar_b64}"
+    else:
+        # Fallback para um ícone genérico se o arquivo não estiver lá
+        avatar_src = "https://img.icons8.com/color/144/roman-soldier.png"
 
-    # 3. Monta o CSS e HTML do Header
+    avatar_html = f"""
+        <div class="hero-avatar-container">
+            <img src="{avatar_src}" class="hero-avatar-img" alt="{TEST_USER}">
+        </div>
+    """
+
+    # 3. Monta o CSS e HTML do Header (CORRIGIDO: Flexbox Robusto)
     st.markdown(f"""
     <style>
     .hero-container {{
@@ -310,44 +310,72 @@ def main():
         margin-bottom: 30px;
         border-radius: 0 0 15px 15px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        /* Flexbox para alinhar avatar e texto */
+        
+        /* Flexbox Centralizado */
         display: flex;
+        flex-direction: row;
         align-items: center;
         justify-content: center;
-        gap: 30px; /* Espaço entre avatar e texto */
+        gap: 30px; /* Distância entre avatar e texto */
+        min-height: 200px;
     }}
+    
     .hero-avatar-img {{
-        width: 150px;
-        height: 150px;
-        border-radius: 50%; /* Redondo */
-        border: 5px solid #DAA520; /* Borda dourada estilo medalhão */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 5px solid #DAA520;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         object-fit: cover;
+        background-color: #FFF; /* Fundo branco caso png seja transparente */
+        transition: transform 0.3s;
     }}
+    .hero-avatar-img:hover {{
+        transform: scale(1.05);
+    }}
+
     .hero-text-container {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         text-align: left;
     }}
+
     .hero-title {{
         font-family: 'Helvetica Neue', sans-serif;
         color: #8B4513;
         font-size: 3.5rem;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 5px;
+        letter-spacing: 4px;
         text-shadow: 2px 2px 0px #FFF, 4px 4px 0px rgba(0,0,0,0.2);
         margin: 0;
         line-height: 1.1;
     }}
+    
     .hero-subtitle {{
         font-family: 'Georgia', serif;
         color: #5C4033;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-style: italic;
-        margin-top: 10px;
+        margin-top: 8px;
+        text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
+    }}
+    
+    /* Responsividade para celulares */
+    @media (max-width: 768px) {{
+        .hero-container {{
+            flex-direction: column;
+            gap: 15px;
+            padding: 40px 10px;
+        }}
+        .hero-title {{ font-size: 2.2rem; text-align: center; }}
+        .hero-text-container {{ text-align: center; }}
     }}
     </style>
+    
     <div class="hero-container">
-        {avatar_html} <!-- Insere o avatar se existir -->
+        {avatar_html}
         <div class="hero-text-container">
             <h1 class="hero-title">Arena SpartaJus</h1>
             <div class="hero-subtitle">"Onde a preparação encontra a glória"</div>
