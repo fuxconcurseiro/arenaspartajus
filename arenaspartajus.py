@@ -28,10 +28,14 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-# Agora a capa usa a nova imagem solicitada
-BG_FILE = "logo_spartajus_2.png" 
-# Avatar do usuário
+# Imagem de Fundo (Ambiente)
+BG_FILE = "coliseu_bg.jpg"
+# Imagem do Título (Logotipo Escrito)
+TITLE_IMG_FILE = "logo_spartajus_2.png"
+# Avatar do Usuário
 USER_AVATAR_FILE = "fux_concurseiro.png"
+# Logo lateral (se necessário fallback)
+LOGO_FILE = "logo_spartajus.jpg"
 
 # -----------------------------------------------------------------------------
 # 2. FUNÇÕES VISUAIS (BASE64 E CSS)
@@ -140,6 +144,7 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
+        # Tenta carregar '1_leao_velho.png'
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
         "img_derrota": "https://img.icons8.com/color/96/skull.png",
@@ -251,14 +256,13 @@ def main():
     user_data = st.session_state['user_data']
     stats = user_data['stats']
 
-    # --- SIDEBAR (MODIFICADA: Avatar no lugar da Logo) ---
+    # --- SIDEBAR (Avatar e Stats) ---
     with st.sidebar:
         # Verifica e exibe Avatar
         if os.path.exists(USER_AVATAR_FILE):
             st.image(USER_AVATAR_FILE, use_container_width=True)
             st.markdown(f"<h3 style='text-align: center; color: #8B4513; margin-top: 5px;'>{TEST_USER}</h3>", unsafe_allow_html=True)
         else:
-            # Fallback simples caso a imagem não exista
             st.header(f"🏛️ {TEST_USER}")
         
         st.markdown("---")
@@ -280,76 +284,162 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (CAPA SPARTAJUS 2) ---
+    # --- HERO HEADER (LAYOUT ATUALIZADO) ---
     
-    # Prepara o background (Logo SpartaJus 2)
-    bg_style = "background-color: #FFF8DC;" # Fallback
+    # 1. Background Logic (Coliseu)
+    bg_style = "background-color: #FFF8DC;" # Fallback seguro
     if os.path.exists(BG_FILE):
         img_b64_bg = get_base64_of_bin_file(BG_FILE)
         if img_b64_bg:
             bg_style = f"""
-            background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url("data:image/png;base64,{img_b64_bg}");
+            background-image: linear-gradient(rgba(255, 255, 240, 0.3), rgba(255, 255, 240, 0.8)), url("data:image/jpg;base64,{img_b64_bg}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             """
 
-    # HTML Simplificado para a Capa (Sem Avatar, apenas Título sobreposto à imagem)
+    # 2. Avatar Logic (Esquerda)
+    avatar_src = "https://img.icons8.com/color/240/roman-soldier.png"
+    if os.path.exists(USER_AVATAR_FILE):
+        avatar_b64 = get_base64_of_bin_file(USER_AVATAR_FILE)
+        if avatar_b64:
+            avatar_src = f"data:image/png;base64,{avatar_b64}"
+
+    # 3. Title Logo Logic (Direita - Substituindo texto)
+    title_html = ""
+    if os.path.exists(TITLE_IMG_FILE):
+        title_b64 = get_base64_of_bin_file(TITLE_IMG_FILE)
+        if title_b64:
+            # Imagem do Logo SpartaJus
+            title_html = f'<img src="data:image/png;base64,{title_b64}" class="title-img" alt="Arena SpartaJus">'
+        else:
+            title_html = '<h1 class="hero-title">Arena SpartaJus</h1>' # Fallback texto
+    else:
+        title_html = '<h1 class="hero-title">Arena SpartaJus</h1>' # Fallback texto
+
+    # Layout HTML/CSS Flexbox
     st.markdown(f"""
     <style>
-    .hero-container {{
-        {bg_style}
+    /* Container Principal */
+    .header-wrapper {{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 25px;
         width: 100%;
-        height: 250px; /* Altura fixa para a capa */
-        border-bottom: 4px solid #DAA520;
         margin-bottom: 30px;
-        border-radius: 0 0 15px 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }}
+    
+    /* Lado Esquerdo: Avatar */
+    .avatar-area {{
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }}
+    
+    .avatar-frame {{
+        width: 180px;
+        height: 240px; /* Portrait 3:4 */
+        border: 6px double #DAA520;
+        background-color: #FFF;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        position: relative;
+        overflow: hidden;
+    }}
+    
+    .avatar-frame img {{
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }}
+    
+    /* Decoração de Louros */
+    .avatar-frame::before {{
+        content: '🌿';
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+        background: #FFFFF0;
+        padding: 0 5px;
+        color: #DAA520;
+        z-index: 2;
+    }}
+    
+    .user-name {{
+        margin-top: 10px;
+        font-weight: bold;
+        color: #8B4513;
+        font-family: 'Georgia', serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }}
+    
+    /* Lado Direito: Logo + Fundo */
+    .title-area {{
+        flex: 1;
+        {bg_style}
+        border: 4px solid #DAA520;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        height: 240px; /* Mesma altura do avatar */
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         text-align: center;
+        padding: 20px;
         position: relative;
     }}
     
-    .hero-title {{
+    .title-img {{
+        max-width: 90%;
+        max-height: 140px; /* Limita altura do logo para caber */
+        object-fit: contain;
+        margin-bottom: 10px;
+        filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+    }}
+    
+    .hero-title {{ /* Caso fallback texto seja usado */
         font-family: 'Helvetica Neue', sans-serif;
-        color: #FFF; /* Texto branco para contraste com a capa */
+        color: #8B4513;
         font-size: 3.5rem;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 5px;
-        text-shadow: 2px 2px 4px #000; /* Sombra preta forte para legibilidade */
+        text-shadow: 2px 2px 0px #FFF;
         margin: 0;
-        z-index: 2;
     }}
     
-    .hero-subtitle {{
+    .sub-title {{
         font-family: 'Georgia', serif;
-        color: #FFF;
-        font-size: 1.3rem;
+        color: #3E2723;
+        font-size: 1.2rem;
         font-weight: bold;
         font-style: italic;
-        margin-top: 10px;
-        text-shadow: 1px 1px 3px #000;
+        text-shadow: 1px 1px 0px rgba(255,255,255,0.7);
         z-index: 2;
     }}
     
-    /* Overlay sutil para garantir leitura se a imagem for clara */
-    .hero-container::before {{
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.3);
-        border-radius: 0 0 15px 15px;
-        z-index: 1;
+    @media (max-width: 768px) {{
+        .header-wrapper {{ flex-direction: column; }}
+        .title-area {{ width: 100%; }}
     }}
     </style>
     
-    <div class="hero-container">
-        <h1 class="hero-title">Arena SpartaJus</h1>
-        <div class="hero-subtitle">"Onde a preparação encontra a glória"</div>
+    <div class="header-wrapper">
+        <div class="avatar-area">
+            <div class="avatar-frame">
+                <img src="{avatar_src}" alt="Avatar">
+            </div>
+            <div class="user-name">{TEST_USER}</div>
+        </div>
+        <div class="title-area">
+            {title_html}
+            <div class="sub-title">"Onde a preparação encontra a glória"</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -380,7 +470,6 @@ def main():
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
                      st.image(opp['img_derrota'], width=80)
                 else: 
-                    # Tenta carregar imagem local, se falhar usa URL (pelo helper function)
                     st.image(opp['avatar_url'], width=120)
 
             with c_info:
@@ -389,7 +478,6 @@ def main():
                 if is_locked: st.markdown("🔒 **BLOQUEADO**")
                 elif is_completed: st.markdown("✅ **CONQUISTADO**")
                 else: 
-                    # Mostra as condições de vitória específicas
                     st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
                     st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
 
