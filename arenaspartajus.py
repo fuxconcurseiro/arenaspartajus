@@ -28,20 +28,18 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-# Imagem de Fundo (Ambiente)
-BG_FILE = "coliseu_bg.jpg"
-# Imagem do Título (Logotipo Escrito)
-TITLE_IMG_FILE = "logo_spartajus_2.png"
-# Avatar do Usuário
+
+# Arquivos de Imagem (Certifique-se de que estão no repositório)
+# Capa principal (Banner)
+HERO_IMG_FILE = "Arena_Spartajus_Logo.png"
+# Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
-# Logo lateral (se necessário fallback)
-LOGO_FILE = "logo_spartajus.jpg"
 
 # -----------------------------------------------------------------------------
 # 2. FUNÇÕES VISUAIS (BASE64 E CSS)
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
-    """Lê um arquivo de imagem local e converte para base64 para uso em CSS."""
+    """Lê um arquivo de imagem local e converte para base64 para uso em CSS/HTML."""
     try:
         with open(bin_file, 'rb') as f:
             data = f.read()
@@ -132,8 +130,9 @@ DEFAULT_USER_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (OPONENTES)
+# 4. BASE DE DADOS (COM O LEÃO VELHO)
 # -----------------------------------------------------------------------------
+# A lógica aqui verifica se o arquivo local existe. Se não, usa um link de backup.
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file):
         return local_file
@@ -144,14 +143,14 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Tenta carregar '1_leao_velho.png'
+        # Tenta carregar '1_leao_velho.png', senão usa o ícone online
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": "https://img.icons8.com/color/96/laurel-wreath.png",
         "img_derrota": "https://img.icons8.com/color/96/skull.png",
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial",
         "max_tempo": 60, 
-        "max_erros": 7
+        "max_erros": 7 
     },
     {
         "id": 2,
@@ -256,14 +255,16 @@ def main():
     user_data = st.session_state['user_data']
     stats = user_data['stats']
 
-    # --- SIDEBAR (Avatar e Stats) ---
+    # --- SIDEBAR (AVATAR DO MENTORADO) ---
     with st.sidebar:
-        # Verifica e exibe Avatar
+        # Verifica se o arquivo fux_concurseiro.png existe
         if os.path.exists(USER_AVATAR_FILE):
-            st.image(USER_AVATAR_FILE, use_container_width=True)
-            st.markdown(f"<h3 style='text-align: center; color: #8B4513; margin-top: 5px;'>{TEST_USER}</h3>", unsafe_allow_html=True)
+            # Imagem completa (sem recorte circular/emojis)
+            st.image(USER_AVATAR_FILE, caption=TEST_USER, use_container_width=True)
         else:
+            # Fallback (caso o arquivo não esteja no repo ainda)
             st.header(f"🏛️ {TEST_USER}")
+            st.warning("Avatar não encontrado (fux_concurseiro.png)")
         
         st.markdown("---")
         st.markdown("### 📊 Desempenho Global")
@@ -284,170 +285,52 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO HEADER (LAYOUT ATUALIZADO) ---
+    # --- HERO HEADER (LOGO/BANNER PRINCIPAL) ---
+    # Aqui substituímos o texto e o fundo antigo pela nova imagem Arena_Spartajus_Logo.png
     
-    # 1. Background Logic (Coliseu)
-    bg_style = "background-color: #FFF8DC;" # Fallback seguro
-    if os.path.exists(BG_FILE):
-        img_b64_bg = get_base64_of_bin_file(BG_FILE)
-        if img_b64_bg:
-            bg_style = f"""
-            background-image: linear-gradient(rgba(255, 255, 240, 0.3), rgba(255, 255, 240, 0.8)), url("data:image/jpg;base64,{img_b64_bg}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            """
-
-    # 2. Avatar Logic (Esquerda)
-    avatar_src = "https://img.icons8.com/color/240/roman-soldier.png"
-    if os.path.exists(USER_AVATAR_FILE):
-        avatar_b64 = get_base64_of_bin_file(USER_AVATAR_FILE)
-        if avatar_b64:
-            avatar_src = f"data:image/png;base64,{avatar_b64}"
-
-    # 3. Title Logo Logic (Direita - Substituindo texto)
-    title_html = ""
-    if os.path.exists(TITLE_IMG_FILE):
-        title_b64 = get_base64_of_bin_file(TITLE_IMG_FILE)
-        if title_b64:
-            # Imagem do Logo SpartaJus
-            title_html = f'<img src="data:image/png;base64,{title_b64}" class="title-img" alt="Arena SpartaJus">'
-        else:
-            title_html = '<h1 class="hero-title">Arena SpartaJus</h1>' # Fallback texto
-    else:
-        title_html = '<h1 class="hero-title">Arena SpartaJus</h1>' # Fallback texto
-
-    # Layout HTML/CSS Flexbox
-    st.markdown(f"""
-    <style>
-    /* Container Principal */
-    .header-wrapper {{
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 25px;
-        width: 100%;
-        margin-bottom: 30px;
-    }}
-    
-    /* Lado Esquerdo: Avatar */
-    .avatar-area {{
-        flex: 0 0 auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }}
-    
-    .avatar-frame {{
-        width: 180px;
-        height: 240px; /* Portrait 3:4 */
-        border: 6px double #DAA520;
-        background-color: #FFF;
-        box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
-        position: relative;
-        overflow: hidden;
-    }}
-    
-    .avatar-frame img {{
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }}
-    
-    /* Decoração de Louros */
-    .avatar-frame::before {{
-        content: '🌿';
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 24px;
-        background: #FFFFF0;
-        padding: 0 5px;
-        color: #DAA520;
-        z-index: 2;
-    }}
-    
-    .user-name {{
-        margin-top: 10px;
-        font-weight: bold;
-        color: #8B4513;
-        font-family: 'Georgia', serif;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }}
-    
-    /* Lado Direito: Logo + Fundo */
-    .title-area {{
-        flex: 1;
-        {bg_style}
-        border: 4px solid #DAA520;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        height: 240px; /* Mesma altura do avatar */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        padding: 20px;
-        position: relative;
-    }}
-    
-    .title-img {{
-        max-width: 90%;
-        max-height: 140px; /* Limita altura do logo para caber */
-        object-fit: contain;
-        margin-bottom: 10px;
-        filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
-    }}
-    
-    .hero-title {{ /* Caso fallback texto seja usado */
-        font-family: 'Helvetica Neue', sans-serif;
-        color: #8B4513;
-        font-size: 3.5rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        text-shadow: 2px 2px 0px #FFF;
-        margin: 0;
-    }}
-    
-    .sub-title {{
-        font-family: 'Georgia', serif;
-        color: #3E2723;
-        font-size: 1.2rem;
-        font-weight: bold;
-        font-style: italic;
-        text-shadow: 1px 1px 0px rgba(255,255,255,0.7);
-        z-index: 2;
-    }}
-    
-    @media (max-width: 768px) {{
-        .header-wrapper {{ flex-direction: column; }}
-        .title-area {{ width: 100%; }}
-    }}
-    </style>
-    
-    <div class="header-wrapper">
-        <div class="avatar-area">
-            <div class="avatar-frame">
-                <img src="{avatar_src}" alt="Avatar">
+    if os.path.exists(HERO_IMG_FILE):
+        img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
+        # Exibe a imagem como um banner centralizado
+        st.markdown(f"""
+        <style>
+        .hero-container {{
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 4px solid #DAA520;
+            margin-bottom: 30px;
+            background-color: #FFF8DC; /* Fundo suave caso a imagem tenha transparência */
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }}
+        .hero-img {{
+            max-width: 100%;
+            height: auto;
+            max-height: 300px; /* Limite de altura para não ocupar a tela toda */
+            object-fit: contain;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }}
+        </style>
+        <div class="hero-container">
+            <img src="data:image/png;base64,{img_b64}" class="hero-img" alt="Arena SpartaJus">
+            <div style="font-family: 'Georgia', serif; color: #5C4033; margin-top: 10px; font-style: italic;">
+                "Onde a preparação encontra a glória"
             </div>
-            <div class="user-name">{TEST_USER}</div>
         </div>
-        <div class="title-area">
-            {title_html}
-            <div class="sub-title">"Onde a preparação encontra a glória"</div>
+        """, unsafe_allow_html=True)
+    else:
+        # Fallback caso a imagem da logo não seja encontrada
+        st.markdown("""
+        <div style="text-align: center; padding: 40px; background-color: #FFF8DC; border-bottom: 4px solid #DAA520; margin-bottom: 30px;">
+            <h1 style="color: #8B4513; font-family: 'Helvetica Neue', sans-serif;">ARENA SPARTAJUS</h1>
+            <p style="color: #5C4033;">(Imagem 'Arena_Spartajus_Logo.png' não encontrada)</p>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     # --- TABS ---
     tab_batalha, tab_doctore, tab_historico = st.tabs(["🛡️ Linha do Tempo (Desafios)", "🦉 Doctore (Treino)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
-    # TAB 1: BATALHA (Lógica Dinâmica)
+    # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
         st.markdown("### 🗺️ A Jornada do Gladiador")
@@ -505,8 +388,10 @@ def main():
                             erros_q = max(0, total_q - acertos_q)
                             limit_errors = opp.get('max_erros', 5)
                             limit_time = opp.get('max_tempo', 60)
+                            
                             passou_erros = erros_q <= limit_errors
                             passou_tempo = tempo_min <= limit_time
+                            
                             VITORIA = passou_erros and passou_tempo
                             
                             user_data['stats']['total_questoes'] += total_q
