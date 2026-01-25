@@ -32,6 +32,7 @@ TEST_USER = "fux_concurseiro"
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
 USER_AVATAR_FILE = "fux_concurseiro.png"
+PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
 # 2. FUNÇÕES VISUAIS (BASE64 E CSS)
@@ -347,19 +348,30 @@ def main():
             st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
             c_img, c_info, c_action = st.columns([1, 2, 1])
             with c_img:
-                # LÓGICA DE EXIBIÇÃO DE IMAGEM (VITÓRIA/DERROTA)
-                # 1. Se venceu (is_completed): Mostra imagem de vitória
-                if is_completed: 
-                    # Usa st.image para carregar imagem local ou URL
-                    st.image(opp['img_vitoria'], width=120)
+                # 1. AVATAR DO OPONENTE (AUMENTADO EM 150%)
+                # Tamanho anterior era 120, agora 180
+                st.image(opp['avatar_url'], width=180)
                 
-                # 2. Se acabou de perder (derrota atual): Mostra imagem de derrota
+                st.markdown("<br>", unsafe_allow_html=True) # Espaçamento
+
+                # 2. IMAGEM DE STATUS (ESPAÇO ABAIXO)
+                # Lógica: Se venceu -> Vitoria. Se perdeu -> Derrota. Senão -> Prepare-se.
+                
+                status_img_path = None
+                
+                if is_completed:
+                    status_img_path = opp['img_vitoria']
                 elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
-                     st.image(opp['img_derrota'], width=120)
+                    status_img_path = opp['img_derrota']
+                elif not is_locked: # Se estiver disponível ou atual, mostra "Prepare-se"
+                    # Verifica se prepare-se existe localmente, senão usa ícone genérico
+                    if os.path.exists(PREPARE_SE_FILE):
+                        status_img_path = PREPARE_SE_FILE
+                    else:
+                        status_img_path = "https://img.icons8.com/color/96/shield.png" # Fallback
                 
-                # 3. Estado normal: Avatar do inimigo
-                else: 
-                    st.image(opp['avatar_url'], width=120)
+                if status_img_path:
+                    st.image(status_img_path, width=120)
 
             with c_info:
                 st.markdown(f"### {opp['nome']}")
