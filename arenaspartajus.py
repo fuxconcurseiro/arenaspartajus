@@ -9,18 +9,16 @@ import base64
 import re
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA & SETUP (COM DIAGNÓSTICO DE ERRO)
+# 0. IMPORTAÇÃO SEGURA & SETUP
 # -----------------------------------------------------------------------------
-LIBS_INSTALLED = False
-ERROR_MSG = ""
-
 try:
     import gspread
     from google.oauth2.service_account import Credentials
     LIBS_INSTALLED = True
+    IMPORT_ERROR = ""
 except ImportError as e:
     LIBS_INSTALLED = False
-    ERROR_MSG = str(e) # Captura o erro real para mostrar na tela
+    IMPORT_ERROR = str(e)
 
 st.set_page_config(
     page_title="Arena SpartaJus",
@@ -33,7 +31,9 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-SHEET_NAME = "ArenaSpartaJus_DB"
+
+# --- MUDANÇA CRUCIAL: USANDO A PLANILHA DO MENTOR ---
+SHEET_NAME = "SpartaJus_DB" 
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -44,7 +44,6 @@ PREPARE_SE_FILE = "prepare-se.jpg"
 # 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
-    """Lê um arquivo de imagem local e converte para base64 para uso em CSS/HTML."""
     try:
         with open(bin_file, 'rb') as f:
             data = f.read()
@@ -53,13 +52,14 @@ def get_base64_of_bin_file(bin_file):
         return None
 
 def render_centered_image(img_path, width=200):
-    """Renderiza uma imagem centralizada usando HTML/CSS."""
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
         b64 = get_base64_of_bin_file(img_path)
         if b64:
             src = f"data:image/{ext};base64,{b64}"
+    elif img_path.startswith("http"):
+        src = img_path
     
     st.markdown(f"""
     <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px;">
@@ -68,122 +68,54 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
-    """
-    Filtra o histórico pela data selecionada e soma acertos/erros.
-    Retorna um dicionário com os totais do dia.
-    """
-    stats = {
-        "total": 0,
-        "acertos": 0,
-        "erros": 0
-    }
-    
+    stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
-    
     for activity in history:
         act_date_str = activity.get('data', '').split(' ')[0]
-        
         if act_date_str == target_str:
             result_str = activity.get('resultado', '')
             match = re.search(r'(\d+)/(\d+)', result_str)
-            
             if match:
                 acertos = int(match.group(1))
                 total = int(match.group(2))
                 erros = max(0, total - acertos)
-                
                 stats['total'] += total
                 stats['acertos'] += acertos
                 stats['erros'] += erros
-                
     return stats
 
 # ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
-    /* CORES GERAIS - IVORY (#FFFFF0) */
     .stApp { background-color: #FFFFF0; color: #333333; }
     .stMarkdown, .stText, p, label, .stDataFrame, .stExpander { color: #4A4A4A !important; }
-    
-    h1, h2, h3, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-        color: #8B4513 !important; font-family: 'Georgia', serif; text-shadow: none;
-    }
-
-    /* SIDEBAR */
+    h1, h2, h3 { color: #8B4513 !important; font-family: 'Georgia', serif; text-shadow: none; }
     [data-testid="stSidebar"] { background-color: #FFDEAD; border-right: 2px solid #DEB887; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { 
-        color: #5C4033 !important; 
-    }
-
-    /* INPUTS */
-    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div, .stDateInput > div > div > input {
-        background-color: #FFFFFF; color: #333333; border: 1px solid #DEB887;
-    }
-
-    /* BUTTONS */
-    .stButton>button {
-        background-color: #FFDEAD; color: #5C4033; border: 1px solid #8B4513; 
-        border-radius: 6px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: all 0.3s;
-    }
-    .stButton>button:hover {
-        background-color: #FFE4C4; color: #000000; border-color: #A0522D; transform: scale(1.02);
-    }
-    
-    /* CARDS DA ARENA */
-    .battle-card {
-        background-color: #FFF8DC; 
-        border: 2px solid #DAA520; 
-        border-radius: 12px; 
-        padding: 20px; 
-        margin-bottom: 20px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        text-align: center;
-    }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #5C4033 !important; }
+    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div, .stDateInput > div > div > input { background-color: #FFFFFF; color: #333333; border: 1px solid #DEB887; }
+    .stButton>button { background-color: #FFDEAD; color: #5C4033; border: 1px solid #8B4513; border-radius: 6px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.3s; }
+    .stButton>button:hover { background-color: #FFE4C4; color: #000000; border-color: #A0522D; transform: scale(1.02); }
+    .battle-card { background-color: #FFF8DC; border: 2px solid #DAA520; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
     .battle-card.locked { filter: grayscale(100%); opacity: 0.6; border-color: #555; }
     .battle-card.victory { border-color: #228B22; background-color: #F0FFF0; }
     .battle-card.defeat { border-color: #B22222; background-color: #FFF0F0; }
-    
-    /* ESTATÍSTICAS SIDEBAR */
-    .stat-box {
-        background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px;
-        padding: 8px; text-align: center; margin-bottom: 8px;
-    }
+    .stat-box { background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px; padding: 8px; text-align: center; margin-bottom: 8px; }
     .stat-value { font-size: 1.3em; font-weight: bold; color: #8B4513; }
     .stat-label { font-size: 0.75em; color: #666; text-transform: uppercase; }
     .stat-header { font-size: 1.1em; font-weight: bold; color: #5C4033; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px dashed #8B4513; }
-
-    /* DOCTORE CARD */
-    .doctore-card {
-        background-color: #FFF; border-left: 5px solid #8B4513; padding: 25px;
-        border-radius: 5px; font-family: 'Georgia', serif; font-size: 1.2rem;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;
-    }
-    .master-card {
-        background-color: #FFF; 
-        border: 4px double #8B4513; 
-        border-radius: 15px; 
-        padding: 20px; 
-        text-align: center;
-        transition: transform 0.2s;
-        margin-bottom: 20px;
-    }
-    .master-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-        border-color: #DAA520;
-    }
-    .feedback-box {
-        padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd;
-    }
+    .doctore-card, .master-card { background-color: #FFF; border: 4px double #8B4513; border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
+    .master-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); border-color: #DAA520; }
+    .feedback-box { padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd; }
     </style>
     """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 3. CONFIGURAÇÃO DE DADOS
+# 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
 # -----------------------------------------------------------------------------
-DEFAULT_USER_DATA = {
-    "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
+# Estrutura padrão APENAS da parte da Arena.
+# Não vamos sobrescrever o JSON inteiro se ele já existir.
+DEFAULT_ARENA_DATA = {
+    "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
     "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
     "historico_atividades": []
 }
@@ -197,9 +129,7 @@ def get_avatar_image(local_file, fallback_url):
 
 OPONENTS_DB = [
     {
-        "id": 1,
-        "nome": "O Velho Leão",
-        "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
+        "id": 1, "nome": "O Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", "https://img.icons8.com/color/96/laurel-wreath.png"),
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", "https://img.icons8.com/color/96/skull.png"),
@@ -207,9 +137,7 @@ OPONENTS_DB = [
         "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7 
     },
     {
-        "id": 2,
-        "nome": "Beuzebu",
-        "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
+        "id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
         "avatar_url": get_avatar_image("touro.jpg", "https://img.icons8.com/color/96/bull.png"),
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", "https://img.icons8.com/color/96/trophy.png"),
         "img_derrota": get_avatar_image("derrota_touro.jpg", "https://img.icons8.com/color/96/dead-body.png"),
@@ -217,9 +145,7 @@ OPONENTS_DB = [
         "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
     },
     {
-        "id": 3,
-        "nome": "Leproso",
-        "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
+        "id": 3, "nome": "Leproso", "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
         "avatar_url": get_avatar_image("leproso.jpg", "https://img.icons8.com/color/96/zombie.png"),
         "img_vitoria": get_avatar_image("vitoria_leproso.jpg", "https://img.icons8.com/color/96/clean-hands.png"),
         "img_derrota": get_avatar_image("derrota_leproso.jpg", "https://img.icons8.com/color/96/hospital.png"),
@@ -263,15 +189,12 @@ DOCTORE_DB = {
 }
 
 # -----------------------------------------------------------------------------
-# 6. CONEXÃO GOOGLE SHEETS (COM REPORT DE ERRO)
+# 6. CONEXÃO GOOGLE SHEETS (BLINDADA)
 # -----------------------------------------------------------------------------
 def connect_db():
-    """Tenta conectar usando a biblioteca moderna google-auth."""
-    # Se falhou a importação lá em cima, já retorna erro
     if not LIBS_INSTALLED:
-        return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {ERROR_MSG}"
+        return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {IMPORT_ERROR}"
 
-    # Verifica se os segredos existem
     if "gcp_service_account" not in st.secrets:
         return None, "Erro: 'gcp_service_account' não encontrado em st.secrets."
 
@@ -280,40 +203,63 @@ def connect_db():
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
-        
         creds_dict = dict(st.secrets["gcp_service_account"])
         credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(credentials)
-        
         sheet = client.open(SHEET_NAME).sheet1
         return sheet, None
 
-    except gspread.exceptions.SpreadsheetNotFound:
-        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada."
     except Exception as e:
         return None, f"Erro de Conexão: {str(e)}"
 
 def load_data():
     sheet, error_msg = connect_db()
     
-    if sheet:
-        try:
-            cell = sheet.find(TEST_USER)
-            if cell:
-                data = json.loads(sheet.cell(cell.row, 2).value)
-                if "stats" not in data: data["stats"] = DEFAULT_USER_DATA["stats"]
-                if "progresso_arena" not in data: data["progresso_arena"] = DEFAULT_USER_DATA["progresso_arena"]
-                if "historico_atividades" not in data: data["historico_atividades"] = []
-                return data, cell.row, "🟢 Online"
-            else:
-                sheet.append_row([TEST_USER, json.dumps(DEFAULT_USER_DATA)])
-                new_cell = sheet.find(TEST_USER)
-                return DEFAULT_USER_DATA, new_cell.row, "🟢 Online (Novo)"
-        except Exception as e:
-            return DEFAULT_USER_DATA, None, f"🔴 Erro Leitura: {str(e)}"
-    
-    # Retorna o erro exato capturado no connect_db
-    return DEFAULT_USER_DATA, None, f"🟠 Offline ({error_msg})"
+    # Se falhou a conexão, retorna offline mas com estrutura segura
+    if not sheet:
+        data = DEFAULT_ARENA_DATA.copy()
+        return data, None, f"🟠 Offline ({error_msg})"
+
+    try:
+        cell = sheet.find(TEST_USER)
+        if cell:
+            # Usuário já existe no MentorSpartaJus
+            raw_data = sheet.cell(cell.row, 2).value
+            data = json.loads(raw_data)
+            
+            # --- MERGE DE DADOS (AQUI ESTÁ O TRUQUE) ---
+            # Verifica se as chaves da Arena já existem. Se não, cria.
+            modified = False
+            if "arena_stats" not in data:
+                data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"]
+                modified = True
+            if "progresso_arena" not in data:
+                data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"]
+                modified = True
+            if "historico_atividades" not in data:
+                data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"]
+                modified = True
+            
+            # Se modificou (primeiro acesso via Arena), salva de volta na planilha
+            if modified:
+                try:
+                    sheet.update_cell(cell.row, 2, json.dumps(data))
+                except: pass
+            
+            return data, cell.row, "🟢 Online (Sincronizado)"
+            
+        else:
+            # Se o usuário não existe nem no Mentor, cria do zero
+            # (Raro, mas possível se for usuário novo só da Arena)
+            new_data = DEFAULT_ARENA_DATA.copy()
+            # Adiciona campos básicos para compatibilidade
+            new_data["logs"] = [] 
+            sheet.append_row([TEST_USER, json.dumps(new_data)])
+            new_cell = sheet.find(TEST_USER)
+            return new_data, new_cell.row, "🟢 Online (Novo)"
+            
+    except Exception as e:
+        return DEFAULT_ARENA_DATA.copy(), None, f"🔴 Erro Leitura: {str(e)}"
 
 def save_data(row_idx, data):
     sheet, _ = connect_db()
@@ -321,21 +267,24 @@ def save_data(row_idx, data):
         try:
             sheet.update_cell(row_idx, 2, json.dumps(data))
         except Exception:
-            pass 
+            pass
 
 # -----------------------------------------------------------------------------
 # 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
-        with st.spinner("Sincronizando..."):
+        with st.spinner("Sincronizando com o Templo..."):
             d, r, s = load_data()
             st.session_state['user_data'] = d
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
+    # Atalhos para facilitar a escrita
     user_data = st.session_state['user_data']
-    stats = user_data['stats']
+    # Garante que as chaves existam para evitar KeyError
+    stats = user_data.get('arena_stats', DEFAULT_ARENA_DATA['arena_stats'])
+    hist = user_data.get('historico_atividades', [])
 
     # --- SIDEBAR ---
     with st.sidebar:
@@ -345,13 +294,12 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado")
         
-        # MOSTRA O STATUS COM A MENSAGEM DE ERRO REAL
+        # STATUS DE CONEXÃO
         if "Online" in st.session_state['status']:
             st.success(st.session_state['status'])
         else:
-            st.error(st.session_state['status']) # Isso mostrará o erro técnico na tela
+            st.error(st.session_state['status'])
 
-        # ... (Resto do código da Sidebar igual) ...
         # --- DESEMPENHO GLOBAL ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
@@ -369,7 +317,7 @@ def main():
         # --- DESEMPENHO DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
         selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
-        daily_stats = calculate_daily_stats(user_data['historico_atividades'], selected_date)
+        daily_stats = calculate_daily_stats(hist, selected_date)
         
         d1, d2 = st.columns(2)
         d1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{daily_stats['acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
@@ -499,9 +447,9 @@ def main():
                             
                             VITORIA = passou_erros and passou_tempo
                             
-                            user_data['stats']['total_questoes'] += total_q
-                            user_data['stats']['total_acertos'] += acertos_q
-                            user_data['stats']['total_erros'] += erros_q
+                            user_data['arena_stats']['total_questoes'] += total_q
+                            user_data['arena_stats']['total_acertos'] += acertos_q
+                            user_data['arena_stats']['total_erros'] += erros_q
                             user_data['historico_atividades'].append({
                                 "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                                 "tipo": "Batalha",
@@ -513,7 +461,7 @@ def main():
                             st.session_state['last_opp_id'] = opp['id']
                             if VITORIA:
                                 st.session_state['last_result'] = 'vitoria'
-                                if opp['id'] not in fases_vencidas:
+                                if opp['id'] not in user_data['progresso_arena']['fases_vencidas']:
                                     user_data['progresso_arena']['fases_vencidas'].append(opp['id'])
                                     if opp['id'] == user_data['progresso_arena']['fase_maxima_desbloqueada']:
                                         user_data['progresso_arena']['fase_maxima_desbloqueada'] += 1
@@ -542,7 +490,7 @@ def main():
                 """, unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES)
+    # TAB 2: DOCTORE
     # -------------------------------------------------------------------------
     with tab_doctore:
         if 'doctore_state' not in st.session_state:
@@ -629,12 +577,12 @@ def main():
                         acertou = (st.session_state['doc_choice'] == q['gabarito'])
                         if acertou: 
                             st.success(f"Correto! {q['gabarito']}")
-                            user_data['stats']['total_acertos'] += 1
+                            user_data['arena_stats']['total_acertos'] += 1
                         else: 
                             st.error(f"Errou! É {q['gabarito']}")
-                            user_data['stats']['total_erros'] += 1
+                            user_data['arena_stats']['total_erros'] += 1
                             if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
-                        user_data['stats']['total_questoes'] += 1
+                        user_data['arena_stats']['total_questoes'] += 1
                         
                         st.markdown(f"<div class='feedback-box'><b>Justificativa:</b> {q['explicacao']}</div>", unsafe_allow_html=True)
                         if st.button("Próxima ➡️"):
