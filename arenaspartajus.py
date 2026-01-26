@@ -1,24 +1,39 @@
 import streamlit as st
-import pandas as pd
-import json
-import time
-from datetime import datetime
-import random
 import os
-import base64
-import re
+import sys
+import time
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA
+# 0. PROTOCOLO DE AUTO-CORREÇÃO (SILENT INSTALL)
 # -----------------------------------------------------------------------------
+# Tenta importar. Se falhar, roda o pip install silenciosamente e recarrega.
 try:
     import gspread
     from google.oauth2.service_account import Credentials
-    LIBS_INSTALLED = True
-except ImportError as e:
-    LIBS_INSTALLED = False
-    IMPORT_ERROR = str(e)
+    import pandas as pd
+except ImportError:
+    # Mostra um aviso discreto enquanto tenta resolver
+    placeholder = st.empty()
+    placeholder.warning("⚠️ Configurando ambiente da Arena... aguarde.")
+    
+    # Tenta instalar as bibliotecas faltantes sem travar o script em caso de avisos
+    os.system(f"{sys.executable} -m pip install gspread google-auth pandas requests")
+    
+    # Limpa o aviso e reinicia para carregar as novas libs
+    placeholder.success("✅ Ambiente pronto! Recarregando...")
+    time.sleep(1)
+    st.rerun()
 
+# -----------------------------------------------------------------------------
+# 1. IMPORTAÇÕES E CONFIGURAÇÃO
+# -----------------------------------------------------------------------------
+import json
+from datetime import datetime
+import random
+import base64
+import re
+
+# Configuração da Página
 st.set_page_config(
     page_title="Arena SpartaJus",
     page_icon="⚔️",
@@ -26,8 +41,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Verifica status da instalação após a tentativa
+try:
+    import gspread
+    from google.oauth2.service_account import Credentials
+    LIBS_INSTALLED = True
+    STATUS_MSG = "Bibliotecas carregadas."
+except ImportError as e:
+    LIBS_INSTALLED = False
+    STATUS_MSG = f"Erro Crítico: {e}"
+
 # -----------------------------------------------------------------------------
-# 1. CONSTANTES E ARQUIVOS
+# 2. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
 SHEET_NAME = "SpartaJus_DB"
@@ -37,7 +62,7 @@ USER_AVATAR_FILE = "fux_concurseiro.png"
 PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
-# 2. FUNÇÕES VISUAIS & UTILITÁRIOS
+# 3. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
     try:
@@ -104,7 +129,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 3. CONFIGURAÇÃO DE DADOS
+# 4. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
 # -----------------------------------------------------------------------------
 DEFAULT_ARENA_DATA = {
     "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
@@ -113,7 +138,7 @@ DEFAULT_ARENA_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (OPONENTES)
+# 5. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
@@ -147,7 +172,7 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE)
+# 6. BASE DE DADOS HIERÁRQUICA (DOCTORE)
 # -----------------------------------------------------------------------------
 DOCTORE_DB = {
     "praetorium": {
@@ -181,29 +206,26 @@ DOCTORE_DB = {
 }
 
 # -----------------------------------------------------------------------------
-# 6. CONEXÃO GOOGLE SHEETS
+# 7. CONEXÃO GOOGLE SHEETS (BLINDADA)
 # -----------------------------------------------------------------------------
 def connect_db():
     if not LIBS_INSTALLED:
-        return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {IMPORT_ERROR}"
+        return None, f"Erro: Bibliotecas não carregadas. {STATUS_MSG}"
 
     if "gcp_service_account" not in st.secrets:
-        return None, "Erro: 'gcp_service_account' não encontrado em st.secrets."
+        return None, "Erro: 'gcp_service_account' não encontrado nos Secrets."
 
     try:
         scope = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
-        
         creds_dict = dict(st.secrets["gcp_service_account"])
         credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(credentials)
         sheet = client.open(SHEET_NAME).sheet1
         return sheet, None
 
-    except gspread.exceptions.SpreadsheetNotFound:
-        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada."
     except Exception as e:
         return None, f"Erro de Conexão: {str(e)}"
 
@@ -237,11 +259,9 @@ def load_data():
             
             return data, cell.row, "🟢 Online (Sincronizado)"
         else:
-            new_data = DEFAULT_ARENA_DATA.copy()
-            new_data["logs"] = [] 
-            sheet.append_row([TEST_USER, json.dumps(new_data)])
-            new_cell = sheet.find(TEST_USER)
-            return new_data, new_cell.row, "🟢 Online (Novo)"
+            # Se não encontrar o usuário, não cria novo na planilha do Mentor para evitar conflito.
+            # Usa local até que o login seja feito no Mentor.
+            return DEFAULT_ARENA_DATA.copy(), None, "🟠 Offline (Usuário não encontrado na Planilha)"
             
     except Exception as e:
         return DEFAULT_ARENA_DATA.copy(), None, f"🔴 Erro Leitura: {str(e)}"
@@ -255,7 +275,7 @@ def save_data(row_idx, data):
             pass
 
 # -----------------------------------------------------------------------------
-# 7. APP PRINCIPAL
+# 8. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
@@ -266,7 +286,6 @@ def main():
             st.session_state['status'] = s
 
     user_data = st.session_state['user_data']
-    # Garante acesso seguro
     stats = user_data.get('arena_stats', DEFAULT_ARENA_DATA['arena_stats'])
     hist = user_data.get('historico_atividades', [])
 
@@ -278,6 +297,7 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado")
         
+        # STATUS DA CONEXÃO
         if "Online" in st.session_state['status']:
             st.success(st.session_state['status'])
         else:
@@ -465,6 +485,16 @@ def main():
                             time.sleep(2)
                             del st.session_state['active_battle_id']
                             st.rerun()
+
+            # Conector Discreto
+            if opp['id'] < len(OPONENTS_DB):
+                st.markdown("""
+                <div style="display:flex; justify-content:center; align-items:center; margin: 15px 0;">
+                    <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
+                    <div style="color: #DAA520; font-size: 14px; margin: 0 10px; opacity: 0.8;">🔗</div>
+                    <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
+                </div>
+                """, unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
     # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES)
