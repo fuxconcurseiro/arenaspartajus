@@ -108,9 +108,9 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 # 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
 # -----------------------------------------------------------------------------
-# Nome da variável unificado para evitar NameError
+# CORREÇÃO: Usando a chave "stats" consistentemente
 DEFAULT_ARENA_DATA = {
-    "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
+    "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
     "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
     "historico_atividades": []
 }
@@ -211,7 +211,7 @@ def load_data():
     sheet, error_msg = connect_db()
     
     if not sheet:
-        # CORRIGIDO AQUI: Usando o nome correto DEFAULT_ARENA_DATA
+        # Retorna estrutura padrão se offline
         return DEFAULT_ARENA_DATA.copy(), None, f"🟠 Offline ({error_msg})"
 
     try:
@@ -223,19 +223,16 @@ def load_data():
             except:
                 full_user_data = {} # Corrompido
             
-            # Garante que arena_v1_data existe
+            # Se não tem dados da Arena, cria a estrutura padrão
             if "arena_v1_data" not in full_user_data:
-                # CORRIGIDO AQUI: Usando o nome correto DEFAULT_ARENA_DATA
                 full_user_data["arena_v1_data"] = DEFAULT_ARENA_DATA.copy()
-
+            
             return full_user_data, cell.row, "🟢 Online (Sincronizado)"
             
         else:
-            # CORRIGIDO AQUI: Usando o nome correto DEFAULT_ARENA_DATA
             return DEFAULT_ARENA_DATA.copy(), None, "🟠 Offline (Usuário não encontrado)"
             
     except Exception as e:
-        # CORRIGIDO AQUI: Usando o nome correto DEFAULT_ARENA_DATA
         return DEFAULT_ARENA_DATA.copy(), None, f"🔴 Erro Leitura: {str(e)}"
 
 def save_data(row_idx, full_data):
@@ -263,13 +260,13 @@ def main():
     # Recupera ou inicializa a parte da Arena
     arena_data = full_data.get('arena_v1_data', DEFAULT_ARENA_DATA.copy())
     
-    # Garante integridade das chaves
+    # GARANTIA DE INTEGRIDADE (Isso corrige o KeyError)
     if not isinstance(arena_data, dict): arena_data = DEFAULT_ARENA_DATA.copy()
-    if "stats" not in arena_data: arena_data["stats"] = DEFAULT_ARENA_DATA["stats"]
-    if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"]
-    if "historico_atividades" not in arena_data: arena_data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"]
+    if "stats" not in arena_data: arena_data["stats"] = DEFAULT_ARENA_DATA["stats"].copy()
+    if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"].copy()
+    if "historico_atividades" not in arena_data: arena_data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"].copy()
 
-    # Atualiza o ponteiro
+    # Atualiza o ponteiro no full_data
     full_data['arena_v1_data'] = arena_data
     
     stats = arena_data['stats']
@@ -338,17 +335,11 @@ def main():
             margin-right: -50vw;
             margin-bottom: 20px;
             overflow: hidden;
-            /* ADICIONADO: Altura fixa razoável ou max-height para controlar o tamanho vertical */
-            max-height: 400px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }}
         .full-width-hero img {{
             width: 100%;
-            height: 100%;
-            object-fit: cover; /* ESSENCIAL: Corta o excesso para preencher o espaço sem distorcer */
-            object-position: center; /* Centraliza o corte */
+            height: auto;
+            object-fit: cover;
             display: block;
             border-bottom: 4px solid #DAA520;
         }}
@@ -406,7 +397,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status Centralizada (400px)
+            # Imagem de Status
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -441,7 +432,7 @@ def main():
                             
                             VITORIA = passou_erros and passou_tempo
                             
-                            # Atualiza a estrutura Arena dentro do JSON full
+                            # Atualiza stats usando a chave correta
                             arena_data['stats']['total_questoes'] += total_q
                             arena_data['stats']['total_acertos'] += acertos_q
                             arena_data['stats']['total_erros'] += erros_q
@@ -470,7 +461,6 @@ def main():
                                 if not passou_tempo: motivos.append(f"Levou {tempo_min} min (Máx: {limit_time})")
                                 st.error(f"DERROTA. Motivo: {', '.join(motivos)}.")
                             
-                            # Salva o JSON completo (Mentor + Arena Atualizada)
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
                             time.sleep(2)
@@ -499,32 +489,21 @@ def main():
         if st.session_state['doctore_state'] == 'selection':
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
-            
             cols = st.columns(2)
-            
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
-                        
                         img_path = master['imagem']
-                        if os.path.exists(img_path):
-                            render_centered_image(img_path, width=400)
-                        else:
-                            if img_path.startswith("http"):
-                                st.image(img_path, use_container_width=True)
-                            else:
-                                st.warning(f"Imagem {img_path} não encontrada.")
-                        
+                        if os.path.exists(img_path): render_centered_image(img_path, width=400)
+                        else: st.warning(f"Imagem {img_path} não encontrada.")
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
-                        
                         if st.button(f"Treinar com {master['nome']}", key=f"sel_{key}"):
                             st.session_state['selected_master'] = key
                             st.session_state['doctore_state'] = 'training'
                             st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
                             st.rerun()
-                            
                         st.markdown("</div>", unsafe_allow_html=True)
 
         elif st.session_state['doctore_state'] == 'training':
@@ -545,7 +524,6 @@ def main():
             if not ds['active']:
                 materias_disponiveis = list(master_data['materias'].keys())
                 nicho = st.selectbox("Escolha a Matéria do Mestre:", materias_disponiveis)
-                
                 c1, c2 = st.columns(2)
                 if c1.button("Iniciar Treino", type="primary", use_container_width=True):
                     qs = master_data['materias'][nicho].copy()
@@ -555,7 +533,6 @@ def main():
             else:
                 q_list = ds['questions']
                 idx = ds['idx']
-                
                 if idx < len(q_list):
                     q = q_list[idx]
                     st.markdown(f"**Modo:** {'REVISÃO' if ds['mode']=='retry' else 'TREINO'} | Q {idx+1}/{len(q_list)}")
@@ -607,6 +584,8 @@ def main():
                         if st.button("Próxima ➡️"):
                             st.session_state['doc_revealed'] = False
                             ds['idx'] += 1
+                            full_data['arena_v1_data'] = arena_data
+                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
                 else:
                     st.success("Treino Finalizado!")
