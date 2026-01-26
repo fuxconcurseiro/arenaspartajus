@@ -9,14 +9,18 @@ import base64
 import re
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA & SETUP (MODERNO)
+# 0. IMPORTAÇÃO SEGURA & SETUP (COM DIAGNÓSTICO DE ERRO)
 # -----------------------------------------------------------------------------
+LIBS_INSTALLED = False
+ERROR_MSG = ""
+
 try:
     import gspread
-    from google.oauth2.service_account import Credentials # Biblioteca atualizada do Google
+    from google.oauth2.service_account import Credentials
     LIBS_INSTALLED = True
-except ImportError:
+except ImportError as e:
     LIBS_INSTALLED = False
+    ERROR_MSG = str(e) # Captura o erro real para mostrar na tela
 
 st.set_page_config(
     page_title="Arena SpartaJus",
@@ -29,8 +33,7 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-# NOME EXATO DA PLANILHA NO GOOGLE DRIVE (Verifique se não tem espaços extras)
-SHEET_NAME = "ArenaSpartaJus_DB" 
+SHEET_NAME = "ArenaSpartaJus_DB"
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -41,6 +44,7 @@ PREPARE_SE_FILE = "prepare-se.jpg"
 # 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
+    """Lê um arquivo de imagem local e converte para base64 para uso em CSS/HTML."""
     try:
         with open(bin_file, 'rb') as f:
             data = f.read()
@@ -49,6 +53,7 @@ def get_base64_of_bin_file(bin_file):
         return None
 
 def render_centered_image(img_path, width=200):
+    """Renderiza uma imagem centralizada usando HTML/CSS."""
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
@@ -63,41 +68,114 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
-    stats = {"total": 0, "acertos": 0, "erros": 0}
+    """
+    Filtra o histórico pela data selecionada e soma acertos/erros.
+    Retorna um dicionário com os totais do dia.
+    """
+    stats = {
+        "total": 0,
+        "acertos": 0,
+        "erros": 0
+    }
+    
     target_str = target_date.strftime("%d/%m/%Y")
+    
     for activity in history:
         act_date_str = activity.get('data', '').split(' ')[0]
+        
         if act_date_str == target_str:
             result_str = activity.get('resultado', '')
             match = re.search(r'(\d+)/(\d+)', result_str)
+            
             if match:
                 acertos = int(match.group(1))
                 total = int(match.group(2))
                 erros = max(0, total - acertos)
+                
                 stats['total'] += total
                 stats['acertos'] += acertos
                 stats['erros'] += erros
+                
     return stats
 
 # ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
+    /* CORES GERAIS - IVORY (#FFFFF0) */
     .stApp { background-color: #FFFFF0; color: #333333; }
     .stMarkdown, .stText, p, label, .stDataFrame, .stExpander { color: #4A4A4A !important; }
-    h1, h2, h3 { color: #8B4513 !important; font-family: 'Georgia', serif; }
+    
+    h1, h2, h3, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: #8B4513 !important; font-family: 'Georgia', serif; text-shadow: none;
+    }
+
+    /* SIDEBAR */
     [data-testid="stSidebar"] { background-color: #FFDEAD; border-right: 2px solid #DEB887; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #5C4033 !important; }
-    .stButton>button { background-color: #FFDEAD; color: #5C4033; border: 1px solid #8B4513; border-radius: 6px; font-weight: bold; }
-    .battle-card { background-color: #FFF8DC; border: 2px solid #DAA520; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
-    .battle-card.locked { filter: grayscale(100%); opacity: 0.6; }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { 
+        color: #5C4033 !important; 
+    }
+
+    /* INPUTS */
+    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div, .stDateInput > div > div > input {
+        background-color: #FFFFFF; color: #333333; border: 1px solid #DEB887;
+    }
+
+    /* BUTTONS */
+    .stButton>button {
+        background-color: #FFDEAD; color: #5C4033; border: 1px solid #8B4513; 
+        border-radius: 6px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #FFE4C4; color: #000000; border-color: #A0522D; transform: scale(1.02);
+    }
+    
+    /* CARDS DA ARENA */
+    .battle-card {
+        background-color: #FFF8DC; 
+        border: 2px solid #DAA520; 
+        border-radius: 12px; 
+        padding: 20px; 
+        margin-bottom: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .battle-card.locked { filter: grayscale(100%); opacity: 0.6; border-color: #555; }
     .battle-card.victory { border-color: #228B22; background-color: #F0FFF0; }
     .battle-card.defeat { border-color: #B22222; background-color: #FFF0F0; }
-    .stat-box { background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px; padding: 8px; text-align: center; margin-bottom: 8px; }
+    
+    /* ESTATÍSTICAS SIDEBAR */
+    .stat-box {
+        background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px;
+        padding: 8px; text-align: center; margin-bottom: 8px;
+    }
     .stat-value { font-size: 1.3em; font-weight: bold; color: #8B4513; }
     .stat-label { font-size: 0.75em; color: #666; text-transform: uppercase; }
     .stat-header { font-size: 1.1em; font-weight: bold; color: #5C4033; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px dashed #8B4513; }
-    .doctore-card, .master-card { background-color: #FFF; border: 4px double #8B4513; border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
-    .feedback-box { padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd; }
+
+    /* DOCTORE CARD */
+    .doctore-card {
+        background-color: #FFF; border-left: 5px solid #8B4513; padding: 25px;
+        border-radius: 5px; font-family: 'Georgia', serif; font-size: 1.2rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;
+    }
+    .master-card {
+        background-color: #FFF; 
+        border: 4px double #8B4513; 
+        border-radius: 15px; 
+        padding: 20px; 
+        text-align: center;
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .master-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        border-color: #DAA520;
+    }
+    .feedback-box {
+        padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -119,7 +197,9 @@ def get_avatar_image(local_file, fallback_url):
 
 OPONENTS_DB = [
     {
-        "id": 1, "nome": "O Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
+        "id": 1,
+        "nome": "O Velho Leão",
+        "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
         "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", "https://img.icons8.com/color/96/laurel-wreath.png"),
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", "https://img.icons8.com/color/96/skull.png"),
@@ -127,7 +207,9 @@ OPONENTS_DB = [
         "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7 
     },
     {
-        "id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
+        "id": 2,
+        "nome": "Beuzebu",
+        "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
         "avatar_url": get_avatar_image("touro.jpg", "https://img.icons8.com/color/96/bull.png"),
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", "https://img.icons8.com/color/96/trophy.png"),
         "img_derrota": get_avatar_image("derrota_touro.jpg", "https://img.icons8.com/color/96/dead-body.png"),
@@ -135,7 +217,9 @@ OPONENTS_DB = [
         "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
     },
     {
-        "id": 3, "nome": "Leproso", "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
+        "id": 3,
+        "nome": "Leproso",
+        "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
         "avatar_url": get_avatar_image("leproso.jpg", "https://img.icons8.com/color/96/zombie.png"),
         "img_vitoria": get_avatar_image("vitoria_leproso.jpg", "https://img.icons8.com/color/96/clean-hands.png"),
         "img_derrota": get_avatar_image("derrota_leproso.jpg", "https://img.icons8.com/color/96/hospital.png"),
@@ -179,44 +263,37 @@ DOCTORE_DB = {
 }
 
 # -----------------------------------------------------------------------------
-# 6. CONEXÃO GOOGLE SHEETS (BLINDADA & MODERNA)
+# 6. CONEXÃO GOOGLE SHEETS (COM REPORT DE ERRO)
 # -----------------------------------------------------------------------------
 def connect_db():
     """Tenta conectar usando a biblioteca moderna google-auth."""
+    # Se falhou a importação lá em cima, já retorna erro
     if not LIBS_INSTALLED:
-        return None, "Erro: Bibliotecas 'gspread' ou 'google-auth' não instaladas."
+        return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {ERROR_MSG}"
 
-    # Verifica se os segredos existem no formato correto no Streamlit Cloud
+    # Verifica se os segredos existem
     if "gcp_service_account" not in st.secrets:
         return None, "Erro: 'gcp_service_account' não encontrado em st.secrets."
 
     try:
-        # Escopos necessários para ler e escrever no Drive/Sheets
         scope = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
         
-        # Cria credenciais a partir do dicionário de segredos
-        # Importante: converte para dict normal caso seja um objeto AttrDict do Streamlit
         creds_dict = dict(st.secrets["gcp_service_account"])
         credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
-        
-        # Autoriza o cliente gspread
         client = gspread.authorize(credentials)
         
-        # Tenta abrir a planilha específica
-        # Se falhar aqui, é porque o nome está errado ou não foi compartilhada
         sheet = client.open(SHEET_NAME).sheet1
         return sheet, None
 
     except gspread.exceptions.SpreadsheetNotFound:
-        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada. Verifique o nome e se compartilhou com o e-mail da conta de serviço."
+        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada."
     except Exception as e:
         return None, f"Erro de Conexão: {str(e)}"
 
 def load_data():
-    """Carrega dados. Retorna (Dados, Linha, Status)."""
     sheet, error_msg = connect_db()
     
     if sheet:
@@ -224,36 +301,34 @@ def load_data():
             cell = sheet.find(TEST_USER)
             if cell:
                 data = json.loads(sheet.cell(cell.row, 2).value)
-                # Migração de dados para garantir chaves novas
                 if "stats" not in data: data["stats"] = DEFAULT_USER_DATA["stats"]
                 if "progresso_arena" not in data: data["progresso_arena"] = DEFAULT_USER_DATA["progresso_arena"]
                 if "historico_atividades" not in data: data["historico_atividades"] = []
-                return data, cell.row, "🟢 Online (Sincronizado)"
+                return data, cell.row, "🟢 Online"
             else:
                 sheet.append_row([TEST_USER, json.dumps(DEFAULT_USER_DATA)])
                 new_cell = sheet.find(TEST_USER)
-                return DEFAULT_USER_DATA, new_cell.row, "🟢 Online (Novo Usuário)"
+                return DEFAULT_USER_DATA, new_cell.row, "🟢 Online (Novo)"
         except Exception as e:
-            return DEFAULT_USER_DATA, None, f"🔴 Erro de Leitura: {str(e)}"
+            return DEFAULT_USER_DATA, None, f"🔴 Erro Leitura: {str(e)}"
     
-    # Se falhou a conexão, retorna o motivo exato
+    # Retorna o erro exato capturado no connect_db
     return DEFAULT_USER_DATA, None, f"🟠 Offline ({error_msg})"
 
 def save_data(row_idx, data):
-    """Salva dados se estiver online."""
     sheet, _ = connect_db()
     if sheet and row_idx:
         try:
             sheet.update_cell(row_idx, 2, json.dumps(data))
-        except Exception as e:
-            st.toast(f"Erro ao salvar na nuvem: {e}", icon="⚠️")
+        except Exception:
+            pass 
 
 # -----------------------------------------------------------------------------
 # 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
-        with st.spinner("Sincronizando com o Templo..."):
+        with st.spinner("Sincronizando..."):
             d, r, s = load_data()
             st.session_state['user_data'] = d
             st.session_state['row_idx'] = r
@@ -270,10 +345,13 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado")
         
-        # STATUS DE CONEXÃO (DEBUG VISUAL)
-        status_color = "green" if "Online" in st.session_state['status'] else "orange"
-        st.markdown(f":{status_color}[{st.session_state['status']}]")
+        # MOSTRA O STATUS COM A MENSAGEM DE ERRO REAL
+        if "Online" in st.session_state['status']:
+            st.success(st.session_state['status'])
+        else:
+            st.error(st.session_state['status']) # Isso mostrará o erro técnico na tela
 
+        # ... (Resto do código da Sidebar igual) ...
         # --- DESEMPENHO GLOBAL ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
