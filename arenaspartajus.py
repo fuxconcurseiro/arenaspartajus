@@ -1,24 +1,37 @@
 import streamlit as st
-import pandas as pd
-import json
-import time
-from datetime import datetime
-import random
+import subprocess
+import sys
 import os
-import base64
-import re
+import time
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA & SETUP
+# 0. AUTO-INSTALL (FORÇA BRUTA PARA CORRIGIR ERRO OFFLINE)
 # -----------------------------------------------------------------------------
+# Tenta importar. Se falhar, instala na hora e reinicia a página.
 try:
     import gspread
     from google.oauth2.service_account import Credentials
-    LIBS_INSTALLED = True
-    IMPORT_ERROR = ""
-except ImportError as e:
-    LIBS_INSTALLED = False
-    IMPORT_ERROR = str(e)
+    import pandas as pd
+except ImportError:
+    st.warning("⚠️ Detectada falta de bibliotecas. Instalando automaticamente... (Isso acontece apenas uma vez)")
+    try:
+        # Comando para forçar a instalação interna
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "gspread", "google-auth", "pandas", "requests"])
+        st.success("✅ Instalação concluída! Reiniciando o sistema...")
+        time.sleep(2)
+        st.rerun()
+    except Exception as e:
+        st.error(f"Erro fatal na instalação automática: {e}")
+        st.stop()
+
+# -----------------------------------------------------------------------------
+# 1. IMPORTAÇÕES E CONFIGURAÇÃO
+# -----------------------------------------------------------------------------
+import json
+from datetime import datetime
+import random
+import base64
+import re
 
 st.set_page_config(
     page_title="Arena SpartaJus",
@@ -28,12 +41,10 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 1. CONSTANTES E ARQUIVOS
+# 2. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-
-# --- MUDANÇA CRUCIAL: USANDO A PLANILHA DO MENTOR ---
-SHEET_NAME = "SpartaJus_DB" 
+SHEET_NAME = "SpartaJus_DB" # Usando a planilha original do Mentor
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -41,7 +52,7 @@ USER_AVATAR_FILE = "fux_concurseiro.png"
 PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
-# 2. FUNÇÕES VISUAIS & UTILITÁRIOS
+# 3. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
     try:
@@ -58,8 +69,6 @@ def render_centered_image(img_path, width=200):
         b64 = get_base64_of_bin_file(img_path)
         if b64:
             src = f"data:image/{ext};base64,{b64}"
-    elif img_path.startswith("http"):
-        src = img_path
     
     st.markdown(f"""
     <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px;">
@@ -110,10 +119,8 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
+# 4. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
 # -----------------------------------------------------------------------------
-# Estrutura padrão APENAS da parte da Arena.
-# Não vamos sobrescrever o JSON inteiro se ele já existir.
 DEFAULT_ARENA_DATA = {
     "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
     "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
@@ -121,7 +128,7 @@ DEFAULT_ARENA_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (OPONENTES)
+# 5. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
@@ -155,7 +162,7 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE)
+# 6. BASE DE DADOS HIERÁRQUICA (DOCTORE)
 # -----------------------------------------------------------------------------
 DOCTORE_DB = {
     "praetorium": {
@@ -189,12 +196,10 @@ DOCTORE_DB = {
 }
 
 # -----------------------------------------------------------------------------
-# 6. CONEXÃO GOOGLE SHEETS (BLINDADA)
+# 7. CONEXÃO GOOGLE SHEETS
 # -----------------------------------------------------------------------------
 def connect_db():
-    if not LIBS_INSTALLED:
-        return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {IMPORT_ERROR}"
-
+    # Verifica Secrets
     if "gcp_service_account" not in st.secrets:
         return None, "Erro: 'gcp_service_account' não encontrado em st.secrets."
 
@@ -203,19 +208,21 @@ def connect_db():
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
+        
         creds_dict = dict(st.secrets["gcp_service_account"])
         credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(credentials)
         sheet = client.open(SHEET_NAME).sheet1
         return sheet, None
 
+    except gspread.exceptions.SpreadsheetNotFound:
+        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada."
     except Exception as e:
         return None, f"Erro de Conexão: {str(e)}"
 
 def load_data():
     sheet, error_msg = connect_db()
     
-    # Se falhou a conexão, retorna offline mas com estrutura segura
     if not sheet:
         data = DEFAULT_ARENA_DATA.copy()
         return data, None, f"🟠 Offline ({error_msg})"
@@ -223,12 +230,9 @@ def load_data():
     try:
         cell = sheet.find(TEST_USER)
         if cell:
-            # Usuário já existe no MentorSpartaJus
             raw_data = sheet.cell(cell.row, 2).value
             data = json.loads(raw_data)
             
-            # --- MERGE DE DADOS (AQUI ESTÁ O TRUQUE) ---
-            # Verifica se as chaves da Arena já existem. Se não, cria.
             modified = False
             if "arena_stats" not in data:
                 data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"]
@@ -240,19 +244,13 @@ def load_data():
                 data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"]
                 modified = True
             
-            # Se modificou (primeiro acesso via Arena), salva de volta na planilha
             if modified:
-                try:
-                    sheet.update_cell(cell.row, 2, json.dumps(data))
+                try: sheet.update_cell(cell.row, 2, json.dumps(data))
                 except: pass
             
             return data, cell.row, "🟢 Online (Sincronizado)"
-            
         else:
-            # Se o usuário não existe nem no Mentor, cria do zero
-            # (Raro, mas possível se for usuário novo só da Arena)
             new_data = DEFAULT_ARENA_DATA.copy()
-            # Adiciona campos básicos para compatibilidade
             new_data["logs"] = [] 
             sheet.append_row([TEST_USER, json.dumps(new_data)])
             new_cell = sheet.find(TEST_USER)
@@ -270,7 +268,7 @@ def save_data(row_idx, data):
             pass
 
 # -----------------------------------------------------------------------------
-# 7. APP PRINCIPAL
+# 8. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
@@ -280,9 +278,8 @@ def main():
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
-    # Atalhos para facilitar a escrita
+    # Atalhos
     user_data = st.session_state['user_data']
-    # Garante que as chaves existam para evitar KeyError
     stats = user_data.get('arena_stats', DEFAULT_ARENA_DATA['arena_stats'])
     hist = user_data.get('historico_atividades', [])
 
@@ -294,13 +291,13 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado")
         
-        # STATUS DE CONEXÃO
+        # STATUS
         if "Online" in st.session_state['status']:
             st.success(st.session_state['status'])
         else:
             st.error(st.session_state['status'])
 
-        # --- DESEMPENHO GLOBAL ---
+        # --- GLOBAL ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
@@ -314,7 +311,7 @@ def main():
         st.markdown(f"**Aproveitamento:** {perc:.1f}%")
         st.progress(perc / 100)
 
-        # --- DESEMPENHO DIÁRIO ---
+        # --- DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
         selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
         daily_stats = calculate_daily_stats(hist, selected_date)
@@ -379,8 +376,8 @@ def main():
     # -------------------------------------------------------------------------
     with tab_batalha:
         st.markdown("### 🗺️ A Jornada do Gladiador")
-        fase_max = user_data['progresso_arena']['fase_maxima_desbloqueada']
-        fases_vencidas = user_data['progresso_arena']['fases_vencidas']
+        fase_max = user_data.get('progresso_arena', DEFAULT_ARENA_DATA['progresso_arena'])['fase_maxima_desbloqueada']
+        fases_vencidas = user_data.get('progresso_arena', DEFAULT_ARENA_DATA['progresso_arena'])['fases_vencidas']
 
         for opp in OPONENTS_DB:
             is_locked = opp['id'] > fase_max
@@ -412,7 +409,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status Centralizada (400px)
+            # Imagem de Status
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -441,15 +438,17 @@ def main():
                             erros_q = max(0, total_q - acertos_q)
                             limit_errors = opp.get('max_erros', 5)
                             limit_time = opp.get('max_tempo', 60)
-                            
                             passou_erros = erros_q <= limit_errors
                             passou_tempo = tempo_min <= limit_time
-                            
                             VITORIA = passou_erros and passou_tempo
+                            
+                            # Atualiza dados seguros
+                            if "arena_stats" not in user_data: user_data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"]
                             
                             user_data['arena_stats']['total_questoes'] += total_q
                             user_data['arena_stats']['total_acertos'] += acertos_q
                             user_data['arena_stats']['total_erros'] += erros_q
+                            
                             user_data['historico_atividades'].append({
                                 "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                                 "tipo": "Batalha",
@@ -501,32 +500,21 @@ def main():
         if st.session_state['doctore_state'] == 'selection':
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
-            
             cols = st.columns(2)
-            
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
-                        
                         img_path = master['imagem']
-                        if os.path.exists(img_path):
-                            render_centered_image(img_path, width=400)
-                        else:
-                            if img_path.startswith("http"):
-                                st.image(img_path, use_container_width=True)
-                            else:
-                                st.warning(f"Imagem {img_path} não encontrada.")
-                        
+                        if os.path.exists(img_path): render_centered_image(img_path, width=400)
+                        else: st.warning(f"Imagem {img_path} não encontrada.")
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
-                        
                         if st.button(f"Treinar com {master['nome']}", key=f"sel_{key}"):
                             st.session_state['selected_master'] = key
                             st.session_state['doctore_state'] = 'training'
                             st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
                             st.rerun()
-                            
                         st.markdown("</div>", unsafe_allow_html=True)
 
         elif st.session_state['doctore_state'] == 'training':
@@ -547,7 +535,6 @@ def main():
             if not ds['active']:
                 materias_disponiveis = list(master_data['materias'].keys())
                 nicho = st.selectbox("Escolha a Matéria do Mestre:", materias_disponiveis)
-                
                 c1, c2 = st.columns(2)
                 if c1.button("Iniciar Treino", type="primary", use_container_width=True):
                     qs = master_data['materias'][nicho].copy()
@@ -557,7 +544,6 @@ def main():
             else:
                 q_list = ds['questions']
                 idx = ds['idx']
-                
                 if idx < len(q_list):
                     q = q_list[idx]
                     st.markdown(f"**Modo:** {'REVISÃO' if ds['mode']=='retry' else 'TREINO'} | Q {idx+1}/{len(q_list)}")
@@ -615,7 +601,7 @@ def main():
     # -------------------------------------------------------------------------
     with tab_historico:
         st.markdown("### 📜 Pergaminho de Feitos")
-        if user_data['historico_atividades']:
+        if user_data.get('historico_atividades'):
             st.dataframe(pd.DataFrame(user_data['historico_atividades'][::-1]), use_container_width=True, hide_index=True)
         else:
             st.info("Ainda não há registros.")
