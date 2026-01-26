@@ -6,14 +6,14 @@ from datetime import datetime
 import random
 import os
 import base64
-import re  # Importante para extrair números do histórico
+import re
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA & SETUP
+# 0. IMPORTAÇÃO SEGURA & SETUP (MODERNO)
 # -----------------------------------------------------------------------------
 try:
     import gspread
-    from google.oauth2.service_account import Credentials # Biblioteca moderna de autenticação
+    from google.oauth2.service_account import Credentials # Biblioteca atualizada do Google
     LIBS_INSTALLED = True
 except ImportError:
     LIBS_INSTALLED = False
@@ -29,7 +29,8 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-SHEET_NAME = "ArenaSpartaJus_DB"
+# NOME EXATO DA PLANILHA NO GOOGLE DRIVE (Verifique se não tem espaços extras)
+SHEET_NAME = "ArenaSpartaJus_DB" 
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -40,7 +41,6 @@ PREPARE_SE_FILE = "prepare-se.jpg"
 # 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
-    """Lê um arquivo de imagem local e converte para base64 para uso em CSS/HTML."""
     try:
         with open(bin_file, 'rb') as f:
             data = f.read()
@@ -49,7 +49,6 @@ def get_base64_of_bin_file(bin_file):
         return None
 
 def render_centered_image(img_path, width=200):
-    """Renderiza uma imagem centralizada usando HTML/CSS."""
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
@@ -64,118 +63,41 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
-    """
-    Filtra o histórico pela data selecionada e soma acertos/erros.
-    Retorna um dicionário com os totais do dia.
-    """
-    stats = {
-        "total": 0,
-        "acertos": 0,
-        "erros": 0
-    }
-    
-    # Formata a data alvo para string dd/mm/yyyy para comparação
+    stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
-    
     for activity in history:
-        # A data no histórico é salva como "dd/mm/yyyy HH:MM"
-        # Pegamos apenas a primeira parte (data)
         act_date_str = activity.get('data', '').split(' ')[0]
-        
         if act_date_str == target_str:
-            # Tenta extrair números do resultado (ex: "Vitória (8/10)" ou "5/10 acertos")
             result_str = activity.get('resultado', '')
             match = re.search(r'(\d+)/(\d+)', result_str)
-            
             if match:
                 acertos = int(match.group(1))
                 total = int(match.group(2))
                 erros = max(0, total - acertos)
-                
                 stats['total'] += total
                 stats['acertos'] += acertos
                 stats['erros'] += erros
-                
     return stats
 
 # ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
-    /* CORES GERAIS - IVORY (#FFFFF0) */
     .stApp { background-color: #FFFFF0; color: #333333; }
     .stMarkdown, .stText, p, label, .stDataFrame, .stExpander { color: #4A4A4A !important; }
-    
-    h1, h2, h3, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-        color: #8B4513 !important; font-family: 'Georgia', serif; text-shadow: none;
-    }
-
-    /* SIDEBAR */
+    h1, h2, h3 { color: #8B4513 !important; font-family: 'Georgia', serif; }
     [data-testid="stSidebar"] { background-color: #FFDEAD; border-right: 2px solid #DEB887; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { 
-        color: #5C4033 !important; 
-    }
-
-    /* INPUTS */
-    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div, .stDateInput > div > div > input {
-        background-color: #FFFFFF; color: #333333; border: 1px solid #DEB887;
-    }
-
-    /* BUTTONS */
-    .stButton>button {
-        background-color: #FFDEAD; color: #5C4033; border: 1px solid #8B4513; 
-        border-radius: 6px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: all 0.3s;
-    }
-    .stButton>button:hover {
-        background-color: #FFE4C4; color: #000000; border-color: #A0522D; transform: scale(1.02);
-    }
-    
-    /* CARDS DA ARENA */
-    .battle-card {
-        background-color: #FFF8DC; 
-        border: 2px solid #DAA520; 
-        border-radius: 12px; 
-        padding: 20px; 
-        margin-bottom: 20px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        text-align: center;
-    }
-    .battle-card.locked { filter: grayscale(100%); opacity: 0.6; border-color: #555; }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #5C4033 !important; }
+    .stButton>button { background-color: #FFDEAD; color: #5C4033; border: 1px solid #8B4513; border-radius: 6px; font-weight: bold; }
+    .battle-card { background-color: #FFF8DC; border: 2px solid #DAA520; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
+    .battle-card.locked { filter: grayscale(100%); opacity: 0.6; }
     .battle-card.victory { border-color: #228B22; background-color: #F0FFF0; }
     .battle-card.defeat { border-color: #B22222; background-color: #FFF0F0; }
-    
-    /* ESTATÍSTICAS SIDEBAR */
-    .stat-box {
-        background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px;
-        padding: 8px; text-align: center; margin-bottom: 8px;
-    }
+    .stat-box { background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px; padding: 8px; text-align: center; margin-bottom: 8px; }
     .stat-value { font-size: 1.3em; font-weight: bold; color: #8B4513; }
     .stat-label { font-size: 0.75em; color: #666; text-transform: uppercase; }
     .stat-header { font-size: 1.1em; font-weight: bold; color: #5C4033; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px dashed #8B4513; }
-
-    /* DOCTORE CARD */
-    .doctore-card {
-        background-color: #FFF; border-left: 5px solid #8B4513; padding: 25px;
-        border-radius: 5px; font-family: 'Georgia', serif; font-size: 1.2rem;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;
-    }
-    .master-card {
-        background-color: #FFF; 
-        border: 4px double #8B4513; 
-        border-radius: 15px; 
-        padding: 20px; 
-        text-align: center;
-        transition: transform 0.2s;
-        margin-bottom: 20px;
-    }
-    .master-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-        border-color: #DAA520;
-    }
-    .feedback-box {
-        padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd;
-    }
+    .doctore-card, .master-card { background-color: #FFF; border: 4px double #8B4513; border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
+    .feedback-box { padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -183,15 +105,8 @@ st.markdown("""
 # 3. CONFIGURAÇÃO DE DADOS
 # -----------------------------------------------------------------------------
 DEFAULT_USER_DATA = {
-    "stats": {
-        "total_questoes": 0,
-        "total_acertos": 0,
-        "total_erros": 0
-    },
-    "progresso_arena": {
-        "fase_maxima_desbloqueada": 1, 
-        "fases_vencidas": [] 
-    },
+    "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
+    "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
     "historico_atividades": []
 }
 
@@ -199,54 +114,33 @@ DEFAULT_USER_DATA = {
 # 4. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
-    """Verifica se a imagem local existe, caso contrário usa fallback."""
-    if os.path.exists(local_file):
-        return local_file
+    if os.path.exists(local_file): return local_file
     return fallback_url
 
 OPONENTS_DB = [
     {
-        "id": 1,
-        "nome": "O Velho Leão",
-        "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Avatar Inicial
+        "id": 1, "nome": "O Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
-        # Imagem de Vitória (Consequência Positiva)
         "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", "https://img.icons8.com/color/96/laurel-wreath.png"),
-        # Imagem de Derrota (Consequência Negativa)
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", "https://img.icons8.com/color/96/skull.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
-        "dificuldade": "Desafio Inicial",
-        "max_tempo": 60, 
-        "max_erros": 7 
+        "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7 
     },
     {
-        "id": 2,
-        "nome": "Beuzebu",
-        "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
-        # Avatar: touro.jpg
+        "id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
         "avatar_url": get_avatar_image("touro.jpg", "https://img.icons8.com/color/96/bull.png"),
-        # Consequências (Padrão sugerido: vitoria_touro.jpg / derrota_touro.jpg)
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", "https://img.icons8.com/color/96/trophy.png"),
         "img_derrota": get_avatar_image("derrota_touro.jpg", "https://img.icons8.com/color/96/dead-body.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB",
-        "dificuldade": "Desafio Inicial",
-        "max_tempo": 30,
-        "max_erros": 5
+        "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
     },
     {
-        "id": 3,
-        "nome": "Leproso",
-        "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
-        # Avatar: leproso.jpg
+        "id": 3, "nome": "Leproso", "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
         "avatar_url": get_avatar_image("leproso.jpg", "https://img.icons8.com/color/96/zombie.png"),
-        # Consequências
         "img_vitoria": get_avatar_image("vitoria_leproso.jpg", "https://img.icons8.com/color/96/clean-hands.png"),
         "img_derrota": get_avatar_image("derrota_leproso.jpg", "https://img.icons8.com/color/96/hospital.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI",
-        "dificuldade": "Desafio Inicial",
-        "max_tempo": 30,
-        "max_erros": 5
+        "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
     }
 ]
 
@@ -255,189 +149,111 @@ OPONENTS_DB = [
 # -----------------------------------------------------------------------------
 DOCTORE_DB = {
     "praetorium": {
-        "nome": "Praetorium Legislativus",
-        "descricao": "O Guardião das Leis e do Processo Legislativo.",
-        "imagem": "praetorium.jpg", 
+        "nome": "Praetorium Legislativus", "descricao": "O Guardião das Leis e do Processo Legislativo.", "imagem": "praetorium.jpg", 
         "materias": {
-            "Direito Constitucional": [
-                {
-                    "id": 101,
-                    "texto": "Segundo o STF, é inconstitucional lei estadual que determina fornecimento de dados cadastrais sem autorização judicial.",
-                    "gabarito": "Certo",
-                    "origem": "ADI 7777/DF",
-                    "explicacao": "Viola a cláusula de reserva de jurisdição."
-                },
-                {
-                    "id": 102,
-                    "texto": "Normas de eficácia limitada possuem aplicabilidade imediata e integral.",
-                    "gabarito": "Errado",
-                    "origem": "MPE/GO 2022",
-                    "explicacao": "Possuem aplicabilidade mediata e reduzida."
-                }
-            ],
-            "Processo Legislativo": [
-                {
-                    "id": 301,
-                    "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.",
-                    "gabarito": "Certo",
-                    "origem": "Súmula STF",
-                    "explicacao": "O vício de iniciativa é insanável pela sanção presidencial/governador."
-                }
-            ]
+            "Direito Constitucional": [{"id": 101, "texto": "Segundo o STF, é inconstitucional lei estadual que determina fornecimento de dados cadastrais sem autorização judicial.", "gabarito": "Certo", "origem": "ADI 7777/DF", "explicacao": "Viola a cláusula de reserva de jurisdição."}, {"id": 102, "texto": "Normas de eficácia limitada possuem aplicabilidade imediata e integral.", "gabarito": "Errado", "origem": "MPE/GO 2022", "explicacao": "Possuem aplicabilidade mediata e reduzida."}],
+            "Processo Legislativo": [{"id": 301, "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.", "gabarito": "Certo", "origem": "Súmula STF", "explicacao": "O vício de iniciativa é insanável."}]
         }
     },
     "enam_criscis": {
-        "nome": "Enam Criscis",
-        "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.",
-        "imagem": "enam-criscis.png",
+        "nome": "Enam Criscis", "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.", "imagem": "enam-criscis.png",
         "materias": {
-            "Direitos Humanos": [
-                {
-                    "id": 401,
-                    "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.",
-                    "gabarito": "Certo",
-                    "origem": "Jurisprudência Corte IDH",
-                    "explicacao": "O controle de convencionalidade é dever do Judiciário nacional."
-                }
-            ],
-            "Direito Administrativo": [
-                {
-                    "id": 402,
-                    "texto": "A responsabilidade civil do Estado por atos omissivos é, em regra, objetiva.",
-                    "gabarito": "Errado",
-                    "origem": "Doutrina Majoritária",
-                    "explicacao": "No caso de omissão, a responsabilidade é subjetiva (teoria da 'faute du service'), salvo em casos de custódia onde o Estado é garante."
-                }
-            ]
+            "Direitos Humanos": [{"id": 401, "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.", "gabarito": "Certo", "origem": "Jurisprudência Corte IDH", "explicacao": "O controle de convencionalidade é dever do Judiciário nacional."}],
+            "Direito Administrativo": [{"id": 402, "texto": "A responsabilidade civil do Estado por atos omissivos é, em regra, objetiva.", "gabarito": "Errado", "origem": "Doutrina Majoritária", "explicacao": "Omissão gera responsabilidade subjetiva."}]
         }
     },
     "parquet_tribunus": {
-        "nome": "Parquet Tribunus",
-        "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.",
-        "imagem": "parquet.jpg",
+        "nome": "Parquet Tribunus", "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.", "imagem": "parquet.jpg",
         "materias": {
-            "Direito Processual Coletivo": [
-                {
-                    "id": 501,
-                    "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.",
-                    "gabarito": "Certo",
-                    "origem": "Tema Repetitivo STJ",
-                    "explicacao": "A relevância social do bem jurídico tutelado legitima a atuação do MP."
-                }
-            ],
-            "Direito Penal": [
-                {
-                    "id": 502,
-                    "texto": "Na ação penal pública condicionada, a representação do ofendido é condição de procedibilidade, mas pode ser retratada até o oferecimento da denúncia.",
-                    "gabarito": "Certo",
-                    "origem": "Art. 25 CPP",
-                    "explicacao": "A retratação é permitida até o oferecimento da denúncia, não até o recebimento."
-                }
-            ]
+            "Direito Processual Coletivo": [{"id": 501, "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.", "gabarito": "Certo", "origem": "Tema Repetitivo STJ", "explicacao": "Relevância social legitima atuação do MP."}],
+            "Direito Penal": [{"id": 502, "texto": "Na ação penal pública condicionada, a representação do ofendido é condição de procedibilidade, mas pode ser retratada até o oferecimento da denúncia.", "gabarito": "Certo", "origem": "Art. 25 CPP", "explicacao": "Retratação possível até o oferecimento."}]
         }
     },
     "noel_autarquicus": {
-        "nome": "Noel Autarquicus",
-        "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.",
-        "imagem": "noel.png",
+        "nome": "Noel Autarquicus", "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.", "imagem": "noel.png",
         "materias": {
-            "Direito Administrativo": [
-                {
-                    "id": 601,
-                    "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.",
-                    "gabarito": "Certo",
-                    "origem": "Tema 999 STF",
-                    "explicacao": "A exigência é válida se prevista em lei."
-                }
-            ],
-            "Legislação Municipal": [
-                {
-                    "id": 602,
-                    "texto": "Compete aos Municípios legislar sobre assuntos de interesse local, inclusive horário de funcionamento de estabelecimento comercial.",
-                    "gabarito": "Certo",
-                    "origem": "Súmula Vinculante 38",
-                    "explicacao": "É competência municipal definir horário do comércio local."
-                }
-            ]
+            "Direito Administrativo": [{"id": 601, "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.", "gabarito": "Certo", "origem": "Tema 999 STF", "explicacao": "Exigência válida se prevista em lei."}],
+            "Legislação Municipal": [{"id": 602, "texto": "Compete aos Municípios legislar sobre assuntos de interesse local, inclusive horário de funcionamento de estabelecimento comercial.", "gabarito": "Certo", "origem": "Súmula Vinculante 38", "explicacao": "Competência municipal."}]
         }
     }
 }
 
 # -----------------------------------------------------------------------------
-# 6. CONEXÃO GOOGLE SHEETS (BLINDADA)
+# 6. CONEXÃO GOOGLE SHEETS (BLINDADA & MODERNA)
 # -----------------------------------------------------------------------------
 def connect_db():
-    """Conecta ao Google Sheets usando st.secrets (igual ao MentorSpartaJus)."""
+    """Tenta conectar usando a biblioteca moderna google-auth."""
     if not LIBS_INSTALLED:
-        return None, "Bibliotecas 'gspread' ou 'google-auth' ausentes."
+        return None, "Erro: Bibliotecas 'gspread' ou 'google-auth' não instaladas."
 
+    # Verifica se os segredos existem no formato correto no Streamlit Cloud
     if "gcp_service_account" not in st.secrets:
-        return None, "Secrets não configurados."
+        return None, "Erro: 'gcp_service_account' não encontrado em st.secrets."
 
     try:
-        # Usa o método moderno (google.oauth2) igual ao Mentor
-        scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-        creds_dict = st.secrets["gcp_service_account"]
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-        client = gspread.authorize(creds)
+        # Escopos necessários para ler e escrever no Drive/Sheets
+        scope = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
         
-        # Tenta abrir a planilha
-        try:
-            return client.open(SHEET_NAME).sheet1, None
-        except gspread.exceptions.SpreadsheetNotFound:
-            return None, f"Planilha '{SHEET_NAME}' não encontrada ou não compartilhada com o bot."
-            
+        # Cria credenciais a partir do dicionário de segredos
+        # Importante: converte para dict normal caso seja um objeto AttrDict do Streamlit
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        
+        # Autoriza o cliente gspread
+        client = gspread.authorize(credentials)
+        
+        # Tenta abrir a planilha específica
+        # Se falhar aqui, é porque o nome está errado ou não foi compartilhada
+        sheet = client.open(SHEET_NAME).sheet1
+        return sheet, None
+
+    except gspread.exceptions.SpreadsheetNotFound:
+        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada. Verifique o nome e se compartilhou com o e-mail da conta de serviço."
     except Exception as e:
         return None, f"Erro de Conexão: {str(e)}"
 
 def load_data():
-    """Carrega dados do usuário. Se não existir, cria. Se falhar, usa local."""
-    sheet, msg = connect_db()
+    """Carrega dados. Retorna (Dados, Linha, Status)."""
+    sheet, error_msg = connect_db()
     
     if sheet:
         try:
-            # Procura usuário na Coluna A
             cell = sheet.find(TEST_USER)
-            
             if cell:
-                # Lê JSON da Coluna B
-                raw_data = sheet.cell(cell.row, 2).value
-                data = json.loads(raw_data)
-                
-                # Migração de Schema (Garante que chaves novas existam)
+                data = json.loads(sheet.cell(cell.row, 2).value)
+                # Migração de dados para garantir chaves novas
                 if "stats" not in data: data["stats"] = DEFAULT_USER_DATA["stats"]
                 if "progresso_arena" not in data: data["progresso_arena"] = DEFAULT_USER_DATA["progresso_arena"]
                 if "historico_atividades" not in data: data["historico_atividades"] = []
-                
-                return data, cell.row, "🟢 Online"
+                return data, cell.row, "🟢 Online (Sincronizado)"
             else:
-                # Usuário Novo: Adiciona linha
                 sheet.append_row([TEST_USER, json.dumps(DEFAULT_USER_DATA)])
-                # Busca a linha recém criada
                 new_cell = sheet.find(TEST_USER)
-                return DEFAULT_USER_DATA, new_cell.row, "🟢 Online (Novo)"
-                
+                return DEFAULT_USER_DATA, new_cell.row, "🟢 Online (Novo Usuário)"
         except Exception as e:
-            return DEFAULT_USER_DATA, None, f"🔴 Erro leitura: {str(e)}"
+            return DEFAULT_USER_DATA, None, f"🔴 Erro de Leitura: {str(e)}"
     
-    # Fallback Offline
-    return DEFAULT_USER_DATA, None, "🟠 Offline (Local)"
+    # Se falhou a conexão, retorna o motivo exato
+    return DEFAULT_USER_DATA, None, f"🟠 Offline ({error_msg})"
 
 def save_data(row_idx, data):
-    """Salva os dados no Google Sheets se estiver online."""
+    """Salva dados se estiver online."""
     sheet, _ = connect_db()
     if sheet and row_idx:
         try:
             sheet.update_cell(row_idx, 2, json.dumps(data))
-        except Exception:
-            pass # Falha silenciosa para não travar o jogo
+        except Exception as e:
+            st.toast(f"Erro ao salvar na nuvem: {e}", icon="⚠️")
 
 # -----------------------------------------------------------------------------
 # 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
-        with st.spinner("Preparando a Arena..."):
+        with st.spinner("Sincronizando com o Templo..."):
             d, r, s = load_data()
             st.session_state['user_data'] = d
             st.session_state['row_idx'] = r
@@ -452,10 +268,11 @@ def main():
             st.image(USER_AVATAR_FILE, caption=TEST_USER, use_container_width=True)
         else:
             st.header(f"🏛️ {TEST_USER}")
-            st.warning("Avatar não encontrado (fux_concurseiro.png)")
+            st.warning("Avatar não encontrado")
         
-        # Status da Conexão (Discreto)
-        st.caption(f"Status: {st.session_state['status']}")
+        # STATUS DE CONEXÃO (DEBUG VISUAL)
+        status_color = "green" if "Online" in st.session_state['status'] else "orange"
+        st.markdown(f":{status_color}[{st.session_state['status']}]")
 
         # --- DESEMPENHO GLOBAL ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
@@ -473,20 +290,14 @@ def main():
 
         # --- DESEMPENHO DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
-        
-        # Seletor de data
         selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
-        
-        # Calcula stats do dia selecionado
         daily_stats = calculate_daily_stats(user_data['historico_atividades'], selected_date)
         
-        # Mostra stats do dia
         d1, d2 = st.columns(2)
         d1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{daily_stats['acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         d2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{daily_stats['erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         st.markdown(f"""<div class='stat-box'><div class='stat-value'>{daily_stats['total']}</div><div class='stat-label'>Total do Dia</div></div>""", unsafe_allow_html=True)
         
-        # Aproveitamento Diário
         if daily_stats['total'] > 0:
             d_perc = (daily_stats['acertos'] / daily_stats['total']) * 100
         else:
