@@ -9,7 +9,7 @@ import base64
 import re
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA & SETUP
+# 0. IMPORTAÇÃO SEGURA
 # -----------------------------------------------------------------------------
 try:
     import gspread
@@ -31,8 +31,7 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-# Usando a mesma planilha do Mentor para unificar os dados
-SHEET_NAME = "SpartaJus_DB" 
+SHEET_NAME = "SpartaJus_DB"
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -43,6 +42,7 @@ PREPARE_SE_FILE = "prepare-se.jpg"
 # 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
+    """Lê um arquivo de imagem local e converte para base64 para uso em CSS/HTML."""
     try:
         with open(bin_file, 'rb') as f:
             data = f.read()
@@ -51,6 +51,7 @@ def get_base64_of_bin_file(bin_file):
         return None
 
 def render_centered_image(img_path, width=200):
+    """Renderiza uma imagem centralizada usando HTML/CSS."""
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
@@ -65,6 +66,7 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
+    """Filtra o histórico pela data selecionada e soma acertos/erros."""
     stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
     for activity in history:
@@ -312,16 +314,6 @@ def main():
         st.progress(d_perc / 100)
         
         st.markdown("---")
-        
-        # Botão de Backup Local (Substitui o download que estava com erro)
-        json_str = json.dumps(user_data, indent=4)
-        st.download_button(
-            label="💾 Backup JSON",
-            data=json_str,
-            file_name="backup_arena.json",
-            mime="application/json"
-        )
-        
         if st.button("Sair"):
             st.session_state.clear()
             st.rerun()
@@ -402,7 +394,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status
+            # Imagem de Status Centralizada (400px)
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
