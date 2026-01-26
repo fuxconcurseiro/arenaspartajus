@@ -50,6 +50,7 @@ def get_base64_of_bin_file(bin_file):
         return None
 
 def render_centered_image(img_path, width=200):
+    """Renderiza uma imagem centralizada usando HTML/CSS."""
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
@@ -64,6 +65,7 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
+    """Filtra o histórico pela data selecionada e soma acertos/erros."""
     stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
     for activity in history:
@@ -108,9 +110,8 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 # 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
 # -----------------------------------------------------------------------------
-# CORREÇÃO: Usando a chave "stats" consistentemente
 DEFAULT_ARENA_DATA = {
-    "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
+    "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
     "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
     "historico_atividades": []
 }
@@ -211,8 +212,8 @@ def load_data():
     sheet, error_msg = connect_db()
     
     if not sheet:
-        # Retorna estrutura padrão se offline
-        return DEFAULT_ARENA_DATA.copy(), None, f"🟠 Offline ({error_msg})"
+        data = DEFAULT_ARENA_DATA.copy()
+        return data, None, f"🟠 Offline ({error_msg})"
 
     try:
         cell = sheet.find(TEST_USER)
@@ -223,10 +224,10 @@ def load_data():
             except:
                 full_user_data = {} # Corrompido
             
-            # Se não tem dados da Arena, cria a estrutura padrão
+            # Garante que arena_v1_data existe
             if "arena_v1_data" not in full_user_data:
                 full_user_data["arena_v1_data"] = DEFAULT_ARENA_DATA.copy()
-            
+
             return full_user_data, cell.row, "🟢 Online (Sincronizado)"
             
         else:
@@ -254,22 +255,18 @@ def main():
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
-    # Atalhos e Proteção de Dados
+    # Atalhos
     full_data = st.session_state['full_data']
-    
-    # Recupera ou inicializa a parte da Arena
     arena_data = full_data.get('arena_v1_data', DEFAULT_ARENA_DATA.copy())
     
-    # GARANTIA DE INTEGRIDADE (Isso corrige o KeyError)
+    # Integridade
     if not isinstance(arena_data, dict): arena_data = DEFAULT_ARENA_DATA.copy()
-    if "stats" not in arena_data: arena_data["stats"] = DEFAULT_ARENA_DATA["stats"].copy()
+    if "arena_stats" not in arena_data: arena_data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"].copy()
     if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"].copy()
     if "historico_atividades" not in arena_data: arena_data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"].copy()
 
-    # Atualiza o ponteiro no full_data
     full_data['arena_v1_data'] = arena_data
-    
-    stats = arena_data['stats']
+    stats = arena_data['arena_stats']
     hist = arena_data['historico_atividades']
 
     # --- SIDEBAR ---
@@ -335,11 +332,16 @@ def main():
             margin-right: -50vw;
             margin-bottom: 20px;
             overflow: hidden;
+            height: 200px; /* DIMINUÍDO EM 50% */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }}
         .full-width-hero img {{
             width: 100%;
-            height: auto;
+            height: 100%;
             object-fit: cover;
+            object-position: center;
             display: block;
             border-bottom: 4px solid #DAA520;
         }}
@@ -357,7 +359,7 @@ def main():
         """, unsafe_allow_html=True)
 
     # --- TABS ---
-    tab_batalha, tab_doctore, tab_historico = st.tabs(["🏛️ Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
+    tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
     # TAB 1: BATALHA
@@ -397,7 +399,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status
+            # Imagem de Status Centralizada (400px)
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -432,10 +434,10 @@ def main():
                             
                             VITORIA = passou_erros and passou_tempo
                             
-                            # Atualiza stats usando a chave correta
-                            arena_data['stats']['total_questoes'] += total_q
-                            arena_data['stats']['total_acertos'] += acertos_q
-                            arena_data['stats']['total_erros'] += erros_q
+                            # Atualiza a estrutura Arena
+                            arena_data['arena_stats']['total_questoes'] += total_q
+                            arena_data['arena_stats']['total_acertos'] += acertos_q
+                            arena_data['arena_stats']['total_erros'] += erros_q
                             
                             arena_data['historico_atividades'].append({
                                 "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
@@ -461,6 +463,7 @@ def main():
                                 if not passou_tempo: motivos.append(f"Levou {tempo_min} min (Máx: {limit_time})")
                                 st.error(f"DERROTA. Motivo: {', '.join(motivos)}.")
                             
+                            # Salva o JSON completo
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
                             time.sleep(2)
@@ -489,21 +492,32 @@ def main():
         if st.session_state['doctore_state'] == 'selection':
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
+            
             cols = st.columns(2)
+            
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
+                        
                         img_path = master['imagem']
-                        if os.path.exists(img_path): render_centered_image(img_path, width=400)
-                        else: st.warning(f"Imagem {img_path} não encontrada.")
+                        if os.path.exists(img_path):
+                            render_centered_image(img_path, width=400)
+                        else:
+                            if img_path.startswith("http"):
+                                st.image(img_path, use_container_width=True)
+                            else:
+                                st.warning(f"Imagem {img_path} não encontrada.")
+                        
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
+                        
                         if st.button(f"Treinar com {master['nome']}", key=f"sel_{key}"):
                             st.session_state['selected_master'] = key
                             st.session_state['doctore_state'] = 'training'
                             st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
                             st.rerun()
+                            
                         st.markdown("</div>", unsafe_allow_html=True)
 
         elif st.session_state['doctore_state'] == 'training':
@@ -524,6 +538,7 @@ def main():
             if not ds['active']:
                 materias_disponiveis = list(master_data['materias'].keys())
                 nicho = st.selectbox("Escolha a Matéria do Mestre:", materias_disponiveis)
+                
                 c1, c2 = st.columns(2)
                 if c1.button("Iniciar Treino", type="primary", use_container_width=True):
                     qs = master_data['materias'][nicho].copy()
@@ -533,6 +548,7 @@ def main():
             else:
                 q_list = ds['questions']
                 idx = ds['idx']
+                
                 if idx < len(q_list):
                     q = q_list[idx]
                     st.markdown(f"**Modo:** {'REVISÃO' if ds['mode']=='retry' else 'TREINO'} | Q {idx+1}/{len(q_list)}")
@@ -542,18 +558,20 @@ def main():
                     if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
                     if not st.session_state['doc_revealed']:
                         c_c, c_e = st.columns(2)
+                        
+                        # --- LÓGICA DE ATUALIZAÇÃO IMEDIATA (NO CLIQUE) ---
                         if c_c.button("✅ CERTO", use_container_width=True):
                             st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
                             
                             if q['gabarito'] == "Certo":
-                                arena_data['stats']['total_acertos'] += 1
+                                arena_data['arena_stats']['total_acertos'] += 1
                                 st.toast("Resposta Correta!", icon="✅")
                             else:
-                                arena_data['stats']['total_erros'] += 1
+                                arena_data['arena_stats']['total_erros'] += 1
                                 if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
                                 st.toast("Resposta Incorreta!", icon="❌")
                                 
-                            arena_data['stats']['total_questoes'] += 1
+                            arena_data['arena_stats']['total_questoes'] += 1
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
@@ -562,34 +580,34 @@ def main():
                             st.session_state.update({"doc_choice": "Errado", "doc_revealed": True})
                             
                             if q['gabarito'] == "Errado":
-                                arena_data['stats']['total_acertos'] += 1
+                                arena_data['arena_stats']['total_acertos'] += 1
                                 st.toast("Resposta Correta!", icon="✅")
                             else:
-                                arena_data['stats']['total_erros'] += 1
+                                arena_data['arena_stats']['total_erros'] += 1
                                 if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
                                 st.toast("Resposta Incorreta!", icon="❌")
                                 
-                            arena_data['stats']['total_questoes'] += 1
+                            arena_data['arena_stats']['total_questoes'] += 1
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
+
                     else:
                         acertou = (st.session_state['doc_choice'] == q['gabarito'])
                         if acertou: 
-                            st.success(f"Correto! {q['gabarito']}")
+                            st.success(f"Correto! O gabarito é {q['gabarito']}.")
                         else: 
-                            st.error(f"Errou! É {q['gabarito']}")
+                            st.error(f"Errou! O gabarito é {q['gabarito']}.")
                         
                         st.markdown(f"<div class='feedback-box'><b>Justificativa:</b> {q['explicacao']}</div>", unsafe_allow_html=True)
                         if st.button("Próxima ➡️"):
                             st.session_state['doc_revealed'] = False
                             ds['idx'] += 1
-                            full_data['arena_v1_data'] = arena_data
-                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
                 else:
                     st.success("Treino Finalizado!")
-                    st.write(f"Erros: {len(ds['wrong_ids'])}")
+                    st.write(f"Erros na rodada: {len(ds['wrong_ids'])}")
+                    
                     arena_data['historico_atividades'].append({
                         "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                         "tipo": "Doctore",
@@ -620,4 +638,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
