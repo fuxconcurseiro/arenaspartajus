@@ -6,14 +6,14 @@ from datetime import datetime
 import random
 import os
 import base64
-import re  # Importante para extrair números do histórico
+import re
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA & SETUP
+# 0. IMPORTAÇÃO SEGURA & SETUP (PADRÃO MENTORSPARTAJUS)
 # -----------------------------------------------------------------------------
 try:
     import gspread
-    from oauth2client.service_account import ServiceAccountCredentials
+    from google.oauth2.service_account import Credentials # Atualizado para igualar ao Mentor
     LIBS_INSTALLED = True
 except ImportError:
     LIBS_INSTALLED = False
@@ -29,6 +29,7 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
+SHEET_NAME = "ArenaSpartaJus_DB" # Nome exato da planilha no Google Drive
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -63,38 +64,22 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
-    """
-    Filtra o histórico pela data selecionada e soma acertos/erros.
-    Retorna um dicionário com os totais do dia.
-    """
-    stats = {
-        "total": 0,
-        "acertos": 0,
-        "erros": 0
-    }
-    
-    # Formata a data alvo para string dd/mm/yyyy para comparação
+    """Filtra o histórico pela data selecionada e soma acertos/erros."""
+    stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
     
     for activity in history:
-        # A data no histórico é salva como "dd/mm/yyyy HH:MM"
-        # Pegamos apenas a primeira parte (data)
         act_date_str = activity.get('data', '').split(' ')[0]
-        
         if act_date_str == target_str:
-            # Tenta extrair números do resultado (ex: "Vitória (8/10)" ou "5/10 acertos")
             result_str = activity.get('resultado', '')
             match = re.search(r'(\d+)/(\d+)', result_str)
-            
             if match:
                 acertos = int(match.group(1))
                 total = int(match.group(2))
                 erros = max(0, total - acertos)
-                
                 stats['total'] += total
                 stats['acertos'] += acertos
                 stats['erros'] += erros
-                
     return stats
 
 # ESTILIZAÇÃO GERAL
@@ -182,15 +167,8 @@ st.markdown("""
 # 3. CONFIGURAÇÃO DE DADOS
 # -----------------------------------------------------------------------------
 DEFAULT_USER_DATA = {
-    "stats": {
-        "total_questoes": 0,
-        "total_acertos": 0,
-        "total_erros": 0
-    },
-    "progresso_arena": {
-        "fase_maxima_desbloqueada": 1, 
-        "fases_vencidas": [] 
-    },
+    "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
+    "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
     "historico_atividades": []
 }
 
@@ -198,9 +176,7 @@ DEFAULT_USER_DATA = {
 # 4. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
-    """Verifica se a imagem local existe, caso contrário usa fallback."""
-    if os.path.exists(local_file):
-        return local_file
+    if os.path.exists(local_file): return local_file
     return fallback_url
 
 OPONENTS_DB = [
@@ -208,44 +184,31 @@ OPONENTS_DB = [
         "id": 1,
         "nome": "O Velho Leão",
         "descricao": "Suas garras estão gastas, mas sua experiência é mortal.",
-        # Avatar Inicial
         "avatar_url": get_avatar_image("1_leao_velho.png", "https://img.icons8.com/color/96/lion.png"),
-        # Imagem de Vitória (Consequência Positiva)
         "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", "https://img.icons8.com/color/96/laurel-wreath.png"),
-        # Imagem de Derrota (Consequência Negativa)
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", "https://img.icons8.com/color/96/skull.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
-        "dificuldade": "Desafio Inicial",
-        "max_tempo": 60, 
-        "max_erros": 7 
+        "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7 
     },
     {
         "id": 2,
         "nome": "Beuzebu",
         "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
-        # Avatar: touro.jpg
         "avatar_url": get_avatar_image("touro.jpg", "https://img.icons8.com/color/96/bull.png"),
-        # Consequências (Padrão sugerido: vitoria_touro.jpg / derrota_touro.jpg)
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", "https://img.icons8.com/color/96/trophy.png"),
         "img_derrota": get_avatar_image("derrota_touro.jpg", "https://img.icons8.com/color/96/dead-body.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB",
-        "dificuldade": "Desafio Inicial",
-        "max_tempo": 30,
-        "max_erros": 5
+        "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
     },
     {
         "id": 3,
         "nome": "Leproso",
         "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
-        # Avatar: leproso.jpg
         "avatar_url": get_avatar_image("leproso.jpg", "https://img.icons8.com/color/96/zombie.png"),
-        # Consequências
         "img_vitoria": get_avatar_image("vitoria_leproso.jpg", "https://img.icons8.com/color/96/clean-hands.png"),
         "img_derrota": get_avatar_image("derrota_leproso.jpg", "https://img.icons8.com/color/96/hospital.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI",
-        "dificuldade": "Desafio Inicial",
-        "max_tempo": 30,
-        "max_erros": 5
+        "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
     }
 ]
 
@@ -259,29 +222,11 @@ DOCTORE_DB = {
         "imagem": "praetorium.jpg", 
         "materias": {
             "Direito Constitucional": [
-                {
-                    "id": 101,
-                    "texto": "Segundo o STF, é inconstitucional lei estadual que determina fornecimento de dados cadastrais sem autorização judicial.",
-                    "gabarito": "Certo",
-                    "origem": "ADI 7777/DF",
-                    "explicacao": "Viola a cláusula de reserva de jurisdição."
-                },
-                {
-                    "id": 102,
-                    "texto": "Normas de eficácia limitada possuem aplicabilidade imediata e integral.",
-                    "gabarito": "Errado",
-                    "origem": "MPE/GO 2022",
-                    "explicacao": "Possuem aplicabilidade mediata e reduzida."
-                }
+                {"id": 101, "texto": "Segundo o STF, é inconstitucional lei estadual que determina fornecimento de dados cadastrais sem autorização judicial.", "gabarito": "Certo", "origem": "ADI 7777/DF", "explicacao": "Viola a cláusula de reserva de jurisdição."},
+                {"id": 102, "texto": "Normas de eficácia limitada possuem aplicabilidade imediata e integral.", "gabarito": "Errado", "origem": "MPE/GO 2022", "explicacao": "Possuem aplicabilidade mediata e reduzida."}
             ],
             "Processo Legislativo": [
-                {
-                    "id": 301,
-                    "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.",
-                    "gabarito": "Certo",
-                    "origem": "Súmula STF",
-                    "explicacao": "O vício de iniciativa é insanável pela sanção presidencial/governador."
-                }
+                {"id": 301, "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.", "gabarito": "Certo", "origem": "Súmula STF", "explicacao": "O vício de iniciativa é insanável pela sanção presidencial/governador."}
             ]
         }
     },
@@ -291,22 +236,10 @@ DOCTORE_DB = {
         "imagem": "enam-criscis.png",
         "materias": {
             "Direitos Humanos": [
-                {
-                    "id": 401,
-                    "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.",
-                    "gabarito": "Certo",
-                    "origem": "Jurisprudência Corte IDH",
-                    "explicacao": "O controle de convencionalidade é dever do Judiciário nacional."
-                }
+                {"id": 401, "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.", "gabarito": "Certo", "origem": "Jurisprudência Corte IDH", "explicacao": "O controle de convencionalidade é dever do Judiciário nacional."}
             ],
             "Direito Administrativo": [
-                {
-                    "id": 402,
-                    "texto": "A responsabilidade civil do Estado por atos omissivos é, em regra, objetiva.",
-                    "gabarito": "Errado",
-                    "origem": "Doutrina Majoritária",
-                    "explicacao": "No caso de omissão, a responsabilidade é subjetiva (teoria da 'faute du service'), salvo em casos de custódia onde o Estado é garante."
-                }
+                {"id": 402, "texto": "A responsabilidade civil do Estado por atos omissivos é, em regra, objetiva.", "gabarito": "Errado", "origem": "Doutrina Majoritária", "explicacao": "Omissão gera responsabilidade subjetiva."}
             ]
         }
     },
@@ -316,22 +249,10 @@ DOCTORE_DB = {
         "imagem": "parquet.jpg",
         "materias": {
             "Direito Processual Coletivo": [
-                {
-                    "id": 501,
-                    "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.",
-                    "gabarito": "Certo",
-                    "origem": "Tema Repetitivo STJ",
-                    "explicacao": "A relevância social do bem jurídico tutelado legitima a atuação do MP."
-                }
+                {"id": 501, "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.", "gabarito": "Certo", "origem": "Tema Repetitivo STJ", "explicacao": "Relevância social legitima atuação do MP."}
             ],
             "Direito Penal": [
-                {
-                    "id": 502,
-                    "texto": "Na ação penal pública condicionada, a representação do ofendido é condição de procedibilidade, mas pode ser retratada até o oferecimento da denúncia.",
-                    "gabarito": "Certo",
-                    "origem": "Art. 25 CPP",
-                    "explicacao": "A retratação é permitida até o oferecimento da denúncia, não até o recebimento."
-                }
+                {"id": 502, "texto": "Na ação penal pública condicionada, a representação do ofendido é condição de procedibilidade, mas pode ser retratada até o oferecimento da denúncia.", "gabarito": "Certo", "origem": "Art. 25 CPP", "explicacao": "Retratação possível até o oferecimento."}
             ]
         }
     },
@@ -341,68 +262,90 @@ DOCTORE_DB = {
         "imagem": "noel.png",
         "materias": {
             "Direito Administrativo": [
-                {
-                    "id": 601,
-                    "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.",
-                    "gabarito": "Certo",
-                    "origem": "Tema 999 STF",
-                    "explicacao": "A exigência é válida se prevista em lei."
-                }
+                {"id": 601, "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.", "gabarito": "Certo", "origem": "Tema 999 STF", "explicacao": "Exigência válida se prevista em lei."}
             ],
             "Legislação Municipal": [
-                {
-                    "id": 602,
-                    "texto": "Compete aos Municípios legislar sobre assuntos de interesse local, inclusive horário de funcionamento de estabelecimento comercial.",
-                    "gabarito": "Certo",
-                    "origem": "Súmula Vinculante 38",
-                    "explicacao": "É competência municipal definir horário do comércio local."
-                }
+                {"id": 602, "texto": "Compete aos Municípios legislar sobre assuntos de interesse local, inclusive horário de funcionamento de estabelecimento comercial.", "gabarito": "Certo", "origem": "Súmula Vinculante 38", "explicacao": "Competência municipal."}
             ]
         }
     }
 }
 
 # -----------------------------------------------------------------------------
-# 6. CONEXÃO GOOGLE SHEETS
+# 6. CONEXÃO GOOGLE SHEETS (BLINDADA)
 # -----------------------------------------------------------------------------
 def connect_db():
-    if not LIBS_INSTALLED: return None, "Libs ausentes"
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    """Conecta ao Google Sheets usando st.secrets (igual ao MentorSpartaJus)."""
+    if not LIBS_INSTALLED:
+        return None, "Bibliotecas 'gspread' ou 'google-auth' ausentes."
+
+    if "gcp_service_account" not in st.secrets:
+        return None, "Secrets não configurados."
+
     try:
-        if "gcp_service_account" in st.secrets:
-            creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
-            client = gspread.authorize(creds)
-            return client.open("ArenaSpartaJus_DB").sheet1, None
-        return None, "Secrets off"
-    except Exception as e: return None, str(e)
+        # Usa o método moderno (google.oauth2) igual ao Mentor
+        scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+        creds_dict = st.secrets["gcp_service_account"]
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        client = gspread.authorize(creds)
+        
+        # Tenta abrir a planilha
+        try:
+            return client.open(SHEET_NAME).sheet1, None
+        except gspread.exceptions.SpreadsheetNotFound:
+            return None, f"Planilha '{SHEET_NAME}' não encontrada ou não compartilhada com o bot."
+            
+    except Exception as e:
+        return None, f"Erro de Conexão: {str(e)}"
 
 def load_data():
+    """Carrega dados do usuário. Se não existir, cria. Se falhar, usa local."""
     sheet, msg = connect_db()
+    
     if sheet:
         try:
+            # Procura usuário na Coluna A
             cell = sheet.find(TEST_USER)
+            
             if cell:
-                data = json.loads(sheet.cell(cell.row, 2).value)
-                if "stats" not in data: data = DEFAULT_USER_DATA.copy()
-                return data, cell.row, "Online"
+                # Lê JSON da Coluna B
+                raw_data = sheet.cell(cell.row, 2).value
+                data = json.loads(raw_data)
+                
+                # Migração de Schema (Garante que chaves novas existam)
+                if "stats" not in data: data["stats"] = DEFAULT_USER_DATA["stats"]
+                if "progresso_arena" not in data: data["progresso_arena"] = DEFAULT_USER_DATA["progresso_arena"]
+                if "historico_atividades" not in data: data["historico_atividades"] = []
+                
+                return data, cell.row, "🟢 Online"
             else:
+                # Usuário Novo: Adiciona linha
                 sheet.append_row([TEST_USER, json.dumps(DEFAULT_USER_DATA)])
-                return DEFAULT_USER_DATA, sheet.find(TEST_USER).row, "Online (Novo)"
-        except: pass
-    return DEFAULT_USER_DATA, None, "Offline"
+                # Busca a linha recém criada
+                new_cell = sheet.find(TEST_USER)
+                return DEFAULT_USER_DATA, new_cell.row, "🟢 Online (Novo)"
+                
+        except Exception as e:
+            return DEFAULT_USER_DATA, None, f"🔴 Erro leitura: {str(e)}"
+    
+    # Fallback Offline
+    return DEFAULT_USER_DATA, None, "🟠 Offline (Local)"
 
 def save_data(row_idx, data):
+    """Salva os dados no Google Sheets se estiver online."""
     sheet, _ = connect_db()
     if sheet and row_idx:
-        try: sheet.update_cell(row_idx, 2, json.dumps(data))
-        except: pass
+        try:
+            sheet.update_cell(row_idx, 2, json.dumps(data))
+        except Exception:
+            pass # Falha silenciosa para não travar o jogo
 
 # -----------------------------------------------------------------------------
 # 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
-        with st.spinner("Preparando a Arena..."):
+        with st.spinner("Conectando aos arquivos da Arena..."):
             d, r, s = load_data()
             st.session_state['user_data'] = d
             st.session_state['row_idx'] = r
@@ -419,6 +362,9 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado (fux_concurseiro.png)")
         
+        # Status da Conexão (Discreto)
+        st.caption(f"Status: {st.session_state['status']}")
+
         # --- DESEMPENHO GLOBAL ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
@@ -433,22 +379,17 @@ def main():
         st.markdown(f"**Aproveitamento:** {perc:.1f}%")
         st.progress(perc / 100)
 
-        # --- DESEMPENHO DIÁRIO (NOVO) ---
+        # --- DESEMPENHO DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
         
-        # Seletor de data
-        selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
-        
-        # Calcula stats do dia selecionado
+        selected_date = st.date_input("Selecionar Data:", datetime.now(), format="DD/MM/YYYY")
         daily_stats = calculate_daily_stats(user_data['historico_atividades'], selected_date)
         
-        # Mostra stats do dia
         d1, d2 = st.columns(2)
         d1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{daily_stats['acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         d2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{daily_stats['erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         st.markdown(f"""<div class='stat-box'><div class='stat-value'>{daily_stats['total']}</div><div class='stat-label'>Total do Dia</div></div>""", unsafe_allow_html=True)
         
-        # Aproveitamento Diário
         if daily_stats['total'] > 0:
             d_perc = (daily_stats['acertos'] / daily_stats['total']) * 100
         else:
@@ -537,7 +478,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status Centralizada (400px)
+            # Imagem de Status
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
