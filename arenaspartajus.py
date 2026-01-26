@@ -158,6 +158,20 @@ st.markdown("""
         border-radius: 5px; font-family: 'Georgia', serif; font-size: 1.2rem;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;
     }
+    .master-card {
+        background-color: #FFF; 
+        border: 4px double #8B4513; 
+        border-radius: 15px; 
+        padding: 20px; 
+        text-align: center;
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .master-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        border-color: #DAA520;
+    }
     .feedback-box {
         padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd;
     }
@@ -483,7 +497,7 @@ def main():
         """, unsafe_allow_html=True)
 
     # --- TABS ---
-    tab_batalha, tab_doctore, tab_historico = st.tabs(["🛡️ Linha do Tempo (Desafios)", "🦉 Doctore (Treino)", "📜 Histórico"])
+    tab_batalha, tab_doctore, tab_historico = st.tabs(["🛡️ Linha do Tempo (Desafios)", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
     # TAB 1: BATALHA
