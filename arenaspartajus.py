@@ -196,22 +196,24 @@ OPONENTS_DB = [
         # Consequências (Padrão sugerido: vitoria_touro.jpg / derrota_touro.jpg)
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", "https://img.icons8.com/color/96/trophy.png"),
         "img_derrota": get_avatar_image("derrota_touro.jpg", "https://img.icons8.com/color/96/dead-body.png"),
-        "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", # Link Atualizado
+        "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB",
         "dificuldade": "Desafio Inicial",
         "max_tempo": 30,
         "max_erros": 5
     },
     {
         "id": 3,
-        "nome": "Centurião da Jurisprudência",
-        "descricao": "Rápido, letal e cheio de precedentes.",
-        "avatar_url": "https://img.icons8.com/color/96/spartan-helmet.png",
-        "img_vitoria": "https://img.icons8.com/color/96/crown.png",
-        "img_derrota": "https://img.icons8.com/color/96/grave.png",
-        "link_tec": "https://www.tecconcursos.com.br",
-        "dificuldade": "Avançado",
+        "nome": "Leproso",
+        "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
+        # Avatar: leproso.jpg
+        "avatar_url": get_avatar_image("leproso.jpg", "https://img.icons8.com/color/96/zombie.png"),
+        # Consequências
+        "img_vitoria": get_avatar_image("vitoria_leproso.jpg", "https://img.icons8.com/color/96/clean-hands.png"),
+        "img_derrota": get_avatar_image("derrota_leproso.jpg", "https://img.icons8.com/color/96/hospital.png"),
+        "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI",
+        "dificuldade": "Desafio Inicial",
         "max_tempo": 30,
-        "max_erros": 3
+        "max_erros": 5
     }
 ]
 
