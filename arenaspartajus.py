@@ -255,11 +255,13 @@ def main():
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
-    # Atalhos
+    # Atalhos e Proteção de Dados
     full_data = st.session_state['full_data']
+    
+    # Recupera ou inicializa a parte da Arena
     arena_data = full_data.get('arena_v1_data', DEFAULT_ARENA_DATA.copy())
     
-    # Integridade
+    # Garante integridade das chaves
     if not isinstance(arena_data, dict): arena_data = DEFAULT_ARENA_DATA.copy()
     if "arena_stats" not in arena_data: arena_data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"].copy()
     if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"].copy()
@@ -332,18 +334,19 @@ def main():
             margin-right: -50vw;
             margin-bottom: 20px;
             overflow: hidden;
-            height: 200px; /* DIMINUÍDO EM 50% */
+            background-color: #FFF8DC; /* Cor de fundo de segurança */
+            height: 250px; /* ALTURA AJUSTADA */
             display: flex;
             align-items: center;
             justify-content: center;
+            border-bottom: 4px solid #DAA520;
         }}
         .full-width-hero img {{
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain; /* Ajusta sem cortar */
             object-position: center;
             display: block;
-            border-bottom: 4px solid #DAA520;
         }}
         </style>
         <div class="full-width-hero">
@@ -463,7 +466,7 @@ def main():
                                 if not passou_tempo: motivos.append(f"Levou {tempo_min} min (Máx: {limit_time})")
                                 st.error(f"DERROTA. Motivo: {', '.join(motivos)}.")
                             
-                            # Salva o JSON completo
+                            # Salva o JSON completo (Mentor + Arena Atualizada)
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
                             time.sleep(2)
@@ -558,8 +561,6 @@ def main():
                     if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
                     if not st.session_state['doc_revealed']:
                         c_c, c_e = st.columns(2)
-                        
-                        # --- LÓGICA DE ATUALIZAÇÃO IMEDIATA (NO CLIQUE) ---
                         if c_c.button("✅ CERTO", use_container_width=True):
                             st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
                             
@@ -591,7 +592,6 @@ def main():
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
-
                     else:
                         acertou = (st.session_state['doc_choice'] == q['gabarito'])
                         if acertou: 
@@ -603,6 +603,8 @@ def main():
                         if st.button("Próxima ➡️"):
                             st.session_state['doc_revealed'] = False
                             ds['idx'] += 1
+                            full_data['arena_v1_data'] = arena_data
+                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
                 else:
                     st.success("Treino Finalizado!")
