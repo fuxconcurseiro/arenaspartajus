@@ -31,8 +31,7 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-# --- ALTERAÇÃO: PLANILHA EXCLUSIVA DO JOGO ---
-SHEET_NAME = "ArenaSpartaJus_DB" 
+SHEET_NAME = "SpartaJus_DB"
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -70,6 +69,7 @@ def calculate_daily_stats(history, target_date):
     """Filtra o histórico pela data selecionada e soma acertos/erros."""
     stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
+    
     for activity in history:
         act_date_str = activity.get('data', '').split(' ')[0]
         if act_date_str == target_str:
@@ -207,15 +207,12 @@ def connect_db():
         sheet = client.open(SHEET_NAME).sheet1
         return sheet, None
 
-    except gspread.exceptions.SpreadsheetNotFound:
-        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada."
     except Exception as e:
         return None, f"Erro de Conexão: {str(e)}"
 
 def load_data():
     sheet, error_msg = connect_db()
     
-    # Se falhou a conexão, retorna offline mas com estrutura segura
     if not sheet:
         data = DEFAULT_ARENA_DATA.copy()
         return data, None, f"🟠 Offline ({error_msg})"
@@ -243,19 +240,16 @@ def load_data():
             
             return data, cell.row, "🟢 Online (Sincronizado)"
         else:
-            # Se usuário não existe nesta nova planilha, cria
-            sheet.append_row([TEST_USER, json.dumps(DEFAULT_ARENA_DATA)])
-            new_cell = sheet.find(TEST_USER)
-            return DEFAULT_ARENA_DATA.copy(), new_cell.row, "🟢 Online (Novo)"
+            return DEFAULT_ARENA_DATA.copy(), None, "🟠 Offline (Usuário não encontrado)"
             
     except Exception as e:
         return DEFAULT_ARENA_DATA.copy(), None, f"🔴 Erro Leitura: {str(e)}"
 
-def save_data(row_idx, data):
+def save_data(row_idx, full_data):
     sheet, _ = connect_db()
     if sheet and row_idx:
         try:
-            sheet.update_cell(row_idx, 2, json.dumps(data))
+            sheet.update_cell(row_idx, 2, json.dumps(full_data))
         except Exception:
             pass
 
@@ -263,17 +257,18 @@ def save_data(row_idx, data):
 # 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
-    if 'user_data' not in st.session_state:
+    if 'full_data' not in st.session_state:
         with st.spinner("Sincronizando com o Templo..."):
             d, r, s = load_data()
-            st.session_state['user_data'] = d
+            st.session_state['full_data'] = d
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
     # Atalhos
-    user_data = st.session_state['user_data']
-    stats = user_data.get('arena_stats', DEFAULT_ARENA_DATA['arena_stats'])
-    hist = user_data.get('historico_atividades', [])
+    full_data = st.session_state['full_data']
+    arena_data = full_data.get('arena_v1_data', DEFAULT_ARENA_DATA)
+    stats = arena_data['stats']
+    hist = arena_data['historico_atividades']
 
     # --- SIDEBAR ---
     with st.sidebar:
@@ -368,8 +363,8 @@ def main():
     # -------------------------------------------------------------------------
     with tab_batalha:
         st.markdown("### 🗺️ A Jornada do Gladiador")
-        fase_max = user_data.get('progresso_arena', DEFAULT_ARENA_DATA['progresso_arena'])['fase_maxima_desbloqueada']
-        fases_vencidas = user_data.get('progresso_arena', DEFAULT_ARENA_DATA['progresso_arena'])['fases_vencidas']
+        fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
+        fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
 
         for opp in OPONENTS_DB:
             is_locked = opp['id'] > fase_max
@@ -436,14 +431,12 @@ def main():
                             
                             VITORIA = passou_erros and passou_tempo
                             
-                            # Atualiza dados seguros
-                            if "arena_stats" not in user_data: user_data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"]
+                            # Atualiza a estrutura Arena
+                            arena_data['stats']['total_questoes'] += total_q
+                            arena_data['stats']['total_acertos'] += acertos_q
+                            arena_data['stats']['total_erros'] += erros_q
                             
-                            user_data['arena_stats']['total_questoes'] += total_q
-                            user_data['arena_stats']['total_acertos'] += acertos_q
-                            user_data['arena_stats']['total_erros'] += erros_q
-                            
-                            user_data['historico_atividades'].append({
+                            arena_data['historico_atividades'].append({
                                 "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                                 "tipo": "Batalha",
                                 "detalhe": f"vs {opp['nome']}",
@@ -454,10 +447,10 @@ def main():
                             st.session_state['last_opp_id'] = opp['id']
                             if VITORIA:
                                 st.session_state['last_result'] = 'vitoria'
-                                if opp['id'] not in user_data['progresso_arena']['fases_vencidas']:
-                                    user_data['progresso_arena']['fases_vencidas'].append(opp['id'])
-                                    if opp['id'] == user_data['progresso_arena']['fase_maxima_desbloqueada']:
-                                        user_data['progresso_arena']['fase_maxima_desbloqueada'] += 1
+                                if opp['id'] not in arena_data['progresso_arena']['fases_vencidas']:
+                                    arena_data['progresso_arena']['fases_vencidas'].append(opp['id'])
+                                    if opp['id'] == arena_data['progresso_arena']['fase_maxima_desbloqueada']:
+                                        arena_data['progresso_arena']['fase_maxima_desbloqueada'] += 1
                                 st.success("VITÓRIA! Oponente derrotado com honra!")
                                 st.balloons()
                             else:
@@ -467,7 +460,9 @@ def main():
                                 if not passou_tempo: motivos.append(f"Levou {tempo_min} min (Máx: {limit_time})")
                                 st.error(f"DERROTA. Motivo: {', '.join(motivos)}.")
                             
-                            save_data(st.session_state['row_idx'], user_data)
+                            # Salva o JSON completo (Mentor + Arena Atualizada)
+                            full_data['arena_v1_data'] = arena_data
+                            save_data(st.session_state['row_idx'], full_data)
                             time.sleep(2)
                             del st.session_state['active_battle_id']
                             st.rerun()
@@ -560,40 +555,73 @@ def main():
                     if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
                     if not st.session_state['doc_revealed']:
                         c_c, c_e = st.columns(2)
+                        
+                        # --- LÓGICA DE ATUALIZAÇÃO IMEDIATA (NO CLIQUE) ---
                         if c_c.button("✅ CERTO", use_container_width=True):
                             st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
+                            
+                            # Atualiza Stats Imediatamente
+                            if q['gabarito'] == "Certo":
+                                arena_data['stats']['total_acertos'] += 1
+                                st.toast("Resposta Correta!", icon="✅")
+                            else:
+                                arena_data['stats']['total_erros'] += 1
+                                if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
+                                st.toast("Resposta Incorreta!", icon="❌")
+                                
+                            arena_data['stats']['total_questoes'] += 1
+                            # Salva DB
+                            full_data['arena_v1_data'] = arena_data
+                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
+
                         if c_e.button("❌ ERRADO", use_container_width=True):
                             st.session_state.update({"doc_choice": "Errado", "doc_revealed": True})
+                            
+                            # Atualiza Stats Imediatamente
+                            if q['gabarito'] == "Errado":
+                                arena_data['stats']['total_acertos'] += 1
+                                st.toast("Resposta Correta!", icon="✅")
+                            else:
+                                arena_data['stats']['total_erros'] += 1
+                                if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
+                                st.toast("Resposta Incorreta!", icon="❌")
+                                
+                            arena_data['stats']['total_questoes'] += 1
+                            # Salva DB
+                            full_data['arena_v1_data'] = arena_data
+                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
+
                     else:
+                        # Mostra o Feedback (Já processado no clique anterior)
                         acertou = (st.session_state['doc_choice'] == q['gabarito'])
+                        
                         if acertou: 
-                            st.success(f"Correto! {q['gabarito']}")
-                            user_data['arena_stats']['total_acertos'] += 1
+                            st.success(f"Correto! O gabarito é {q['gabarito']}.")
                         else: 
-                            st.error(f"Errou! É {q['gabarito']}")
-                            user_data['arena_stats']['total_erros'] += 1
-                            if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
-                        user_data['arena_stats']['total_questoes'] += 1
+                            st.error(f"Errou! O gabarito é {q['gabarito']}.")
                         
                         st.markdown(f"<div class='feedback-box'><b>Justificativa:</b> {q['explicacao']}</div>", unsafe_allow_html=True)
+                        
                         if st.button("Próxima ➡️"):
                             st.session_state['doc_revealed'] = False
                             ds['idx'] += 1
-                            save_data(st.session_state['row_idx'], user_data)
                             st.rerun()
                 else:
                     st.success("Treino Finalizado!")
-                    st.write(f"Erros: {len(ds['wrong_ids'])}")
-                    user_data['historico_atividades'].append({
+                    st.write(f"Erros na rodada: {len(ds['wrong_ids'])}")
+                    
+                    # Salva apenas o registro histórico da sessão
+                    arena_data['historico_atividades'].append({
                         "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                         "tipo": "Doctore",
                         "detalhe": f"{master_data['nome']} ({ds['mode']})",
                         "resultado": f"{len(q_list)-len(ds['wrong_ids'])}/{len(q_list)} acertos",
                         "tempo": "-"
                     })
-                    save_data(st.session_state['row_idx'], user_data)
+                    full_data['arena_v1_data'] = arena_data
+                    save_data(st.session_state['row_idx'], full_data)
                     
                     c1, c2 = st.columns(2)
                     if c1.button("🏠 Novo Treino"):
