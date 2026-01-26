@@ -9,7 +9,7 @@ import base64
 import re
 
 # -----------------------------------------------------------------------------
-# 0. IMPORTAÇÃO SEGURA (SEM INSTALAÇÃO FORÇADA)
+# 0. IMPORTAÇÃO SEGURA
 # -----------------------------------------------------------------------------
 try:
     import gspread
@@ -104,7 +104,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
+# 3. CONFIGURAÇÃO DE DADOS
 # -----------------------------------------------------------------------------
 DEFAULT_ARENA_DATA = {
     "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
@@ -181,10 +181,9 @@ DOCTORE_DB = {
 }
 
 # -----------------------------------------------------------------------------
-# 6. CONEXÃO GOOGLE SHEETS (BLINDADA)
+# 6. CONEXÃO GOOGLE SHEETS
 # -----------------------------------------------------------------------------
 def connect_db():
-    # Se falhou a importação lá em cima, já retorna erro
     if not LIBS_INSTALLED:
         return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {IMPORT_ERROR}"
 
@@ -266,8 +265,8 @@ def main():
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
-    # Atalhos
     user_data = st.session_state['user_data']
+    # Garante acesso seguro
     stats = user_data.get('arena_stats', DEFAULT_ARENA_DATA['arena_stats'])
     hist = user_data.get('historico_atividades', [])
 
@@ -279,7 +278,6 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado")
         
-        # STATUS DA CONEXÃO
         if "Online" in st.session_state['status']:
             st.success(st.session_state['status'])
         else:
@@ -432,9 +430,13 @@ def main():
                             
                             VITORIA = passou_erros and passou_tempo
                             
+                            # Atualiza dados seguros
+                            if "arena_stats" not in user_data: user_data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"]
+                            
                             user_data['arena_stats']['total_questoes'] += total_q
                             user_data['arena_stats']['total_acertos'] += acertos_q
                             user_data['arena_stats']['total_erros'] += erros_q
+                            
                             user_data['historico_atividades'].append({
                                 "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                                 "tipo": "Batalha",
@@ -463,16 +465,6 @@ def main():
                             time.sleep(2)
                             del st.session_state['active_battle_id']
                             st.rerun()
-
-            # Conector Discreto
-            if opp['id'] < len(OPONENTS_DB):
-                st.markdown("""
-                <div style="display:flex; justify-content:center; align-items:center; margin: 15px 0;">
-                    <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
-                    <div style="color: #DAA520; font-size: 14px; margin: 0 10px; opacity: 0.8;">🔗</div>
-                    <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
-                </div>
-                """, unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
     # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES)
@@ -607,16 +599,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
-#### 2. Recomendações para Instalação (Cloud)
-O `app.py` não contém mais o "bloco nuclear" de auto-instalação para evitar o crash `exit status 1`.
-Para que o app funcione no **Streamlit Cloud** sem dar erro de biblioteca:
-
-1.  Garanta que o arquivo **`requirements.txt`** esteja na raiz do repositório com exatamente este conteúdo:
-    ```text
-    streamlit
-    pandas
-    gspread
-    google-auth
-    requests
