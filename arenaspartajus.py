@@ -497,7 +497,7 @@ def main():
         """, unsafe_allow_html=True)
 
     # --- TABS ---
-    tab_batalha, tab_doctore, tab_historico = st.tabs(["🛡️ Linha do Tempo (Desafios)", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
+    tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
     # TAB 1: BATALHA
