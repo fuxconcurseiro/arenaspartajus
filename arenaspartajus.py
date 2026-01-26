@@ -1,37 +1,23 @@
 import streamlit as st
-import subprocess
-import sys
-import os
+import pandas as pd
+import json
 import time
+from datetime import datetime
+import random
+import os
+import base64
+import re
 
 # -----------------------------------------------------------------------------
-# 0. AUTO-INSTALL (FORÇA BRUTA PARA CORRIGIR ERRO OFFLINE)
+# 0. IMPORTAÇÃO SEGURA (SEM INSTALAÇÃO FORÇADA)
 # -----------------------------------------------------------------------------
-# Tenta importar. Se falhar, instala na hora e reinicia a página.
 try:
     import gspread
     from google.oauth2.service_account import Credentials
-    import pandas as pd
-except ImportError:
-    st.warning("⚠️ Detectada falta de bibliotecas. Instalando automaticamente... (Isso acontece apenas uma vez)")
-    try:
-        # Comando para forçar a instalação interna
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "gspread", "google-auth", "pandas", "requests"])
-        st.success("✅ Instalação concluída! Reiniciando o sistema...")
-        time.sleep(2)
-        st.rerun()
-    except Exception as e:
-        st.error(f"Erro fatal na instalação automática: {e}")
-        st.stop()
-
-# -----------------------------------------------------------------------------
-# 1. IMPORTAÇÕES E CONFIGURAÇÃO
-# -----------------------------------------------------------------------------
-import json
-from datetime import datetime
-import random
-import base64
-import re
+    LIBS_INSTALLED = True
+except ImportError as e:
+    LIBS_INSTALLED = False
+    IMPORT_ERROR = str(e)
 
 st.set_page_config(
     page_title="Arena SpartaJus",
@@ -41,18 +27,17 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. CONSTANTES E ARQUIVOS
+# 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-SHEET_NAME = "SpartaJus_DB" # Usando a planilha original do Mentor
+SHEET_NAME = "SpartaJus_DB"
 
-# Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
 USER_AVATAR_FILE = "fux_concurseiro.png"
 PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
-# 3. FUNÇÕES VISUAIS & UTILITÁRIOS
+# 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
     try:
@@ -119,7 +104,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 4. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
+# 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
 # -----------------------------------------------------------------------------
 DEFAULT_ARENA_DATA = {
     "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
@@ -128,7 +113,7 @@ DEFAULT_ARENA_DATA = {
 }
 
 # -----------------------------------------------------------------------------
-# 5. BASE DE DADOS (OPONENTES)
+# 4. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
@@ -162,7 +147,7 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 6. BASE DE DADOS HIERÁRQUICA (DOCTORE)
+# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE)
 # -----------------------------------------------------------------------------
 DOCTORE_DB = {
     "praetorium": {
@@ -196,10 +181,13 @@ DOCTORE_DB = {
 }
 
 # -----------------------------------------------------------------------------
-# 7. CONEXÃO GOOGLE SHEETS
+# 6. CONEXÃO GOOGLE SHEETS (BLINDADA)
 # -----------------------------------------------------------------------------
 def connect_db():
-    # Verifica Secrets
+    # Se falhou a importação lá em cima, já retorna erro
+    if not LIBS_INSTALLED:
+        return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {IMPORT_ERROR}"
+
     if "gcp_service_account" not in st.secrets:
         return None, "Erro: 'gcp_service_account' não encontrado em st.secrets."
 
@@ -268,7 +256,7 @@ def save_data(row_idx, data):
             pass
 
 # -----------------------------------------------------------------------------
-# 8. APP PRINCIPAL
+# 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
     if 'user_data' not in st.session_state:
@@ -291,13 +279,13 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado")
         
-        # STATUS
+        # STATUS DA CONEXÃO
         if "Online" in st.session_state['status']:
             st.success(st.session_state['status'])
         else:
             st.error(st.session_state['status'])
 
-        # --- GLOBAL ---
+        # --- DESEMPENHO GLOBAL ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
@@ -311,7 +299,7 @@ def main():
         st.markdown(f"**Aproveitamento:** {perc:.1f}%")
         st.progress(perc / 100)
 
-        # --- DIÁRIO ---
+        # --- DESEMPENHO DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
         selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
         daily_stats = calculate_daily_stats(hist, selected_date)
@@ -409,7 +397,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status
+            # Imagem de Status Centralizada (400px)
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -438,17 +426,15 @@ def main():
                             erros_q = max(0, total_q - acertos_q)
                             limit_errors = opp.get('max_erros', 5)
                             limit_time = opp.get('max_tempo', 60)
+                            
                             passou_erros = erros_q <= limit_errors
                             passou_tempo = tempo_min <= limit_time
-                            VITORIA = passou_erros and passou_tempo
                             
-                            # Atualiza dados seguros
-                            if "arena_stats" not in user_data: user_data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"]
+                            VITORIA = passou_erros and passou_tempo
                             
                             user_data['arena_stats']['total_questoes'] += total_q
                             user_data['arena_stats']['total_acertos'] += acertos_q
                             user_data['arena_stats']['total_erros'] += erros_q
-                            
                             user_data['historico_atividades'].append({
                                 "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                                 "tipo": "Batalha",
@@ -489,7 +475,7 @@ def main():
                 """, unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE
+    # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES)
     # -------------------------------------------------------------------------
     with tab_doctore:
         if 'doctore_state' not in st.session_state:
@@ -500,21 +486,32 @@ def main():
         if st.session_state['doctore_state'] == 'selection':
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
+            
             cols = st.columns(2)
+            
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
+                        
                         img_path = master['imagem']
-                        if os.path.exists(img_path): render_centered_image(img_path, width=400)
-                        else: st.warning(f"Imagem {img_path} não encontrada.")
+                        if os.path.exists(img_path):
+                            render_centered_image(img_path, width=400)
+                        else:
+                            if img_path.startswith("http"):
+                                st.image(img_path, use_container_width=True)
+                            else:
+                                st.warning(f"Imagem {img_path} não encontrada.")
+                        
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
+                        
                         if st.button(f"Treinar com {master['nome']}", key=f"sel_{key}"):
                             st.session_state['selected_master'] = key
                             st.session_state['doctore_state'] = 'training'
                             st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
                             st.rerun()
+                            
                         st.markdown("</div>", unsafe_allow_html=True)
 
         elif st.session_state['doctore_state'] == 'training':
@@ -535,6 +532,7 @@ def main():
             if not ds['active']:
                 materias_disponiveis = list(master_data['materias'].keys())
                 nicho = st.selectbox("Escolha a Matéria do Mestre:", materias_disponiveis)
+                
                 c1, c2 = st.columns(2)
                 if c1.button("Iniciar Treino", type="primary", use_container_width=True):
                     qs = master_data['materias'][nicho].copy()
@@ -544,6 +542,7 @@ def main():
             else:
                 q_list = ds['questions']
                 idx = ds['idx']
+                
                 if idx < len(q_list):
                     q = q_list[idx]
                     st.markdown(f"**Modo:** {'REVISÃO' if ds['mode']=='retry' else 'TREINO'} | Q {idx+1}/{len(q_list)}")
@@ -608,3 +607,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+#### 2. Recomendações para Instalação (Cloud)
+O `app.py` não contém mais o "bloco nuclear" de auto-instalação para evitar o crash `exit status 1`.
+Para que o app funcione no **Streamlit Cloud** sem dar erro de biblioteca:
+
+1.  Garanta que o arquivo **`requirements.txt`** esteja na raiz do repositório com exatamente este conteúdo:
+    ```text
+    streamlit
+    pandas
+    gspread
+    google-auth
+    requests
