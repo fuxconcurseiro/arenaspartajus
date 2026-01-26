@@ -189,14 +189,16 @@ OPONENTS_DB = [
     },
     {
         "id": 2,
-        "nome": "Legionário da Lei Seca",
-        "descricao": "A letra da lei é sua espada. Atenção aos detalhes.",
-        "avatar_url": "https://img.icons8.com/color/96/centurion.png",
-        "img_vitoria": "https://img.icons8.com/color/96/trophy.png",
-        "img_derrota": "https://img.icons8.com/color/96/dead-body.png",
-        "link_tec": "https://www.tecconcursos.com.br",
-        "dificuldade": "Intermediário",
-        "max_tempo": 45,
+        "nome": "Beuzebu",
+        "descricao": "A fúria incontrolável. Supere a pressão ou seja chifrado.",
+        # Avatar: touro.jpg
+        "avatar_url": get_avatar_image("touro.jpg", "https://img.icons8.com/color/96/bull.png"),
+        # Consequências (Padrão sugerido: vitoria_touro.jpg / derrota_touro.jpg)
+        "img_vitoria": get_avatar_image("vitoria_touro.jpg", "https://img.icons8.com/color/96/trophy.png"),
+        "img_derrota": get_avatar_image("derrota_touro.jpg", "https://img.icons8.com/color/96/dead-body.png"),
+        "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", # Link Atualizado
+        "dificuldade": "Desafio Inicial",
+        "max_tempo": 30,
         "max_erros": 5
     },
     {
