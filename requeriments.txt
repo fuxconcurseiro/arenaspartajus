@@ -1,7 +1,1 @@
-streamlit
-pandas
-gspread
-google-auth
-oauth2client
-PyOpenSSL
-requests
+streamlit pandas gspread google-auth
