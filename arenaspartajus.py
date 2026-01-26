@@ -31,7 +31,8 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-SHEET_NAME = "SpartaJus_DB"
+# --- ALTERAÇÃO: PLANILHA EXCLUSIVA DO JOGO ---
+SHEET_NAME = "ArenaSpartaJus_DB" 
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -206,12 +207,15 @@ def connect_db():
         sheet = client.open(SHEET_NAME).sheet1
         return sheet, None
 
+    except gspread.exceptions.SpreadsheetNotFound:
+        return None, f"Erro: Planilha '{SHEET_NAME}' não encontrada."
     except Exception as e:
         return None, f"Erro de Conexão: {str(e)}"
 
 def load_data():
     sheet, error_msg = connect_db()
     
+    # Se falhou a conexão, retorna offline mas com estrutura segura
     if not sheet:
         data = DEFAULT_ARENA_DATA.copy()
         return data, None, f"🟠 Offline ({error_msg})"
@@ -239,7 +243,10 @@ def load_data():
             
             return data, cell.row, "🟢 Online (Sincronizado)"
         else:
-            return DEFAULT_ARENA_DATA.copy(), None, "🟠 Offline (Usuário não encontrado)"
+            # Se usuário não existe nesta nova planilha, cria
+            sheet.append_row([TEST_USER, json.dumps(DEFAULT_ARENA_DATA)])
+            new_cell = sheet.find(TEST_USER)
+            return DEFAULT_ARENA_DATA.copy(), new_cell.row, "🟢 Online (Novo)"
             
     except Exception as e:
         return DEFAULT_ARENA_DATA.copy(), None, f"🔴 Erro Leitura: {str(e)}"
