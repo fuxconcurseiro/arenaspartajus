@@ -31,7 +31,7 @@ st.set_page_config(
 # 1. CONSTANTES E ARQUIVOS
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
-SHEET_NAME = "SpartaJus_DB"
+SHEET_NAME = "SpartaJus_DB" 
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -42,7 +42,6 @@ PREPARE_SE_FILE = "prepare-se.jpg"
 # 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
-    """Lê um arquivo de imagem local e converte para base64 para uso em CSS/HTML."""
     try:
         with open(bin_file, 'rb') as f:
             data = f.read()
@@ -51,7 +50,6 @@ def get_base64_of_bin_file(bin_file):
         return None
 
 def render_centered_image(img_path, width=200):
-    """Renderiza uma imagem centralizada usando HTML/CSS."""
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
@@ -66,22 +64,28 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
-    """Filtra o histórico pela data selecionada e soma acertos/erros."""
+    """Filtra o histórico da ARENA pela data selecionada."""
     stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
     
+    if not history: return stats
+
     for activity in history:
-        act_date_str = activity.get('data', '').split(' ')[0]
-        if act_date_str == target_str:
-            result_str = activity.get('resultado', '')
-            match = re.search(r'(\d+)/(\d+)', result_str)
-            if match:
-                acertos = int(match.group(1))
-                total = int(match.group(2))
-                erros = max(0, total - acertos)
-                stats['total'] += total
-                stats['acertos'] += acertos
-                stats['erros'] += erros
+        try:
+            act_date_str = activity.get('data', '').split(' ')[0]
+            if act_date_str == target_str:
+                result_str = activity.get('resultado', '')
+                match = re.search(r'(\d+)/(\d+)', result_str)
+                if match:
+                    acertos = int(match.group(1))
+                    total = int(match.group(2))
+                    erros = max(0, total - acertos)
+                    stats['total'] += total
+                    stats['acertos'] += acertos
+                    stats['erros'] += erros
+        except:
+            continue
+            
     return stats
 
 # ESTILIZAÇÃO GERAL
@@ -110,10 +114,10 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
+# 3. ESTRUTURA DE DADOS (SEPARAÇÃO SEGURA)
 # -----------------------------------------------------------------------------
-DEFAULT_ARENA_DATA = {
-    "arena_stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
+DEFAULT_ARENA_STRUCTURE = {
+    "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
     "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
     "historico_atividades": []
 }
@@ -191,59 +195,47 @@ DOCTORE_DB = {
 # -----------------------------------------------------------------------------
 def connect_db():
     if not LIBS_INSTALLED:
-        return None, f"Erro Crítico: Bibliotecas não instaladas. Detalhe: {IMPORT_ERROR}"
+        return None, f"Erro Crítico: {IMPORT_ERROR}"
 
     if "gcp_service_account" not in st.secrets:
         return None, "Erro: 'gcp_service_account' não encontrado em st.secrets."
 
     try:
-        scope = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive"
-        ]
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds_dict = dict(st.secrets["gcp_service_account"])
         credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(credentials)
         sheet = client.open(SHEET_NAME).sheet1
         return sheet, None
-
     except Exception as e:
-        return None, f"Erro de Conexão: {str(e)}"
+        return None, f"Erro Conexão: {str(e)}"
 
 def load_data():
     sheet, error_msg = connect_db()
     
     if not sheet:
-        data = DEFAULT_ARENA_DATA.copy()
-        return data, None, f"🟠 Offline ({error_msg})"
+        return DEFAULT_ARENA_STRUCTURE.copy(), None, f"🟠 Offline ({error_msg})"
 
     try:
         cell = sheet.find(TEST_USER)
         if cell:
             raw_data = sheet.cell(cell.row, 2).value
-            data = json.loads(raw_data)
+            try:
+                full_user_data = json.loads(raw_data)
+            except:
+                full_user_data = {} # Corrompido
             
-            modified = False
-            if "arena_stats" not in data:
-                data["arena_stats"] = DEFAULT_ARENA_DATA["arena_stats"]
-                modified = True
-            if "progresso_arena" not in data:
-                data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"]
-                modified = True
-            if "historico_atividades" not in data:
-                data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"]
-                modified = True
+            # Garante que arena_v1_data existe
+            if "arena_v1_data" not in full_user_data:
+                full_user_data["arena_v1_data"] = DEFAULT_ARENA_STRUCTURE.copy()
+
+            return full_user_data, cell.row, "🟢 Online (Sincronizado)"
             
-            if modified:
-                try: sheet.update_cell(cell.row, 2, json.dumps(data))
-                except: pass
-            
-            return data, cell.row, "🟢 Online (Sincronizado)"
         else:
-            return DEFAULT_ARENA_DATA.copy(), None, "🟠 Offline (Usuário não encontrado)"
+            return DEFAULT_ARENA_STRUCTURE.copy(), None, "🟠 Offline (Usuário não encontrado)"
             
     except Exception as e:
-        return DEFAULT_ARENA_DATA.copy(), None, f"🔴 Erro Leitura: {str(e)}"
+        return DEFAULT_ARENA_STRUCTURE.copy(), None, f"🔴 Erro Leitura: {str(e)}"
 
 def save_data(row_idx, full_data):
     sheet, _ = connect_db()
@@ -264,9 +256,21 @@ def main():
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
-    # Atalhos
+    # Atalhos e Proteção de Dados (CORREÇÃO DO KEYERROR)
     full_data = st.session_state['full_data']
-    arena_data = full_data.get('arena_v1_data', DEFAULT_ARENA_DATA)
+    
+    # Recupera ou inicializa a parte da Arena
+    arena_data = full_data.get('arena_v1_data', DEFAULT_ARENA_STRUCTURE.copy())
+    
+    # Garante integridade das chaves (se a chave existe mas está vazia ou incompleta)
+    if not isinstance(arena_data, dict): arena_data = DEFAULT_ARENA_STRUCTURE.copy()
+    if "stats" not in arena_data: arena_data["stats"] = DEFAULT_ARENA_STRUCTURE["stats"]
+    if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_STRUCTURE["progresso_arena"]
+    if "historico_atividades" not in arena_data: arena_data["historico_atividades"] = DEFAULT_ARENA_STRUCTURE["historico_atividades"]
+
+    # Atualiza o ponteiro
+    full_data['arena_v1_data'] = arena_data
+    
     stats = arena_data['stats']
     hist = arena_data['historico_atividades']
 
@@ -278,7 +282,6 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado")
         
-        # STATUS DA CONEXÃO
         if "Online" in st.session_state['status']:
             st.success(st.session_state['status'])
         else:
@@ -555,58 +558,29 @@ def main():
                     if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
                     if not st.session_state['doc_revealed']:
                         c_c, c_e = st.columns(2)
-                        
-                        # --- LÓGICA DE ATUALIZAÇÃO IMEDIATA (NO CLIQUE) ---
                         if c_c.button("✅ CERTO", use_container_width=True):
                             st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
-                            
-                            # Atualiza Stats Imediatamente
-                            if q['gabarito'] == "Certo":
-                                arena_data['stats']['total_acertos'] += 1
-                                st.toast("Resposta Correta!", icon="✅")
-                            else:
-                                arena_data['stats']['total_erros'] += 1
-                                if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
-                                st.toast("Resposta Incorreta!", icon="❌")
-                                
-                            arena_data['stats']['total_questoes'] += 1
-                            # Salva DB
-                            full_data['arena_v1_data'] = arena_data
-                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
-
                         if c_e.button("❌ ERRADO", use_container_width=True):
                             st.session_state.update({"doc_choice": "Errado", "doc_revealed": True})
-                            
-                            # Atualiza Stats Imediatamente
-                            if q['gabarito'] == "Errado":
-                                arena_data['stats']['total_acertos'] += 1
-                                st.toast("Resposta Correta!", icon="✅")
-                            else:
-                                arena_data['stats']['total_erros'] += 1
-                                if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
-                                st.toast("Resposta Incorreta!", icon="❌")
-                                
-                            arena_data['stats']['total_questoes'] += 1
-                            # Salva DB
-                            full_data['arena_v1_data'] = arena_data
-                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
-
                     else:
-                        # Mostra o Feedback (Já processado no clique anterior)
                         acertou = (st.session_state['doc_choice'] == q['gabarito'])
-                        
                         if acertou: 
-                            st.success(f"Correto! O gabarito é {q['gabarito']}.")
+                            st.success(f"Correto! {q['gabarito']}")
+                            arena_data['stats']['total_acertos'] += 1
                         else: 
-                            st.error(f"Errou! O gabarito é {q['gabarito']}.")
+                            st.error(f"Errou! É {q['gabarito']}")
+                            arena_data['stats']['total_erros'] += 1
+                            if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
+                        arena_data['stats']['total_questoes'] += 1
                         
                         st.markdown(f"<div class='feedback-box'><b>Justificativa:</b> {q['explicacao']}</div>", unsafe_allow_html=True)
-                        
                         if st.button("Próxima ➡️"):
                             st.session_state['doc_revealed'] = False
                             ds['idx'] += 1
+                            full_data['arena_v1_data'] = arena_data
+                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
                 else:
                     st.success("Treino Finalizado!")
