@@ -6,6 +6,7 @@ from datetime import datetime
 import random
 import os
 import base64
+import re  # Importante para extrair números do histórico
 
 # -----------------------------------------------------------------------------
 # 0. IMPORTAÇÃO SEGURA & SETUP
@@ -29,16 +30,13 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
 
-# Arquivos de Imagem (Certifique-se de que estão no repositório)
-# Capa principal (Banner)
+# Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
-# Avatar do usuário para a barra lateral
 USER_AVATAR_FILE = "fux_concurseiro.png"
-# Imagem de espera
 PREPARE_SE_FILE = "prepare-se.jpg"
 
 # -----------------------------------------------------------------------------
-# 2. FUNÇÕES VISUAIS (BASE64 E CSS)
+# 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
 def get_base64_of_bin_file(bin_file):
     """Lê um arquivo de imagem local e converte para base64 para uso em CSS/HTML."""
@@ -64,6 +62,41 @@ def render_centered_image(img_path, width=200):
     </div>
     """, unsafe_allow_html=True)
 
+def calculate_daily_stats(history, target_date):
+    """
+    Filtra o histórico pela data selecionada e soma acertos/erros.
+    Retorna um dicionário com os totais do dia.
+    """
+    stats = {
+        "total": 0,
+        "acertos": 0,
+        "erros": 0
+    }
+    
+    # Formata a data alvo para string dd/mm/yyyy para comparação
+    target_str = target_date.strftime("%d/%m/%Y")
+    
+    for activity in history:
+        # A data no histórico é salva como "dd/mm/yyyy HH:MM"
+        # Pegamos apenas a primeira parte (data)
+        act_date_str = activity.get('data', '').split(' ')[0]
+        
+        if act_date_str == target_str:
+            # Tenta extrair números do resultado (ex: "Vitória (8/10)" ou "5/10 acertos")
+            result_str = activity.get('resultado', '')
+            match = re.search(r'(\d+)/(\d+)', result_str)
+            
+            if match:
+                acertos = int(match.group(1))
+                total = int(match.group(2))
+                erros = max(0, total - acertos)
+                
+                stats['total'] += total
+                stats['acertos'] += acertos
+                stats['erros'] += erros
+                
+    return stats
+
 # ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
@@ -82,7 +115,7 @@ st.markdown("""
     }
 
     /* INPUTS */
-    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div {
+    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div, .stDateInput > div > div > input {
         background-color: #FFFFFF; color: #333333; border: 1px solid #DEB887;
     }
 
@@ -110,31 +143,16 @@ st.markdown("""
     .battle-card.victory { border-color: #228B22; background-color: #F0FFF0; }
     .battle-card.defeat { border-color: #B22222; background-color: #FFF0F0; }
     
-    /* CARD DO DOCTORE (SELEÇÃO) */
-    .master-card {
-        background-color: #FFF; 
-        border: 4px double #8B4513; 
-        border-radius: 15px; 
-        padding: 20px; 
-        text-align: center;
-        transition: transform 0.2s;
-        margin-bottom: 20px;
-    }
-    .master-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-        border-color: #DAA520;
-    }
-    
     /* ESTATÍSTICAS SIDEBAR */
     .stat-box {
         background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px;
-        padding: 10px; text-align: center; margin-bottom: 10px;
+        padding: 8px; text-align: center; margin-bottom: 8px;
     }
-    .stat-value { font-size: 1.5em; font-weight: bold; color: #8B4513; }
-    .stat-label { font-size: 0.8em; color: #666; text-transform: uppercase; }
+    .stat-value { font-size: 1.3em; font-weight: bold; color: #8B4513; }
+    .stat-label { font-size: 0.75em; color: #666; text-transform: uppercase; }
+    .stat-header { font-size: 1.1em; font-weight: bold; color: #5C4033; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px dashed #8B4513; }
 
-    /* DOCTORE QUESTION CARD */
+    /* DOCTORE CARD */
     .doctore-card {
         background-color: #FFF; border-left: 5px solid #8B4513; padding: 25px;
         border-radius: 5px; font-family: 'Georgia', serif; font-size: 1.2rem;
@@ -387,8 +405,8 @@ def main():
             st.header(f"🏛️ {TEST_USER}")
             st.warning("Avatar não encontrado (fux_concurseiro.png)")
         
-        st.markdown("---")
-        st.markdown("### 📊 Desempenho Global")
+        # --- DESEMPENHO GLOBAL ---
+        st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
@@ -400,6 +418,29 @@ def main():
             perc = 0
         st.markdown(f"**Aproveitamento:** {perc:.1f}%")
         st.progress(perc / 100)
+
+        # --- DESEMPENHO DIÁRIO (NOVO) ---
+        st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
+        
+        # Seletor de data
+        selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
+        
+        # Calcula stats do dia selecionado
+        daily_stats = calculate_daily_stats(user_data['historico_atividades'], selected_date)
+        
+        # Mostra stats do dia
+        d1, d2 = st.columns(2)
+        d1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{daily_stats['acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
+        d2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{daily_stats['erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class='stat-box'><div class='stat-value'>{daily_stats['total']}</div><div class='stat-label'>Total do Dia</div></div>""", unsafe_allow_html=True)
+        
+        # Aproveitamento Diário
+        if daily_stats['total'] > 0:
+            d_perc = (daily_stats['acertos'] / daily_stats['total']) * 100
+        else:
+            d_perc = 0.0
+        st.markdown(f"**Eficiência:** {d_perc:.1f}%")
+        st.progress(d_perc / 100)
         
         st.markdown("---")
         if st.button("Sair"):
