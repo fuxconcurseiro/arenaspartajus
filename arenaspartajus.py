@@ -120,6 +120,75 @@ DEFAULT_ARENA_DATA = {
     "historico_atividades": []
 }
 
+# --- DADOS ORIGINAIS PARA BACKUP (FALLBACK) ---
+DEFAULT_DOCTORE_DB = {
+    "praetorium": {
+        "nome": "Praetorium Legislativus", "descricao": "O Guardião das Leis e do Processo Legislativo.", "imagem": "praetorium.jpg", 
+        "materias": {
+            "Direito Constitucional": {
+                "Organização Político-Administrativa": [
+                     {
+                        "id": 21,
+                        "texto": "Nos termos da Constituição da República, a câmara de vereadores não é competente para apreciar matéria eleitoral nem matéria criminal.",
+                        "gabarito": "Certo",
+                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)"
+                    },
+                    {
+                        "id": 22,
+                        "texto": "A posse do prefeito e do vice-prefeito ocorre no dia 1.º de fevereiro do ano subsequente ao da eleição, coincidindo com o início dos trabalhos do legislativo.",
+                        "gabarito": "Errado",
+                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)<br><br><strong>Texto Original Correto:</strong> A posse do prefeito e do vice-prefeito ocorre no dia 1.º de janeiro do ano subsequente ao da eleição.<br><br><strong>Análise do Erro:</strong> O erro está na alteração da data. A posse do Executivo municipal ocorre em 1.º de janeiro, não em fevereiro."
+                    },
+                    {
+                        "id": 23,
+                        "texto": "No serviço público de interesse local, o serviço de transporte coletivo é competência exclusiva do Estado, cabendo ao município apenas a fiscalização suplementar.",
+                        "gabarito": "Errado",
+                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / SEN<br><br><strong>Texto Original Correto:</strong> No serviço público de interesse local, o serviço de transporte coletivo é competência essencialmente municipal.<br><br><strong>Análise do Erro:</strong> O transporte coletivo municipal é de competência do Município (art. 30, V, CF), e não do Estado."
+                    }
+                ],
+                "Poder Legislativo": [
+                    {
+                        "id": 101, 
+                        "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.", 
+                        "gabarito": "Certo", 
+                        "explicacao": "<strong>Metadados:</strong> Súmula STF"
+                    }
+                ]
+            }
+        }
+    },
+    "enam_criscis": {
+        "nome": "Enam Criscis", "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.", "imagem": "enam-criscis.png",
+        "materias": {
+            "Direitos Humanos": {
+                "Geral": [
+                     {"id": 401, "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Jurisprudência Corte IDH"}
+                ]
+            }
+        }
+    },
+    "parquet_tribunus": {
+        "nome": "Parquet Tribunus", "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.", "imagem": "parquet.jpg",
+        "materias": {
+            "Direito Processual Coletivo": {
+                "Ação Civil Pública": [
+                    {"id": 501, "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema Repetitivo STJ"}
+                ]
+            }
+        }
+    },
+    "noel_autarquicus": {
+        "nome": "Noel Autarquicus", "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.", "imagem": "noel.png",
+        "materias": {
+            "Direito Administrativo": {
+                "Servidores Públicos": [
+                    {"id": 601, "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema 999 STF"}
+                ]
+            }
+        }
+    }
+}
+
 # -----------------------------------------------------------------------------
 # 4. BASE DE DADOS (OPONENTES)
 # -----------------------------------------------------------------------------
@@ -155,36 +224,21 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE) - CARGA JSON
+# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE) - CARGA HÍBRIDA
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
-    """Carrega o arquivo questoes.json ou retorna estrutura básica."""
+    """Tenta carregar JSON. Se falhar, usa o backup hardcoded (DEFAULT_DOCTORE_DB)."""
     if not os.path.exists(QUESTOES_FILE):
-        # Estrutura de fallback para não quebrar a iteração
-        return {
-            "demo_master": {
-                "nome": "Mestre Demo",
-                "descricao": "Base de dados não encontrada (modo de segurança).",
-                "imagem": "demo.png",
-                "materias": {}
-            }
-        }
+        return DEFAULT_DOCTORE_DB # Retorna os dados originais se não houver arquivo
     
     try:
         with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data
-    except Exception as e:
-        # Fallback em caso de JSON corrompido
-        return {
-            "error_master": {
-                "nome": "Erro de Leitura",
-                "descricao": f"Erro ao ler JSON: {str(e)}",
-                "imagem": "error.png",
-                "materias": {}
-            }
-        }
+    except Exception:
+        # Se o JSON estiver corrompido, também retorna os dados originais
+        return DEFAULT_DOCTORE_DB
 
 # Carrega os dados na inicialização
 DOCTORE_DB = load_doctore_data()
@@ -505,7 +559,7 @@ def main():
             
             cols = st.columns(2)
             
-            # Itera sobre o DOCTORE_DB carregado do JSON
+            # Itera sobre o DOCTORE_DB (que agora garantidamente tem dados)
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
