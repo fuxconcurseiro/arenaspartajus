@@ -89,61 +89,73 @@ def calculate_daily_stats(history, target_date):
 # ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
-    /* 1. RESET E FUNDO GLOBAL (Clean Design) */
+    /* 1. RESET E FUNDO GLOBAL */
     .stApp {
         background-color: #F5F4EF;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* 2. TIPOGRAFIA (Cor #9E0000 Global) */
-    h1, h2, h3, h4, h5, h6, p, label, span, div, li, .stMarkdown, .stText {
+    /* 2. HIERARQUIA TIPOGRÁFICA (Ajuste Fino de Cores) */
+    
+    /* Títulos e Negritos: Vermelho Espartano (#9E0000) */
+    h1, h2, h3, h4, h5, h6, strong, b {
         color: #9E0000 !important;
     }
+    
+    /* Corpo do Texto: Chumbo/Grafite (#2e2c2b) para leitura confortável */
+    p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p {
+        color: #2e2c2b !important;
+    }
+    
+    /* Legendas e textos auxiliares */
     .stcaption {
-        color: #9E0000 !important;
-        opacity: 0.7;
+        color: #2e2c2b !important;
+        opacity: 0.8;
     }
 
     /* 3. SIDEBAR (Fundo #E3DFD3) */
     [data-testid="stSidebar"] {
         background-color: #E3DFD3;
-        border-right: 1px solid #E3DFD3;
+        border-right: 1px solid #dcd8cc;
     }
+    /* Elementos da Sidebar herdam a hierarquia acima, mas forçamos títulos */
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
         color: #9E0000 !important;
+    }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
+        color: #2e2c2b !important;
     }
     [data-testid="stSidebar"] hr {
         border-color: #9E0000;
         opacity: 0.2;
     }
 
-    /* 4. BOTÕES (Minimalistas) */
+    /* 4. BOTÕES (Interação Elegante) */
     .stButton > button {
-        background-color: #E3DFD3;
-        color: #9E0000;
-        border: 1px solid #E3DFD3;
+        background-color: #E3DFD3; /* Fundo Bege */
+        color: #9E0000;            /* Texto Vermelho */
+        border: 1px solid #E3DFD3; /* Borda Bege (invisível inicialmente) */
         border-radius: 6px;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        transition: all 0.3s ease;
-        box-shadow: none;
-        padding: 0.5rem 1rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        padding: 0.6rem 1.2rem;
     }
+    
+    /* HOVER STATE: Mantém fundo bege, mas destaca borda e texto */
     .stButton > button:hover {
-        background-color: #9E0000;
-        color: #F5F4EF; /* Texto claro no hover */
-        border-color: #9E0000;
-        transform: translateY(-1px);
+        background-color: #E3DFD3 !important; /* Mantém Bege */
+        color: #9E0000 !important;            /* Texto Vermelho vivo */
+        border: 1px solid #9E0000 !important; /* Borda Vermelha (Inversão elegante da borda) */
+        transform: translateY(-2px);          /* Leve flutuação */
+        box-shadow: 0 4px 6px rgba(158, 0, 0, 0.1);
     }
+    
     .stButton > button:active {
-        background-color: #7A0000;
+        background-color: #dcd8cc;
         transform: translateY(0px);
-    }
-    /* Botões Secundários/Outline se houver necessidade */
-    button[kind="secondary"] {
-        background-color: transparent;
-        border: 1px solid #9E0000;
     }
 
     /* 5. INPUTS E FORMULÁRIOS */
@@ -151,8 +163,8 @@ st.markdown("""
     .stNumberInput > div > div > input,
     .stSelectbox > div > div > div,
     .stDateInput > div > div > input {
-        background-color: #F5F4EF;
-        color: #9E0000;
+        background-color: #FFFFFF; /* Fundo branco para contraste com o app */
+        color: #2e2c2b;
         border: 1px solid #E3DFD3;
         border-radius: 4px;
     }
@@ -160,119 +172,96 @@ st.markdown("""
     .stNumberInput > div > div > input:focus,
     .stSelectbox > div > div > div:focus {
         border-color: #9E0000;
-        box-shadow: none;
-    }
-    /* Cor do texto do placeholder ou dropdown */
-    .stSelectbox div[data-baseweb="select"] span {
-        color: #9E0000;
+        box-shadow: 0 0 0 1px #9E0000;
     }
 
     /* 6. CARDS GERAIS (Battle, Master) */
     .battle-card, .master-card {
-        background-color: #F5F4EF;
+        background-color: #FFFFFF;
         border: 1px solid #E3DFD3;
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
         text-align: center;
-        transition: border-color 0.3s ease;
+        transition: all 0.3s ease;
     }
     .master-card:hover {
         border-color: #9E0000;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(158, 0, 0, 0.05);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
     }
     
     /* Estados Específicos Battle Card */
-    .battle-card.locked {
-        opacity: 0.5;
-        filter: grayscale(100%);
-    }
-    .battle-card.victory {
-        border: 1px solid #9E0000;
-        background-color: rgba(46, 139, 87, 0.05); /* Leve toque verde, mas mantendo a identidade */
-    }
-    .battle-card.defeat {
-        border: 1px solid #9E0000;
-        background-color: rgba(158, 0, 0, 0.05);
-    }
+    .battle-card.locked { opacity: 0.6; filter: grayscale(100%); background-color: #F0F0F0; }
+    .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
+    .battle-card.defeat { border-left: 4px solid #B22222; background-color: #FCFAFA; }
 
-    /* 7. DOCTORE CARD (Questões - Estritamente Formatado) */
+    /* 7. DOCTORE CARD (Questões - Fonte Aumentada) */
     .doctore-card {
-        background-color: #F5F4EF;
-        border: 1px solid #E3DFD3; /* Borda simples e elegante */
-        border-left: 4px solid #9E0000; /* Detalhe lateral para destaque */
-        border-radius: 4px;
-        padding: 30px;
-        margin-bottom: 25px;
+        background-color: #FFFFFF;
+        border: 1px solid #E3DFD3;
+        border-left: 5px solid #9E0000; /* Destaque lateral mais robusto */
+        border-radius: 6px;
+        padding: 35px; /* Mais respiro */
+        margin-bottom: 30px;
         
-        /* Regras de Tipografia da Questão */
+        /* Tipografia da Questão */
         text-align: left !important;
-        font-size: 15px !important;
+        font-size: 18px !important; /* Aumento solicitado */
+        font-weight: 500;
         line-height: 1.6;
-        color: #9E0000;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        color: #2e2c2b !important; /* Texto escuro para leitura */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
     }
 
-    /* 8. ESTATÍSTICAS (Sidebar e Topo) */
+    /* 8. ESTATÍSTICAS */
     .stat-box {
-        background-color: #F5F4EF;
+        background-color: #FFFFFF;
         border: 1px solid #E3DFD3;
         border-radius: 6px;
-        padding: 10px;
+        padding: 12px;
         text-align: center;
         margin-bottom: 10px;
     }
     .stat-value {
-        font-size: 1.4em;
-        font-weight: 700;
-        color: #9E0000;
+        font-size: 1.5em;
+        font-weight: 800;
+        color: #9E0000; /* Valor em vermelho */
     }
     .stat-label {
-        font-size: 0.75em;
-        color: #9E0000;
+        font-size: 0.8em;
+        color: #555; /* Label neutro */
         text-transform: uppercase;
         letter-spacing: 1px;
-        opacity: 0.8;
     }
     .stat-header {
-        font-size: 1em;
+        font-size: 1.1em;
         font-weight: bold;
         color: #9E0000;
-        margin-top: 15px;
-        margin-bottom: 10px;
+        margin-top: 20px;
+        margin-bottom: 15px;
         border-bottom: 1px solid #E3DFD3;
         padding-bottom: 5px;
     }
 
-    /* 9. FEEDBACK E ELEMENTOS EXTRAS */
+    /* 9. FEEDBACK E EXTRAS */
     .feedback-box {
-        background-color: #F5F4EF;
-        padding: 15px;
+        background-color: #Fdfdfd;
+        padding: 20px;
         border-radius: 4px;
-        margin-top: 15px;
+        margin-top: 20px;
         border: 1px solid #E3DFD3;
         text-align: left;
+        font-size: 16px;
+        color: #2e2c2b !important;
     }
     
-    /* Barras de Progresso */
-    .stProgress > div > div > div > div {
-        background-color: #9E0000;
-    }
+    /* Tabs Customizadas */
+    .stTabs [data-baseweb="tab-list"] { border-bottom-color: #E3DFD3; }
+    .stTabs [data-baseweb="tab"] { color: #555; }
+    .stTabs [aria-selected="true"] { color: #9E0000; border-bottom-color: #9E0000; font-weight: bold;}
     
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        border-bottom-color: #E3DFD3;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: #9E0000;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #9E0000;
-        border-bottom-color: #9E0000;
-    }
-    
-    /* Hero Image Container */
+    /* Hero */
     .full-width-hero {
         background-color: #F5F4EF !important;
         border-bottom: 1px solid #E3DFD3 !important;
@@ -897,4 +886,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
