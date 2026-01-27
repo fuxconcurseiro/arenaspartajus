@@ -89,25 +89,194 @@ def calculate_daily_stats(history, target_date):
 # ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
-    .stApp { background-color: #FFFFF0; color: #333333; }
-    .stMarkdown, .stText, p, label, .stDataFrame, .stExpander { color: #4A4A4A !important; }
-    h1, h2, h3 { color: #8B4513 !important; font-family: 'Georgia', serif; text-shadow: none; }
-    [data-testid="stSidebar"] { background-color: #FFDEAD; border-right: 2px solid #DEB887; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #5C4033 !important; }
-    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div, .stDateInput > div > div > input { background-color: #FFFFFF; color: #333333; border: 1px solid #DEB887; }
-    .stButton>button { background-color: #FFDEAD; color: #5C4033; border: 1px solid #8B4513; border-radius: 6px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.3s; }
-    .stButton>button:hover { background-color: #FFE4C4; color: #000000; border-color: #A0522D; transform: scale(1.02); }
-    .battle-card { background-color: #FFF8DC; border: 2px solid #DAA520; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
-    .battle-card.locked { filter: grayscale(100%); opacity: 0.6; border-color: #555; }
-    .battle-card.victory { border-color: #228B22; background-color: #F0FFF0; }
-    .battle-card.defeat { border-color: #B22222; background-color: #FFF0F0; }
-    .stat-box { background-color: #FFFFFF; border: 1px solid #DEB887; border-radius: 8px; padding: 8px; text-align: center; margin-bottom: 8px; }
-    .stat-value { font-size: 1.3em; font-weight: bold; color: #8B4513; }
-    .stat-label { font-size: 0.75em; color: #666; text-transform: uppercase; }
-    .stat-header { font-size: 1.1em; font-weight: bold; color: #5C4033; margin-top: 15px; margin-bottom: 10px; border-bottom: 1px dashed #8B4513; }
-    .doctore-card, .master-card { background-color: #FFF; border: 4px double #8B4513; border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
-    .master-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); border-color: #DAA520; }
-    .feedback-box { padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #ddd; }
+    /* 1. RESET E FUNDO GLOBAL (Clean Design) */
+    .stApp {
+        background-color: #F5F4EF;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    /* 2. TIPOGRAFIA (Cor #9E0000 Global) */
+    h1, h2, h3, h4, h5, h6, p, label, span, div, li, .stMarkdown, .stText {
+        color: #9E0000 !important;
+    }
+    .stcaption {
+        color: #9E0000 !important;
+        opacity: 0.7;
+    }
+
+    /* 3. SIDEBAR (Fundo #E3DFD3) */
+    [data-testid="stSidebar"] {
+        background-color: #E3DFD3;
+        border-right: 1px solid #E3DFD3;
+    }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #9E0000 !important;
+    }
+    [data-testid="stSidebar"] hr {
+        border-color: #9E0000;
+        opacity: 0.2;
+    }
+
+    /* 4. BOTÕES (Minimalistas) */
+    .stButton > button {
+        background-color: #E3DFD3;
+        color: #9E0000;
+        border: 1px solid #E3DFD3;
+        border-radius: 6px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: none;
+        padding: 0.5rem 1rem;
+    }
+    .stButton > button:hover {
+        background-color: #9E0000;
+        color: #F5F4EF; /* Texto claro no hover */
+        border-color: #9E0000;
+        transform: translateY(-1px);
+    }
+    .stButton > button:active {
+        background-color: #7A0000;
+        transform: translateY(0px);
+    }
+    /* Botões Secundários/Outline se houver necessidade */
+    button[kind="secondary"] {
+        background-color: transparent;
+        border: 1px solid #9E0000;
+    }
+
+    /* 5. INPUTS E FORMULÁRIOS */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stSelectbox > div > div > div,
+    .stDateInput > div > div > input {
+        background-color: #F5F4EF;
+        color: #9E0000;
+        border: 1px solid #E3DFD3;
+        border-radius: 4px;
+    }
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus,
+    .stSelectbox > div > div > div:focus {
+        border-color: #9E0000;
+        box-shadow: none;
+    }
+    /* Cor do texto do placeholder ou dropdown */
+    .stSelectbox div[data-baseweb="select"] span {
+        color: #9E0000;
+    }
+
+    /* 6. CARDS GERAIS (Battle, Master) */
+    .battle-card, .master-card {
+        background-color: #F5F4EF;
+        border: 1px solid #E3DFD3;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        transition: border-color 0.3s ease;
+    }
+    .master-card:hover {
+        border-color: #9E0000;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(158, 0, 0, 0.05);
+    }
+    
+    /* Estados Específicos Battle Card */
+    .battle-card.locked {
+        opacity: 0.5;
+        filter: grayscale(100%);
+    }
+    .battle-card.victory {
+        border: 1px solid #9E0000;
+        background-color: rgba(46, 139, 87, 0.05); /* Leve toque verde, mas mantendo a identidade */
+    }
+    .battle-card.defeat {
+        border: 1px solid #9E0000;
+        background-color: rgba(158, 0, 0, 0.05);
+    }
+
+    /* 7. DOCTORE CARD (Questões - Estritamente Formatado) */
+    .doctore-card {
+        background-color: #F5F4EF;
+        border: 1px solid #E3DFD3; /* Borda simples e elegante */
+        border-left: 4px solid #9E0000; /* Detalhe lateral para destaque */
+        border-radius: 4px;
+        padding: 30px;
+        margin-bottom: 25px;
+        
+        /* Regras de Tipografia da Questão */
+        text-align: left !important;
+        font-size: 15px !important;
+        line-height: 1.6;
+        color: #9E0000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+    /* 8. ESTATÍSTICAS (Sidebar e Topo) */
+    .stat-box {
+        background-color: #F5F4EF;
+        border: 1px solid #E3DFD3;
+        border-radius: 6px;
+        padding: 10px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .stat-value {
+        font-size: 1.4em;
+        font-weight: 700;
+        color: #9E0000;
+    }
+    .stat-label {
+        font-size: 0.75em;
+        color: #9E0000;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.8;
+    }
+    .stat-header {
+        font-size: 1em;
+        font-weight: bold;
+        color: #9E0000;
+        margin-top: 15px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #E3DFD3;
+        padding-bottom: 5px;
+    }
+
+    /* 9. FEEDBACK E ELEMENTOS EXTRAS */
+    .feedback-box {
+        background-color: #F5F4EF;
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 15px;
+        border: 1px solid #E3DFD3;
+        text-align: left;
+    }
+    
+    /* Barras de Progresso */
+    .stProgress > div > div > div > div {
+        background-color: #9E0000;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        border-bottom-color: #E3DFD3;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #9E0000;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #9E0000;
+        border-bottom-color: #9E0000;
+    }
+    
+    /* Hero Image Container */
+    .full-width-hero {
+        background-color: #F5F4EF !important;
+        border-bottom: 1px solid #E3DFD3 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -728,3 +897,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
