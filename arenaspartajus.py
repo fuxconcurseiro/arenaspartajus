@@ -207,7 +207,7 @@ st.markdown("""
         
         /* Tipografia da Questão */
         text-align: left !important;
-        font-size: 18px !important; /* Aumento solicitado */
+        font-size: 22px !important; /* Aumento solicitado */
         font-weight: 500;
         line-height: 1.6;
         color: #2e2c2b !important; /* Texto escuro para leitura */
@@ -886,5 +886,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
