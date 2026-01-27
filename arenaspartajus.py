@@ -32,6 +32,7 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 TEST_USER = "fux_concurseiro"
 SHEET_NAME = "SpartaJus_DB"
+QUESTOES_FILE = "questoes.json"
 
 # Arquivos de Imagem
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
@@ -154,75 +155,39 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE)
+# 5. BASE DE DADOS HIERÁRQUICA (DOCTORE) - CARGA JSON
 # -----------------------------------------------------------------------------
-DOCTORE_DB = {
-    "praetorium": {
-        "nome": "Praetorium Legislativus", "descricao": "O Guardião das Leis e do Processo Legislativo.", "imagem": "praetorium.jpg", 
-        "materias": {
-            "Direito Constitucional": {
-                "Organização Político-Administrativa": [
-                     {
-                        "id": 21,
-                        "texto": "Nos termos da Constituição da República, a câmara de vereadores não é competente para apreciar matéria eleitoral nem matéria criminal.",
-                        "gabarito": "Certo",
-                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)"
-                    },
-                    {
-                        "id": 22,
-                        "texto": "A posse do prefeito e do vice-prefeito ocorre no dia 1.º de fevereiro do ano subsequente ao da eleição, coincidindo com o início dos trabalhos do legislativo.",
-                        "gabarito": "Errado",
-                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)<br><br><strong>Texto Original Correto:</strong> A posse do prefeito e do vice-prefeito ocorre no dia 1.º de janeiro do ano subsequente ao da eleição.<br><br><strong>Análise do Erro:</strong> O erro está na alteração da data. A posse do Executivo municipal ocorre em 1.º de janeiro, não em fevereiro."
-                    },
-                    {
-                        "id": 23,
-                        "texto": "No serviço público de interesse local, o serviço de transporte coletivo é competência exclusiva do Estado, cabendo ao município apenas a fiscalização suplementar.",
-                        "gabarito": "Errado",
-                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / SEN<br><br><strong>Texto Original Correto:</strong> No serviço público de interesse local, o serviço de transporte coletivo é competência essencialmente municipal.<br><br><strong>Análise do Erro:</strong> O transporte coletivo municipal é de competência do Município (art. 30, V, CF), e não do Estado."
-                    }
-                ],
-                "Poder Legislativo": [
-                    {
-                        "id": 101, 
-                        "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.", 
-                        "gabarito": "Certo", 
-                        "explicacao": "<strong>Metadados:</strong> Súmula STF"
-                    }
-                ]
+@st.cache_data
+def load_doctore_data():
+    """Carrega o arquivo questoes.json ou retorna estrutura básica."""
+    if not os.path.exists(QUESTOES_FILE):
+        # Estrutura de fallback para não quebrar a iteração
+        return {
+            "demo_master": {
+                "nome": "Mestre Demo",
+                "descricao": "Base de dados não encontrada (modo de segurança).",
+                "imagem": "demo.png",
+                "materias": {}
             }
         }
-    },
-    "enam_criscis": {
-        "nome": "Enam Criscis", "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.", "imagem": "enam-criscis.png",
-        "materias": {
-            "Direitos Humanos": {
-                "Geral": [
-                     {"id": 401, "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Jurisprudência Corte IDH"}
-                ]
+    
+    try:
+        with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        # Fallback em caso de JSON corrompido
+        return {
+            "error_master": {
+                "nome": "Erro de Leitura",
+                "descricao": f"Erro ao ler JSON: {str(e)}",
+                "imagem": "error.png",
+                "materias": {}
             }
         }
-    },
-    "parquet_tribunus": {
-        "nome": "Parquet Tribunus", "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.", "imagem": "parquet.jpg",
-        "materias": {
-            "Direito Processual Coletivo": {
-                "Ação Civil Pública": [
-                    {"id": 501, "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema Repetitivo STJ"}
-                ]
-            }
-        }
-    },
-    "noel_autarquicus": {
-        "nome": "Noel Autarquicus", "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.", "imagem": "noel.png",
-        "materias": {
-            "Direito Administrativo": {
-                "Servidores Públicos": [
-                    {"id": 601, "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema 999 STF"}
-                ]
-            }
-        }
-    }
-}
+
+# Carrega os dados na inicialização
+DOCTORE_DB = load_doctore_data()
 
 # -----------------------------------------------------------------------------
 # 6. CONEXÃO GOOGLE SHEETS (BLINDADA)
@@ -405,7 +370,7 @@ def main():
     tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
-    # TAB 1: BATALHA
+    # TAB 1: BATALHA (LÓGICA PRESERVADA)
     # -------------------------------------------------------------------------
     with tab_batalha:
         st.markdown("### 🗺️ A Jornada do Gladiador")
@@ -442,7 +407,6 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status Centralizada (400px)
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -477,7 +441,7 @@ def main():
                             
                             VITORIA = passou_erros and passou_tempo
                             
-                            # Atualiza a estrutura Arena com a chave correta
+                            # Atualiza a estrutura Arena
                             stats['total_questoes'] += total_q
                             stats['total_acertos'] += acertos_q
                             stats['total_erros'] += erros_q
@@ -506,7 +470,7 @@ def main():
                                 if not passou_tempo: motivos.append(f"Levou {tempo_min} min (Máx: {limit_time})")
                                 st.error(f"DERROTA. Motivo: {', '.join(motivos)}.")
                             
-                            # Salva e reatribui para garantir persistência
+                            # Persistência
                             arena_data['stats'] = stats
                             arena_data['historico_atividades'] = hist
                             full_data['arena_v1_data'] = arena_data
@@ -516,7 +480,6 @@ def main():
                             del st.session_state['active_battle_id']
                             st.rerun()
 
-            # Conector Discreto
             if opp['id'] < len(OPONENTS_DB):
                 st.markdown("""
                 <div style="display:flex; justify-content:center; align-items:center; margin: 15px 0;">
@@ -527,7 +490,7 @@ def main():
                 """, unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE (O PANTEÃO DOS MESTRES)
+    # TAB 2: DOCTORE (REFATORADA)
     # -------------------------------------------------------------------------
     with tab_doctore:
         if 'doctore_state' not in st.session_state:
@@ -535,25 +498,27 @@ def main():
         if 'selected_master' not in st.session_state:
             st.session_state['selected_master'] = None
 
+        # --- TELA DE SELEÇÃO ---
         if st.session_state['doctore_state'] == 'selection':
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             
             cols = st.columns(2)
             
+            # Itera sobre o DOCTORE_DB carregado do JSON
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
                         
-                        img_path = master['imagem']
+                        img_path = master.get('imagem', '')
                         if os.path.exists(img_path):
                             render_centered_image(img_path, width=400)
                         else:
                             if img_path.startswith("http"):
                                 st.image(img_path, use_container_width=True)
                             else:
-                                st.warning(f"Imagem {img_path} não encontrada.")
+                                st.warning(f"Mestre {master['nome']}")
                         
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
@@ -566,9 +531,16 @@ def main():
                             
                         st.markdown("</div>", unsafe_allow_html=True)
 
+        # --- TELA DE TREINAMENTO ---
         elif st.session_state['doctore_state'] == 'training':
             master_key = st.session_state['selected_master']
-            master_data = DOCTORE_DB[master_key]
+            # Fallback seguro caso o JSON mude e a chave em sessão fique inválida
+            master_data = DOCTORE_DB.get(master_key)
+            
+            if not master_data:
+                st.error("Mestre não encontrado. Retornando ao panteão.")
+                st.session_state['doctore_state'] = 'selection'
+                st.rerun()
             
             if st.button("🔙 Voltar ao Panteão", type="secondary"):
                 st.session_state['doctore_state'] = 'selection'
@@ -581,25 +553,32 @@ def main():
                 st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
             ds = st.session_state['doctore_session']
 
+            # Configuração do Treino (Filtros)
             if not ds['active']:
-                # SELETOR DE MATÉRIA
                 materias_disponiveis = list(master_data['materias'].keys())
-                nicho = st.selectbox("1. Escolha a Matéria:", materias_disponiveis)
                 
-                # SELETOR DE ASSUNTO (Dependente da Matéria)
-                assuntos_disponiveis = list(master_data['materias'][nicho].keys())
-                sub_nicho = st.selectbox("2. Escolha o Assunto:", assuntos_disponiveis)
-                
-                c1, c2 = st.columns(2)
-                if c1.button("Iniciar Treino", type="primary", use_container_width=True):
-                    # Carrega as questões do Assunto específico
-                    qs = master_data['materias'][nicho][sub_nicho].copy()
-                    random.shuffle(qs)
-                    ds.update({"questions": qs, "idx": 0, "active": True, "wrong_ids": [], "mode": "normal"})
-                    st.rerun()
+                if not materias_disponiveis:
+                     st.warning("Este mestre ainda não possui matérias cadastradas.")
+                else:
+                    nicho = st.selectbox("1. Escolha a Matéria:", materias_disponiveis)
+                    
+                    # SELETOR DE ASSUNTO (Dependente da Matéria)
+                    assuntos_disponiveis = list(master_data['materias'][nicho].keys())
+                    sub_nicho = st.selectbox("2. Escolha o Assunto:", assuntos_disponiveis)
+                    
+                    c1, c2 = st.columns(2)
+                    if c1.button("Iniciar Treino", type="primary", use_container_width=True):
+                        # Carrega as questões do Assunto específico
+                        qs = master_data['materias'][nicho][sub_nicho].copy()
+                        random.shuffle(qs)
+                        ds.update({"questions": qs, "idx": 0, "active": True, "wrong_ids": [], "mode": "normal"})
+                        st.rerun()
+            
+            # Execução do Treino (Quiz)
             else:
                 q_list = ds['questions']
                 idx = ds['idx']
+                
                 if idx < len(q_list):
                     q = q_list[idx]
                     st.markdown(f"**Modo:** {'REVISÃO' if ds['mode']=='retry' else 'TREINO'} | Q {idx+1}/{len(q_list)}")
@@ -607,44 +586,43 @@ def main():
                     st.markdown(f"<div class='doctore-card'>{q['texto']}</div>", unsafe_allow_html=True)
                     
                     if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
+                    
+                    # --- ÁREA DE INTERAÇÃO ---
                     if not st.session_state['doc_revealed']:
                         c_c, c_e = st.columns(2)
                         
-                        # Lógica de Clique com Atualização Imediata
-                        if c_c.button("✅ CERTO", use_container_width=True):
-                            st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
+                        # Função auxiliar para processar a resposta e salvar IMEDIATAMENTE
+                        def process_answer(choice_text):
+                            st.session_state['doc_choice'] = choice_text
+                            st.session_state['doc_revealed'] = True
                             
-                            if q['gabarito'] == "Certo":
+                            is_correct = (choice_text == q['gabarito'])
+                            
+                            # Atualiza Stats Locais
+                            stats['total_questoes'] += 1
+                            if is_correct:
                                 stats['total_acertos'] += 1
-                                st.toast("Resposta Correta!", icon="✅")
                             else:
                                 stats['total_erros'] += 1
                                 if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
-                                st.toast("Resposta Incorreta!", icon="❌")
-                                
-                            stats['total_questoes'] += 1
+                            
+                            # Atualiza Sessão Global e Persiste no Google Sheets
                             arena_data['stats'] = stats
                             full_data['arena_v1_data'] = arena_data
+                            
+                            # Salva imediatamente para não perder dados se o usuário sair
                             save_data(st.session_state['row_idx'], full_data)
+
+                        if c_c.button("✅ CERTO", use_container_width=True):
+                            process_answer("Certo")
                             st.rerun()
 
                         if c_e.button("❌ ERRADO", use_container_width=True):
-                            st.session_state.update({"doc_choice": "Errado", "doc_revealed": True})
-                            
-                            if q['gabarito'] == "Errado":
-                                stats['total_acertos'] += 1
-                                st.toast("Resposta Correta!", icon="✅")
-                            else:
-                                stats['total_erros'] += 1
-                                if q not in ds['wrong_ids']: ds['wrong_ids'].append(q)
-                                st.toast("Resposta Incorreta!", icon="❌")
-                                
-                            stats['total_questoes'] += 1
-                            arena_data['stats'] = stats
-                            full_data['arena_v1_data'] = arena_data
-                            save_data(st.session_state['row_idx'], full_data)
+                            process_answer("Errado")
                             st.rerun()
+                            
                     else:
+                        # Exibição do Gabarito e Explicação
                         acertou = (st.session_state['doc_choice'] == q['gabarito'])
                         if acertou: 
                             st.success(f"Correto! O gabarito é {q['gabarito']}.")
@@ -652,14 +630,18 @@ def main():
                             st.error(f"Errou! O gabarito é {q['gabarito']}.")
                         
                         st.markdown(f"<div class='feedback-box'>{q['explicacao']}</div>", unsafe_allow_html=True)
+                        
                         if st.button("Próxima ➡️"):
                             st.session_state['doc_revealed'] = False
                             ds['idx'] += 1
                             st.rerun()
                 else:
+                    # Fim do Treino
                     st.success("Treino Finalizado!")
                     st.write(f"Erros na rodada: {len(ds['wrong_ids'])}")
                     
+                    # Registra histórico apenas ao final do bloco (opcional, já que stats globais já foram salvos)
+                    # Mas é bom para o gráfico de atividades
                     hist.append({
                         "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                         "tipo": "Doctore",
