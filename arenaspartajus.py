@@ -65,18 +65,13 @@ def render_centered_image(img_path, width=200):
     """, unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
-    """Filtra o histórico da ARENA pela data selecionada."""
+    """Filtra o histórico pela data selecionada e soma acertos/erros."""
     stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
-    
-    if not history: return stats
-
     for activity in history:
         try:
-            # Pega apenas a data (ignorando hora)
             act_date_str = activity.get('data', '').split(' ')[0]
             if act_date_str == target_str:
-                # Tenta extrair números do resultado (ex: "Vitória (8/10)")
                 result_str = activity.get('resultado', '')
                 match = re.search(r'(\d+)/(\d+)', result_str)
                 if match:
@@ -118,7 +113,6 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 # 3. CONFIGURAÇÃO DE DADOS (MERGE SEGURO)
 # -----------------------------------------------------------------------------
-# CORREÇÃO: Usando a chave "stats" consistentemente
 DEFAULT_ARENA_DATA = {
     "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
     "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
@@ -166,29 +160,66 @@ DOCTORE_DB = {
     "praetorium": {
         "nome": "Praetorium Legislativus", "descricao": "O Guardião das Leis e do Processo Legislativo.", "imagem": "praetorium.jpg", 
         "materias": {
-            "Direito Constitucional": [{"id": 101, "texto": "Segundo o STF, é inconstitucional lei estadual que determina fornecimento de dados cadastrais sem autorização judicial.", "gabarito": "Certo", "origem": "ADI 7777/DF", "explicacao": "Viola a cláusula de reserva de jurisdição."}, {"id": 102, "texto": "Normas de eficácia limitada possuem aplicabilidade imediata e integral.", "gabarito": "Errado", "origem": "MPE/GO 2022", "explicacao": "Possuem aplicabilidade mediata e reduzida."}],
-            "Processo Legislativo": [{"id": 301, "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.", "gabarito": "Certo", "origem": "Súmula STF", "explicacao": "O vício de iniciativa é insanável."}]
+            "Direito Constitucional": {
+                "Organização Político-Administrativa": [
+                     {
+                        "id": 21,
+                        "texto": "Nos termos da Constituição da República, a câmara de vereadores não é competente para apreciar matéria eleitoral nem matéria criminal.",
+                        "gabarito": "Certo",
+                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)"
+                    },
+                    {
+                        "id": 22,
+                        "texto": "A posse do prefeito e do vice-prefeito ocorre no dia 1.º de fevereiro do ano subsequente ao da eleição, coincidindo com o início dos trabalhos do legislativo.",
+                        "gabarito": "Errado",
+                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)<br><br><strong>Texto Original Correto:</strong> A posse do prefeito e do vice-prefeito ocorre no dia 1.º de janeiro do ano subsequente ao da eleição.<br><br><strong>Análise do Erro:</strong> O erro está na alteração da data. A posse do Executivo municipal ocorre em 1.º de janeiro, não em fevereiro."
+                    },
+                    {
+                        "id": 23,
+                        "texto": "No serviço público de interesse local, o serviço de transporte coletivo é competência exclusiva do Estado, cabendo ao município apenas a fiscalização suplementar.",
+                        "gabarito": "Errado",
+                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / SEN<br><br><strong>Texto Original Correto:</strong> No serviço público de interesse local, o serviço de transporte coletivo é competência essencialmente municipal.<br><br><strong>Análise do Erro:</strong> O transporte coletivo municipal é de competência do Município (art. 30, V, CF), e não do Estado."
+                    }
+                ],
+                "Poder Legislativo": [
+                    {
+                        "id": 101, 
+                        "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.", 
+                        "gabarito": "Certo", 
+                        "explicacao": "<strong>Metadados:</strong> Súmula STF"
+                    }
+                ]
+            }
         }
     },
     "enam_criscis": {
         "nome": "Enam Criscis", "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.", "imagem": "enam-criscis.png",
         "materias": {
-            "Direitos Humanos": [{"id": 401, "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.", "gabarito": "Certo", "origem": "Jurisprudência Corte IDH", "explicacao": "O controle de convencionalidade é dever do Judiciário nacional."}],
-            "Direito Administrativo": [{"id": 402, "texto": "A responsabilidade civil do Estado por atos omissivos é, em regra, objetiva.", "gabarito": "Errado", "origem": "Doutrina Majoritária", "explicacao": "Omissão gera responsabilidade subjetiva."}]
+            "Direitos Humanos": {
+                "Geral": [
+                     {"id": 401, "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Jurisprudência Corte IDH"}
+                ]
+            }
         }
     },
     "parquet_tribunus": {
         "nome": "Parquet Tribunus", "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.", "imagem": "parquet.jpg",
         "materias": {
-            "Direito Processual Coletivo": [{"id": 501, "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.", "gabarito": "Certo", "origem": "Tema Repetitivo STJ", "explicacao": "Relevância social legitima atuação do MP."}],
-            "Direito Penal": [{"id": 502, "texto": "Na ação penal pública condicionada, a representação do ofendido é condição de procedibilidade, mas pode ser retratada até o oferecimento da denúncia.", "gabarito": "Certo", "origem": "Art. 25 CPP", "explicacao": "Retratação possível até o oferecimento."}]
+            "Direito Processual Coletivo": {
+                "Ação Civil Pública": [
+                    {"id": 501, "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema Repetitivo STJ"}
+                ]
+            }
         }
     },
     "noel_autarquicus": {
         "nome": "Noel Autarquicus", "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.", "imagem": "noel.png",
         "materias": {
-            "Direito Administrativo": [{"id": 601, "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.", "gabarito": "Certo", "origem": "Tema 999 STF", "explicacao": "Exigência válida se prevista em lei."}],
-            "Legislação Municipal": [{"id": 602, "texto": "Compete aos Municípios legislar sobre assuntos de interesse local, inclusive horário de funcionamento de estabelecimento comercial.", "gabarito": "Certo", "origem": "Súmula Vinculante 38", "explicacao": "Competência municipal."}]
+            "Direito Administrativo": {
+                "Servidores Públicos": [
+                    {"id": 601, "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema 999 STF"}
+                ]
+            }
         }
     }
 }
@@ -221,8 +252,8 @@ def load_data():
     sheet, error_msg = connect_db()
     
     if not sheet:
-        # CORREÇÃO DO NAME ERROR AQUI: Usando DEFAULT_ARENA_DATA
-        return DEFAULT_ARENA_DATA.copy(), None, f"🟠 Offline ({error_msg})"
+        data = DEFAULT_ARENA_DATA.copy()
+        return data, None, f"🟠 Offline ({error_msg})"
 
     try:
         cell = sheet.find(TEST_USER)
@@ -240,11 +271,9 @@ def load_data():
             return full_user_data, cell.row, "🟢 Online (Sincronizado)"
             
         else:
-            # CORREÇÃO DO NAME ERROR AQUI TAMBÉM
             return DEFAULT_ARENA_DATA.copy(), None, "🟠 Offline (Usuário não encontrado)"
             
     except Exception as e:
-        # CORREÇÃO DO NAME ERROR AQUI TAMBÉM
         return DEFAULT_ARENA_DATA.copy(), None, f"🔴 Erro Leitura: {str(e)}"
 
 def save_data(row_idx, full_data):
@@ -278,9 +307,7 @@ def main():
     if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"].copy()
     if "historico_atividades" not in arena_data: arena_data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"].copy()
 
-    # Atualiza o ponteiro
     full_data['arena_v1_data'] = arena_data
-    
     stats = arena_data['stats']
     hist = arena_data['historico_atividades']
 
@@ -375,7 +402,7 @@ def main():
         """, unsafe_allow_html=True)
 
     # --- TABS ---
-    tab_batalha, tab_doctore, tab_historico = st.tabs(["🏛️ Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
+    tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
     # TAB 1: BATALHA
@@ -415,7 +442,7 @@ def main():
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Imagem de Status
+            # Imagem de Status Centralizada (400px)
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -511,21 +538,32 @@ def main():
         if st.session_state['doctore_state'] == 'selection':
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
+            
             cols = st.columns(2)
+            
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown(f"<div class='master-card'>", unsafe_allow_html=True)
+                        
                         img_path = master['imagem']
-                        if os.path.exists(img_path): render_centered_image(img_path, width=400)
-                        else: st.warning(f"Imagem {img_path} não encontrada.")
+                        if os.path.exists(img_path):
+                            render_centered_image(img_path, width=400)
+                        else:
+                            if img_path.startswith("http"):
+                                st.image(img_path, use_container_width=True)
+                            else:
+                                st.warning(f"Imagem {img_path} não encontrada.")
+                        
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
+                        
                         if st.button(f"Treinar com {master['nome']}", key=f"sel_{key}"):
                             st.session_state['selected_master'] = key
                             st.session_state['doctore_state'] = 'training'
                             st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0, "wrong_ids": [], "mode": "normal"}
                             st.rerun()
+                            
                         st.markdown("</div>", unsafe_allow_html=True)
 
         elif st.session_state['doctore_state'] == 'training':
@@ -544,11 +582,18 @@ def main():
             ds = st.session_state['doctore_session']
 
             if not ds['active']:
+                # SELETOR DE MATÉRIA
                 materias_disponiveis = list(master_data['materias'].keys())
-                nicho = st.selectbox("Escolha a Matéria do Mestre:", materias_disponiveis)
+                nicho = st.selectbox("1. Escolha a Matéria:", materias_disponiveis)
+                
+                # SELETOR DE ASSUNTO (Dependente da Matéria)
+                assuntos_disponiveis = list(master_data['materias'][nicho].keys())
+                sub_nicho = st.selectbox("2. Escolha o Assunto:", assuntos_disponiveis)
+                
                 c1, c2 = st.columns(2)
                 if c1.button("Iniciar Treino", type="primary", use_container_width=True):
-                    qs = master_data['materias'][nicho].copy()
+                    # Carrega as questões do Assunto específico
+                    qs = master_data['materias'][nicho][sub_nicho].copy()
                     random.shuffle(qs)
                     ds.update({"questions": qs, "idx": 0, "active": True, "wrong_ids": [], "mode": "normal"})
                     st.rerun()
@@ -564,6 +609,8 @@ def main():
                     if 'doc_revealed' not in st.session_state: st.session_state['doc_revealed'] = False
                     if not st.session_state['doc_revealed']:
                         c_c, c_e = st.columns(2)
+                        
+                        # Lógica de Clique com Atualização Imediata
                         if c_c.button("✅ CERTO", use_container_width=True):
                             st.session_state.update({"doc_choice": "Certo", "doc_revealed": True})
                             
@@ -576,8 +623,7 @@ def main():
                                 st.toast("Resposta Incorreta!", icon="❌")
                                 
                             stats['total_questoes'] += 1
-                            
-                            arena_data['stats'] = stats # Garante persistência
+                            arena_data['stats'] = stats
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
@@ -594,7 +640,6 @@ def main():
                                 st.toast("Resposta Incorreta!", icon="❌")
                                 
                             stats['total_questoes'] += 1
-                            
                             arena_data['stats'] = stats
                             full_data['arena_v1_data'] = arena_data
                             save_data(st.session_state['row_idx'], full_data)
@@ -606,11 +651,10 @@ def main():
                         else: 
                             st.error(f"Errou! O gabarito é {q['gabarito']}.")
                         
-                        st.markdown(f"<div class='feedback-box'><b>Justificativa:</b> {q['explicacao']}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='feedback-box'>{q['explicacao']}</div>", unsafe_allow_html=True)
                         if st.button("Próxima ➡️"):
                             st.session_state['doc_revealed'] = False
                             ds['idx'] += 1
-                            save_data(st.session_state['row_idx'], full_data)
                             st.rerun()
                 else:
                     st.success("Treino Finalizado!")
@@ -641,8 +685,8 @@ def main():
     # -------------------------------------------------------------------------
     with tab_historico:
         st.markdown("### 📜 Pergaminho de Feitos")
-        if hist:
-            st.dataframe(pd.DataFrame(hist[::-1]), use_container_width=True, hide_index=True)
+        if arena_data.get('historico_atividades'):
+            st.dataframe(pd.DataFrame(arena_data['historico_atividades'][::-1]), use_container_width=True, hide_index=True)
         else:
             st.info("Ainda não há registros.")
 
