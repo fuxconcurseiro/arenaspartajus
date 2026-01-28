@@ -625,4 +625,38 @@
       }
     }
   }
+"sara_oracula": {
+  "nome": "Sara, A Orácula",
+  "descricao": "A Voz dos Tribunais.",
+  "imagem": "sara.png",
+  "materias": {
+    "STF - Constitucional": {
+      "Súmula Vinculante": [
+        {
+          "id": 8000,
+          "texto": "O Supremo Tribunal Federal poderá, de ofício ou por provocação, mediante decisão de dois terços dos seus membros, após reiteradas decisões sobre matéria constitucional, aprovar súmula que, a partir de sua publicação na imprensa oficial, terá efeito vinculante em relação aos demais órgãos do Poder Judiciário e à administração pública direta e indireta.",
+          "gabarito": "Certo",
+          "explicacao": "<strong>Metadados:</strong> Constituição Federal, Art. 103-A.<br><br><strong>Comentário:</strong> O enunciado reproduz corretamente o texto constitucional inserido pela Emenda Constitucional nº 45/2004 (Reforma do Judiciário)."
+        }
+      ]
+    }
+  }
+},
+"primus_revisao": {
+  "nome": "Primus",
+  "descricao": "O Guardião das Falhas. Revise e forje sua vitória.",
+  "imagem": "primus.png",
+  "materias": {
+    "Erros do Direcionamento 7": {
+      "Revisão Geral": [
+        {
+          "id": 9000,
+          "texto": "Na revisão de erros baseada em desempenho, o candidato deve priorizar apenas as disciplinas que tem maior afinidade, ignorando aquelas com índice de acerto inferior a 60%, pois o custo-benefício de aprendizado destas é baixo.",
+          "gabarito": "Errado",
+          "explicacao": "<strong>Metadados:</strong> Metodologia de Estudo de Alta Performance.<br><br><strong>Análise do Erro:</strong> A estratégia deve ser inversa. O maior ganho marginal de nota está justamente nas disciplinas onde o desempenho é baixo (lacunas de conhecimento), exigindo prioridade na revisão para elevar a média geral."
+        }
+      ]
+    }
+  }
+}
 }
