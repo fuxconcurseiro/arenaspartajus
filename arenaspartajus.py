@@ -95,30 +95,29 @@ st.markdown("""
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* 2. HIERARQUIA TIPOGRÁFICA (Ajuste Fino de Cores) */
+    /* 2. HIERARQUIA TIPOGRÁFICA */
     
     /* Títulos e Negritos: Vermelho Espartano (#9E0000) */
     h1, h2, h3, h4, h5, h6, strong, b {
         color: #9E0000 !important;
     }
     
-    /* Corpo do Texto: Chumbo/Grafite (#2e2c2b) para leitura confortável */
+    /* Corpo do Texto: Chumbo/Grafite (#2e2c2b) */
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p {
         color: #2e2c2b !important;
     }
     
-    /* Legendas e textos auxiliares */
+    /* Legendas */
     .stcaption {
         color: #2e2c2b !important;
         opacity: 0.8;
     }
 
-    /* 3. SIDEBAR (Fundo #E3DFD3) */
+    /* 3. SIDEBAR */
     [data-testid="stSidebar"] {
         background-color: #E3DFD3;
         border-right: 1px solid #dcd8cc;
     }
-    /* Elementos da Sidebar herdam a hierarquia acima, mas forçamos títulos */
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
         color: #9E0000 !important;
     }
@@ -130,11 +129,11 @@ st.markdown("""
         opacity: 0.2;
     }
 
-    /* 4. BOTÕES (Interação Elegante) */
+    /* 4. BOTÕES */
     .stButton > button {
-        background-color: #E3DFD3; /* Fundo Bege */
-        color: #9E0000;            /* Texto Vermelho */
-        border: 1px solid #E3DFD3; /* Borda Bege (invisível inicialmente) */
+        background-color: #E3DFD3;
+        color: #9E0000;
+        border: 1px solid #E3DFD3;
         border-radius: 6px;
         font-weight: 700;
         text-transform: uppercase;
@@ -144,12 +143,11 @@ st.markdown("""
         padding: 0.6rem 1.2rem;
     }
     
-    /* HOVER STATE: Mantém fundo bege, mas destaca borda e texto */
     .stButton > button:hover {
-        background-color: #E3DFD3 !important; /* Mantém Bege */
-        color: #9E0000 !important;            /* Texto Vermelho vivo */
-        border: 1px solid #9E0000 !important; /* Borda Vermelha (Inversão elegante da borda) */
-        transform: translateY(-2px);          /* Leve flutuação */
+        background-color: #E3DFD3 !important;
+        color: #9E0000 !important;
+        border: 1px solid #9E0000 !important;
+        transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(158, 0, 0, 0.1);
     }
     
@@ -158,12 +156,12 @@ st.markdown("""
         transform: translateY(0px);
     }
 
-    /* 5. INPUTS E FORMULÁRIOS */
+    /* 5. INPUTS */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
     .stSelectbox > div > div > div,
     .stDateInput > div > div > input {
-        background-color: #FFFFFF; /* Fundo branco para contraste com o app */
+        background-color: #FFFFFF;
         color: #2e2c2b;
         border: 1px solid #E3DFD3;
         border-radius: 4px;
@@ -175,7 +173,7 @@ st.markdown("""
         box-shadow: 0 0 0 1px #9E0000;
     }
 
-    /* 6. CARDS GERAIS (Battle, Master) */
+    /* 6. CARDS GERAIS */
     .battle-card, .master-card {
         background-color: #FFFFFF;
         border: 1px solid #E3DFD3;
@@ -191,27 +189,34 @@ st.markdown("""
         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
     }
     
-    /* Estados Específicos Battle Card */
     .battle-card.locked { opacity: 0.6; filter: grayscale(100%); background-color: #F0F0F0; }
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
     .battle-card.defeat { border-left: 4px solid #B22222; background-color: #FCFAFA; }
 
-    /* 7. DOCTORE CARD (Questões - Fonte Aumentada) */
+    /* 7. DOCTORE CARD (Focado na Ergonomia de Leitura) */
     .doctore-card {
         background-color: #FFFFFF;
         border: 1px solid #E3DFD3;
-        border-left: 5px solid #9E0000; /* Destaque lateral mais robusto */
+        border-left: 5px solid #9E0000;
         border-radius: 6px;
-        padding: 35px; /* Mais respiro */
+        padding: 40px; /* Padding generoso */
         margin-bottom: 30px;
         
-        /* Tipografia da Questão */
+        /* Dimensionamento e Posicionamento Controlados */
+        display: block;
+        width: 50% !important;           /* Ocupa metade da tela em monitores grandes */
+        min-width: 600px !important;     /* Garante largura mínima legível */
+        max-width: 95vw !important;      /* Previne scroll horizontal em telas < 600px */
+        margin-left: auto !important;    /* Centraliza horizontalmente */
+        margin-right: auto !important;   /* Centraliza horizontalmente */
+        
+        /* Tipografia Otimizada */
         text-align: left !important;
-        font-size: 22px !important; /* Aumento solicitado */
+        font-size: 22px !important;      /* Tamanho ideal para leitura */
         font-weight: 500;
         line-height: 1.6;
-        color: #2e2c2b !important; /* Texto escuro para leitura */
-        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+        color: #2e2c2b !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06); /* Sombra mais difusa para destaque */
     }
 
     /* 8. ESTATÍSTICAS */
@@ -226,11 +231,11 @@ st.markdown("""
     .stat-value {
         font-size: 1.5em;
         font-weight: 800;
-        color: #9E0000; /* Valor em vermelho */
+        color: #9E0000;
     }
     .stat-label {
         font-size: 0.8em;
-        color: #555; /* Label neutro */
+        color: #555;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
@@ -244,7 +249,7 @@ st.markdown("""
         padding-bottom: 5px;
     }
 
-    /* 9. FEEDBACK E EXTRAS */
+    /* 9. EXTRAS */
     .feedback-box {
         background-color: #Fdfdfd;
         padding: 20px;
@@ -256,12 +261,10 @@ st.markdown("""
         color: #2e2c2b !important;
     }
     
-    /* Tabs Customizadas */
     .stTabs [data-baseweb="tab-list"] { border-bottom-color: #E3DFD3; }
     .stTabs [data-baseweb="tab"] { color: #555; }
     .stTabs [aria-selected="true"] { color: #9E0000; border-bottom-color: #9E0000; font-weight: bold;}
     
-    /* Hero */
     .full-width-hero {
         background-color: #F5F4EF !important;
         border-bottom: 1px solid #E3DFD3 !important;
@@ -886,6 +889,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
