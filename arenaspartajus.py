@@ -189,6 +189,7 @@ st.markdown("""
         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
     }
     
+    .battle-card.locked { opacity: 0.6; filter: grayscale(100%); background-color: #F0F0F0; }
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
     .battle-card.defeat { border-left: 4px solid #B22222; background-color: #FCFAFA; }
 
@@ -289,28 +290,11 @@ DEFAULT_DOCTORE_DB = {
                 ]
             }
         }
-    },
-    "sara_oracula": {
-      "nome": "Sara, A Orácula",
-      "descricao": "A Voz dos Tribunais.",
-      "imagem": "sara.png",
-      "materias": {
-        "STF - Constitucional": {
-          "Súmula Vinculante": [
-            {
-              "id": 8000,
-              "texto": "O Supremo Tribunal Federal poderá, de ofício ou por provocação, mediante decisão de dois terços dos seus membros, após reiteradas decisões sobre matéria constitucional, aprovar súmula que, a partir de sua publicação na imprensa oficial, terá efeito vinculante...",
-              "gabarito": "Certo",
-              "explicacao": "<strong>Metadados:</strong> Constituição Federal, Art. 103-A."
-            }
-          ]
-        }
-      }
     }
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (OPONENTES) - ATUALIZADA
+# 4. BASE DE DADOS (OPONENTES) - LISTA FINAL E BALANCEADA
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
@@ -331,7 +315,7 @@ OPONENTS_DB = [
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", "https://img.icons8.com/color/96/trophy.png"),
         "img_derrota": get_avatar_image("derrota_touro.jpg", "https://img.icons8.com/color/96/dead-body.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB",
-        "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
+        "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6 
     },
     {
         "id": 3, "nome": "Leproso", "descricao": "A doença que corrói a alma. Vença ou seja consumido.",
@@ -339,16 +323,15 @@ OPONENTS_DB = [
         "img_vitoria": get_avatar_image("vitoria_leproso.jpg", "https://img.icons8.com/color/96/clean-hands.png"),
         "img_derrota": get_avatar_image("derrota_leproso.jpg", "https://img.icons8.com/color/96/hospital.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI",
-        "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
+        "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6
     },
-    # NOVOS OPONENTES (ATUALIZAÇÃO DE STATS)
     {
         "id": 4, "nome": "Autanax, o domador canino", "descricao": "Ele comanda as feras com um olhar gelado. Quebre seu controle.",
         "avatar_url": get_avatar_image("autanax.png", "https://img.icons8.com/color/96/wolf.png"),
         "img_vitoria": get_avatar_image("vitoria_autanax.png", "https://img.icons8.com/color/96/medal.png"),
         "img_derrota": get_avatar_image("derrota_autanax.png", "https://img.icons8.com/color/96/sad.png"),
         "link_tec": "", 
-        "dificuldade": "Intermediário", "max_tempo": 45, "max_erros": 4 
+        "dificuldade": "Intermediário", "max_tempo": 30, "max_erros": 5 
     },
     {
         "id": 5, "nome": "Tanara, a infiel", "descricao": "Sua lealdade é comprada com sangue. Não confie em ninguém.",
@@ -356,7 +339,7 @@ OPONENTS_DB = [
         "img_vitoria": get_avatar_image("vitoria_tanara.png", "https://img.icons8.com/color/96/crown.png"),
         "img_derrota": get_avatar_image("derrota_tanara.png", "https://img.icons8.com/color/96/ghost.png"),
         "link_tec": "", 
-        "dificuldade": "Difícil", "max_tempo": 50, "max_erros": 3 
+        "dificuldade": "Difícil", "max_tempo": 30, "max_erros": 5 
     },
     {
         "id": 6, "nome": "Afezio, o renegado", "descricao": "Expulso do panteão, ele busca vingança contra os justos.",
@@ -364,7 +347,7 @@ OPONENTS_DB = [
         "img_vitoria": get_avatar_image("vitoria_afezio.png", "https://img.icons8.com/color/96/throne.png"),
         "img_derrota": get_avatar_image("derrota_afezio.png", "https://img.icons8.com/color/96/fire.png"),
         "link_tec": "", 
-        "dificuldade": "Pesadelo", "max_tempo": 60, "max_erros": 2 
+        "dificuldade": "Pesadelo", "max_tempo": 30, "max_erros": 5 
     }
 ]
 
@@ -561,21 +544,21 @@ def main():
     tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
-    # TAB 1: BATALHA (PAGINAÇÃO E VITRINE VISUAL)
+    # TAB 1: BATALHA (PAGINAÇÃO + LÓGICA DE BLOQUEIO)
     # -------------------------------------------------------------------------
     with tab_batalha:
         st.markdown("### 🗺️ A Jornada do Gladiador")
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
 
-        # Configuração de Paginação
+        # Paginação
         ITEMS_PER_PAGE = 3
         if 'coliseum_page' not in st.session_state:
             st.session_state['coliseum_page'] = 0
 
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # Garante que a página atual é válida
+        # Validação do índice da página
         current_page = st.session_state['coliseum_page']
         if current_page >= total_pages:
              current_page = total_pages - 1
@@ -584,22 +567,21 @@ def main():
              current_page = 0
              st.session_state['coliseum_page'] = current_page
 
-        # Slicing da lista
         start_idx = current_page * ITEMS_PER_PAGE
         end_idx = start_idx + ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx:end_idx]
 
         st.markdown(f"*Página {current_page + 1} de {total_pages}*")
 
-        # Loop de Renderização
         for opp in page_opponents:
             is_locked = opp['id'] > fase_max
             is_completed = opp['id'] in fases_vencidas
             is_current = (opp['id'] == fase_max) and not is_completed
             
-            # CSS: Removemos a classe 'locked' para manter colorido
+            # CSS: Aplica classe .locked para estilo cinza/transparente
             css_class = "battle-card"
-            if is_completed: css_class += " victory"
+            if is_locked: css_class += " locked"
+            elif is_completed: css_class += " victory"
             
             st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
             c_img, c_info, c_action = st.columns([1, 2, 1])
@@ -610,25 +592,28 @@ def main():
                 st.markdown(f"### {opp['nome']}")
                 st.markdown(f"*{opp['descricao']}*")
                 
-                if is_completed: st.markdown("✅ **CONQUISTADO**")
-                
-                # Visualização de Stats: Sempre visível, mesmo para bloqueados
-                st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
-                st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
+                # Lógica de Exibição de Info
+                if is_locked:
+                    st.markdown("### 🔒 BLOQUEADO")
+                else:
+                    if is_completed: st.markdown("✅ **CONQUISTADO**")
+                    st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
+                    st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
 
             with c_action:
-                # Botão de Ação: Só aparece se for a fase atual ou para refazer
-                if is_current:
-                    if st.button("⚔️ BATALHAR", key=f"bat_{opp['id']}", type="primary"):
-                        st.session_state['active_battle_id'] = opp['id']
-                elif is_completed:
-                    st.button("Refazer", key=f"redo_{opp['id']}")
-                # Se for futuro (bloqueado), não mostramos nada aqui (apenas a vitrine)
-
+                # Botões de Ação
+                if not is_locked:
+                    if is_current:
+                        if st.button("⚔️ BATALHAR", key=f"bat_{opp['id']}", type="primary"):
+                            st.session_state['active_battle_id'] = opp['id']
+                    elif is_completed:
+                        st.button("Refazer", key=f"redo_{opp['id']}")
+            
+            # Imagem de Status (V/D) - Apenas se não estiver bloqueado ou se já tiver interagido
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
-            else: 
+            elif not is_locked: 
                 if os.path.exists(PREPARE_SE_FILE): status_img_path = PREPARE_SE_FILE
                 else: status_img_path = "https://img.icons8.com/color/96/shield.png"
             
@@ -697,7 +682,7 @@ def main():
                             del st.session_state['active_battle_id']
                             st.rerun()
 
-            # Divisor visual entre cards na mesma página
+            # Divisor visual
             if opp != page_opponents[-1]:
                 st.markdown("""
                 <div style="display:flex; justify-content:center; align-items:center; margin: 15px 0;">
@@ -705,7 +690,7 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
 
-        # Controles de Navegação (Rodapé da lista)
+        # Navegação no Rodapé
         st.divider()
         c_prev, c_page, c_next = st.columns([1, 2, 1])
         with c_prev:
