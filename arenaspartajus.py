@@ -86,7 +86,7 @@ def calculate_daily_stats(history, target_date):
             continue
     return stats
 
-# ESTILIZAÇÃO GERAL
+# ESTILIZAÇÃO GERAL (Clean Design - Leitura Otimizada)
 st.markdown("""
     <style>
     /* 1. RESET E FUNDO GLOBAL */
@@ -189,34 +189,31 @@ st.markdown("""
         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
     }
     
-    .battle-card.locked { opacity: 0.6; filter: grayscale(100%); background-color: #F0F0F0; }
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
     .battle-card.defeat { border-left: 4px solid #B22222; background-color: #FCFAFA; }
 
-    /* 7. DOCTORE CARD (Focado na Ergonomia de Leitura) */
+    /* 7. DOCTORE CARD (Ergonomia de Leitura) */
     .doctore-card {
         background-color: #FFFFFF;
         border: 1px solid #E3DFD3;
         border-left: 5px solid #9E0000;
         border-radius: 6px;
-        padding: 40px; /* Padding generoso */
+        padding: 40px; 
         margin-bottom: 30px;
         
-        /* Dimensionamento e Posicionamento Controlados */
         display: block;
-        width: 50% !important;           /* Ocupa metade da tela em monitores grandes */
-        min-width: 600px !important;     /* Garante largura mínima legível */
-        max-width: 95vw !important;      /* Previne scroll horizontal em telas < 600px */
-        margin-left: auto !important;    /* Centraliza horizontalmente */
-        margin-right: auto !important;   /* Centraliza horizontalmente */
+        width: 50% !important;           
+        min-width: 600px !important;     
+        max-width: 95vw !important;      
+        margin-left: auto !important;    
+        margin-right: auto !important;   
         
-        /* Tipografia Otimizada */
         text-align: left !important;
-        font-size: 22px !important;      /* Tamanho ideal para leitura */
+        font-size: 22px !important;      
         font-weight: 500;
         line-height: 1.6;
         color: #2e2c2b !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); /* Sombra mais difusa para destaque */
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     }
 
     /* 8. ESTATÍSTICAS */
@@ -288,70 +285,32 @@ DEFAULT_DOCTORE_DB = {
         "materias": {
             "Direito Constitucional": {
                 "Organização Político-Administrativa": [
-                     {
-                        "id": 21,
-                        "texto": "Nos termos da Constituição da República, a câmara de vereadores não é competente para apreciar matéria eleitoral nem matéria criminal.",
-                        "gabarito": "Certo",
-                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)"
-                    },
-                    {
-                        "id": 22,
-                        "texto": "A posse do prefeito e do vice-prefeito ocorre no dia 1.º de fevereiro do ano subsequente ao da eleição, coincidindo com o início dos trabalhos do legislativo.",
-                        "gabarito": "Errado",
-                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)<br><br><strong>Texto Original Correto:</strong> A posse do prefeito e do vice-prefeito ocorre no dia 1.º de janeiro do ano subsequente ao da eleição.<br><br><strong>Análise do Erro:</strong> O erro está na alteração da data. A posse do Executivo municipal ocorre em 1.º de janeiro, não em fevereiro."
-                    },
-                    {
-                        "id": 23,
-                        "texto": "No serviço público de interesse local, o serviço de transporte coletivo é competência exclusiva do Estado, cabendo ao município apenas a fiscalização suplementar.",
-                        "gabarito": "Errado",
-                        "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / SEN<br><br><strong>Texto Original Correto:</strong> No serviço público de interesse local, o serviço de transporte coletivo é competência essencialmente municipal.<br><br><strong>Análise do Erro:</strong> O transporte coletivo municipal é de competência do Município (art. 30, V, CF), e não do Estado."
-                    }
-                ],
-                "Poder Legislativo": [
-                    {
-                        "id": 101, 
-                        "texto": "A sanção do projeto de lei não convalida o vício de iniciativa.", 
-                        "gabarito": "Certo", 
-                        "explicacao": "<strong>Metadados:</strong> Súmula STF"
-                    }
+                     {"id": 21, "texto": "Nos termos da Constituição da República, a câmara de vereadores não é competente para apreciar matéria eleitoral nem matéria criminal.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)"}
                 ]
             }
         }
     },
-    "enam_criscis": {
-        "nome": "Enam Criscis", "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.", "imagem": "enam-criscis.png",
-        "materias": {
-            "Direitos Humanos": {
-                "Geral": [
-                     {"id": 401, "texto": "A Corte Interamericana de Direitos Humanos admite a possibilidade de controle de convencionalidade das leis internas.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Jurisprudência Corte IDH"}
-                ]
+    "sara_oracula": {
+      "nome": "Sara, A Orácula",
+      "descricao": "A Voz dos Tribunais.",
+      "imagem": "sara.png",
+      "materias": {
+        "STF - Constitucional": {
+          "Súmula Vinculante": [
+            {
+              "id": 8000,
+              "texto": "O Supremo Tribunal Federal poderá, de ofício ou por provocação, mediante decisão de dois terços dos seus membros, após reiteradas decisões sobre matéria constitucional, aprovar súmula que, a partir de sua publicação na imprensa oficial, terá efeito vinculante...",
+              "gabarito": "Certo",
+              "explicacao": "<strong>Metadados:</strong> Constituição Federal, Art. 103-A."
             }
+          ]
         }
-    },
-    "parquet_tribunus": {
-        "nome": "Parquet Tribunus", "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.", "imagem": "parquet.jpg",
-        "materias": {
-            "Direito Processual Coletivo": {
-                "Ação Civil Pública": [
-                    {"id": 501, "texto": "O Ministério Público possui legitimidade para propor Ação Civil Pública visando a defesa de direitos individuais homogêneos, ainda que disponíveis, quando houver relevância social.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema Repetitivo STJ"}
-                ]
-            }
-        }
-    },
-    "noel_autarquicus": {
-        "nome": "Noel Autarquicus", "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.", "imagem": "noel.png",
-        "materias": {
-            "Direito Administrativo": {
-                "Servidores Públicos": [
-                    {"id": 601, "texto": "É constitucional a exigência de inscrição em conselho de fiscalização profissional para o exercício de cargos públicos cujas funções exijam qualificação técnica específica.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> Tema 999 STF"}
-                ]
-            }
-        }
+      }
     }
 }
 
 # -----------------------------------------------------------------------------
-# 4. BASE DE DADOS (OPONENTES)
+# 4. BASE DE DADOS (OPONENTES) - ATUALIZADA
 # -----------------------------------------------------------------------------
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
@@ -381,6 +340,31 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_leproso.jpg", "https://img.icons8.com/color/96/hospital.png"),
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI",
         "dificuldade": "Desafio Inicial", "max_tempo": 30, "max_erros": 5
+    },
+    # NOVOS OPONENTES (ATUALIZAÇÃO DE STATS)
+    {
+        "id": 4, "nome": "Autanax, o domador canino", "descricao": "Ele comanda as feras com um olhar gelado. Quebre seu controle.",
+        "avatar_url": get_avatar_image("autanax.png", "https://img.icons8.com/color/96/wolf.png"),
+        "img_vitoria": get_avatar_image("vitoria_autanax.png", "https://img.icons8.com/color/96/medal.png"),
+        "img_derrota": get_avatar_image("derrota_autanax.png", "https://img.icons8.com/color/96/sad.png"),
+        "link_tec": "", 
+        "dificuldade": "Intermediário", "max_tempo": 45, "max_erros": 4 
+    },
+    {
+        "id": 5, "nome": "Tanara, a infiel", "descricao": "Sua lealdade é comprada com sangue. Não confie em ninguém.",
+        "avatar_url": get_avatar_image("tanara.png", "https://img.icons8.com/color/96/witch.png"),
+        "img_vitoria": get_avatar_image("vitoria_tanara.png", "https://img.icons8.com/color/96/crown.png"),
+        "img_derrota": get_avatar_image("derrota_tanara.png", "https://img.icons8.com/color/96/ghost.png"),
+        "link_tec": "", 
+        "dificuldade": "Difícil", "max_tempo": 50, "max_erros": 3 
+    },
+    {
+        "id": 6, "nome": "Afezio, o renegado", "descricao": "Expulso do panteão, ele busca vingança contra os justos.",
+        "avatar_url": get_avatar_image("afezio.png", "https://img.icons8.com/color/96/demon.png"),
+        "img_vitoria": get_avatar_image("vitoria_afezio.png", "https://img.icons8.com/color/96/throne.png"),
+        "img_derrota": get_avatar_image("derrota_afezio.png", "https://img.icons8.com/color/96/fire.png"),
+        "link_tec": "", 
+        "dificuldade": "Pesadelo", "max_tempo": 60, "max_erros": 2 
     }
 ]
 
@@ -391,17 +375,15 @@ OPONENTS_DB = [
 def load_doctore_data():
     """Tenta carregar JSON. Se falhar, usa o backup hardcoded (DEFAULT_DOCTORE_DB)."""
     if not os.path.exists(QUESTOES_FILE):
-        return DEFAULT_DOCTORE_DB # Retorna os dados originais se não houver arquivo
+        return DEFAULT_DOCTORE_DB 
     
     try:
         with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data
     except Exception:
-        # Se o JSON estiver corrompido, também retorna os dados originais
         return DEFAULT_DOCTORE_DB
 
-# Carrega os dados na inicialização
 DOCTORE_DB = load_doctore_data()
 
 # -----------------------------------------------------------------------------
@@ -444,7 +426,6 @@ def load_data():
             except:
                 full_user_data = {} 
             
-            # Garante que arena_v1_data existe
             if "arena_v1_data" not in full_user_data:
                 full_user_data["arena_v1_data"] = DEFAULT_ARENA_DATA.copy()
 
@@ -475,13 +456,10 @@ def main():
             st.session_state['row_idx'] = r
             st.session_state['status'] = s
 
-    # Atalhos e Proteção de Dados
     full_data = st.session_state['full_data']
     
-    # Recupera ou inicializa a parte da Arena
     arena_data = full_data.get('arena_v1_data', DEFAULT_ARENA_DATA.copy())
     
-    # Garante integridade das chaves
     if not isinstance(arena_data, dict): arena_data = DEFAULT_ARENA_DATA.copy()
     if "stats" not in arena_data: arena_data["stats"] = DEFAULT_ARENA_DATA["stats"].copy()
     if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"].copy()
@@ -504,7 +482,6 @@ def main():
         else:
             st.error(st.session_state['status'])
 
-        # --- DESEMPENHO GLOBAL ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
@@ -518,7 +495,6 @@ def main():
         st.markdown(f"**Aproveitamento:** {perc:.1f}%")
         st.progress(perc / 100)
 
-        # --- DESEMPENHO DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
         selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
         daily_stats = calculate_daily_stats(hist, selected_date)
@@ -585,21 +561,45 @@ def main():
     tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore (treinos no Ludus)", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
-    # TAB 1: BATALHA (LÓGICA PRESERVADA)
+    # TAB 1: BATALHA (PAGINAÇÃO E VITRINE VISUAL)
     # -------------------------------------------------------------------------
     with tab_batalha:
         st.markdown("### 🗺️ A Jornada do Gladiador")
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
 
-        for opp in OPONENTS_DB:
+        # Configuração de Paginação
+        ITEMS_PER_PAGE = 3
+        if 'coliseum_page' not in st.session_state:
+            st.session_state['coliseum_page'] = 0
+
+        total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
+        
+        # Garante que a página atual é válida
+        current_page = st.session_state['coliseum_page']
+        if current_page >= total_pages:
+             current_page = total_pages - 1
+             st.session_state['coliseum_page'] = current_page
+        if current_page < 0:
+             current_page = 0
+             st.session_state['coliseum_page'] = current_page
+
+        # Slicing da lista
+        start_idx = current_page * ITEMS_PER_PAGE
+        end_idx = start_idx + ITEMS_PER_PAGE
+        page_opponents = OPONENTS_DB[start_idx:end_idx]
+
+        st.markdown(f"*Página {current_page + 1} de {total_pages}*")
+
+        # Loop de Renderização
+        for opp in page_opponents:
             is_locked = opp['id'] > fase_max
             is_completed = opp['id'] in fases_vencidas
             is_current = (opp['id'] == fase_max) and not is_completed
             
+            # CSS: Removemos a classe 'locked' para manter colorido
             css_class = "battle-card"
-            if is_locked: css_class += " locked"
-            elif is_completed: css_class += " victory"
+            if is_completed: css_class += " victory"
             
             st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
             c_img, c_info, c_action = st.columns([1, 2, 1])
@@ -609,19 +609,22 @@ def main():
             with c_info:
                 st.markdown(f"### {opp['nome']}")
                 st.markdown(f"*{opp['descricao']}*")
-                if is_locked: st.markdown("🔒 **BLOQUEADO**")
-                elif is_completed: st.markdown("✅ **CONQUISTADO**")
-                else: 
-                    st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
-                    st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
+                
+                if is_completed: st.markdown("✅ **CONQUISTADO**")
+                
+                # Visualização de Stats: Sempre visível, mesmo para bloqueados
+                st.markdown(f"🔥 **Dificuldade:** {opp['dificuldade']}")
+                st.caption(f"Tempo Máx: {opp['max_tempo']} min | Limite de Erros: {opp['max_erros']}")
 
             with c_action:
+                # Botão de Ação: Só aparece se for a fase atual ou para refazer
                 if is_current:
                     if st.button("⚔️ BATALHAR", key=f"bat_{opp['id']}", type="primary"):
                         st.session_state['active_battle_id'] = opp['id']
                 elif is_completed:
                     st.button("Refazer", key=f"redo_{opp['id']}")
-            
+                # Se for futuro (bloqueado), não mostramos nada aqui (apenas a vitrine)
+
             status_img_path = None
             if is_completed: status_img_path = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']: status_img_path = opp['img_derrota']
@@ -637,7 +640,8 @@ def main():
             if st.session_state.get('active_battle_id') == opp['id']:
                 with st.expander("⚔️ CAMPO DE BATALHA", expanded=True):
                     st.info(f"Derrote {opp['nome']}. Você deve terminar em até {opp['max_tempo']} minutos e errar no máximo {opp['max_erros']} questões.")
-                    st.link_button("🔗 ABRIR CADERNO TEC CONCURSOS", opp['link_tec'], type="primary", use_container_width=True)
+                    if opp['link_tec']:
+                        st.link_button("🔗 ABRIR CADERNO TEC CONCURSOS", opp['link_tec'], type="primary", use_container_width=True)
                     st.divider()
                     
                     with st.form(f"form_bat_{opp['id']}"):
@@ -656,7 +660,6 @@ def main():
                             
                             VITORIA = passou_erros and passou_tempo
                             
-                            # Atualiza a estrutura Arena
                             stats['total_questoes'] += total_q
                             stats['total_acertos'] += acertos_q
                             stats['total_erros'] += erros_q
@@ -685,7 +688,6 @@ def main():
                                 if not passou_tempo: motivos.append(f"Levou {tempo_min} min (Máx: {limit_time})")
                                 st.error(f"DERROTA. Motivo: {', '.join(motivos)}.")
                             
-                            # Persistência
                             arena_data['stats'] = stats
                             arena_data['historico_atividades'] = hist
                             full_data['arena_v1_data'] = arena_data
@@ -695,14 +697,27 @@ def main():
                             del st.session_state['active_battle_id']
                             st.rerun()
 
-            if opp['id'] < len(OPONENTS_DB):
+            # Divisor visual entre cards na mesma página
+            if opp != page_opponents[-1]:
                 st.markdown("""
                 <div style="display:flex; justify-content:center; align-items:center; margin: 15px 0;">
                     <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
-                    <div style="color: #DAA520; font-size: 14px; margin: 0 10px; opacity: 0.8;">🔗</div>
-                    <div style="height: 1px; width: 60px; background-color: #DAA520; opacity: 0.6;"></div>
                 </div>
                 """, unsafe_allow_html=True)
+
+        # Controles de Navegação (Rodapé da lista)
+        st.divider()
+        c_prev, c_page, c_next = st.columns([1, 2, 1])
+        with c_prev:
+            if current_page > 0:
+                if st.button("⬅️ Anterior"):
+                    st.session_state['coliseum_page'] -= 1
+                    st.rerun()
+        with c_next:
+            if current_page < total_pages - 1:
+                if st.button("Próximo ➡️"):
+                    st.session_state['coliseum_page'] += 1
+                    st.rerun()
 
     # -------------------------------------------------------------------------
     # TAB 2: DOCTORE (REFATORADA)
@@ -720,7 +735,7 @@ def main():
             
             cols = st.columns(2)
             
-            # Itera sobre o DOCTORE_DB (que agora garantidamente tem dados)
+            # Itera sobre o DOCTORE_DB
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
@@ -749,7 +764,6 @@ def main():
         # --- TELA DE TREINAMENTO ---
         elif st.session_state['doctore_state'] == 'training':
             master_key = st.session_state['selected_master']
-            # Fallback seguro caso o JSON mude e a chave em sessão fique inválida
             master_data = DOCTORE_DB.get(master_key)
             
             if not master_data:
@@ -855,8 +869,6 @@ def main():
                     st.success("Treino Finalizado!")
                     st.write(f"Erros na rodada: {len(ds['wrong_ids'])}")
                     
-                    # Registra histórico apenas ao final do bloco (opcional, já que stats globais já foram salvos)
-                    # Mas é bom para o gráfico de atividades
                     hist.append({
                         "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
                         "tipo": "Doctore",
@@ -889,7 +901,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
