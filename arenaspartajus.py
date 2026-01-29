@@ -99,6 +99,17 @@ st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
+    /* CAMUFLAGEM DE SEGURANÇA (Para eliminar barra branca) */
+    /* Camufla inputs residuais para a cor do fundo */
+    .stTextInput > div > div {
+        background-color: #F5F4EF !important;
+        border-color: #F5F4EF !important;
+    }
+    /* Remove fundo branco de containers vazios */
+    div[data-testid="stVerticalBlock"] > div {
+        background-color: transparent !important;
+    }
+
     /* Títulos Globais em Vermelho */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
     
@@ -160,7 +171,7 @@ st.markdown("""
     }
     /* ---------------------------------------------------- */
     
-    /* Inputs */
+    /* Inputs (Especificidade para manter inputs funcionais visíveis se necessário) */
     .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div {
         background-color: #FFFFFF; color: #2e2c2b; border: 1px solid #E3DFD3;
     }
