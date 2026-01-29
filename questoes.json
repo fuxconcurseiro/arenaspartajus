@@ -1,7 +1,7 @@
 {
   "praetorium": {
     "nome": "Praetorium Lex",
-    "descricao": "O Guardião das Leis e do Processo Legislativo.",
+    "descricao": "O Guardião das Leis.",
     "imagem": "praetorium.jpg",
     "materias": {
       "Direito Constitucional": {
@@ -576,7 +576,7 @@
   },
   "enam_criscis": {
     "nome": "Enam Criscis",
-    "descricao": "A Sabedoria da Toga. Mestre do Exame Nacional da Magistratura.",
+    "descricao": "A Sabedoria da Toga.",
     "imagem": "enam-criscis.png",
     "materias": {
       "Direitos Humanos": {
@@ -593,7 +593,7 @@
   },
   "parquet_tribunus": {
     "nome": "Parquet Tribunus",
-    "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.",
+    "descricao": "O Defensor da Sociedade e dos direitos difusos.",
     "imagem": "parquet.jpg",
     "materias": {
       "Direito Processual Coletivo": {
@@ -610,7 +610,7 @@
   },
   "noel_autarquicus": {
     "nome": "Noel Autarquicus",
-    "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.",
+    "descricao": "O Mestre da Administração Local.",
     "imagem": "noel.png",
     "materias": {
       "Direito Administrativo": {
@@ -644,7 +644,7 @@
   },
   "primus_revisao": {
     "nome": "Primus Savage",
-    "descricao": "O Guardião das Falhas. Revise e forje sua vitória.",
+    "descricao": "Revise e forje sua vitória.",
     "imagem": "primus.png",
     "materias": {
       "Erros do Direcionamento 7": {
@@ -660,3 +660,4 @@
     }
   }
 }
+
