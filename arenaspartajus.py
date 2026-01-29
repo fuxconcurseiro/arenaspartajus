@@ -1,21 +1,310 @@
+import streamlit as st
+import pandas as pd
+import json
+import time
+from datetime import datetime
+import random
+import os
+import base64
+import re
+
 # -----------------------------------------------------------------------------
-# 8. APP PRINCIPAL (MAIN LOOP) - COM SIDEBAR COMPLETA RESTAURADA
+# 0. IMPORTAÇÃO SEGURA DAS LIBS DO GOOGLE
+# -----------------------------------------------------------------------------
+try:
+    import gspread
+    from google.oauth2.service_account import Credentials
+    LIBS_INSTALLED = True
+    IMPORT_ERROR = ""
+except ImportError as e:
+    LIBS_INSTALLED = False
+    IMPORT_ERROR = str(e)
+
+st.set_page_config(
+    page_title="Arena SpartaJus",
+    page_icon="⚔️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# -----------------------------------------------------------------------------
+# 1. CONSTANTES E ARQUIVOS
+# -----------------------------------------------------------------------------
+SHEET_NAME = "SpartaJus_DB"
+QUESTOES_FILE = "questoes.json"
+
+# Arquivos de Imagem
+HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
+USER_AVATAR_FILE = "fux_concurseiro.png"
+PREPARE_SE_FILE = "prepare-se.jpg"
+
+# -----------------------------------------------------------------------------
+# 2. FUNÇÕES VISUAIS & UTILITÁRIOS
+# -----------------------------------------------------------------------------
+def get_base64_of_bin_file(bin_file):
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception:
+        return None
+
+def render_centered_image(img_path, width=200):
+    src = img_path
+    if os.path.exists(img_path):
+        ext = img_path.split('.')[-1]
+        b64 = get_base64_of_bin_file(img_path)
+        if b64:
+            src = f"data:image/{ext};base64,{b64}"
+    
+    st.markdown(f"""
+    <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px;">
+        <img src="{src}" style="width: {width}px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+    </div>
+    """, unsafe_allow_html=True)
+
+def calculate_daily_stats(history, target_date):
+    stats = {"total": 0, "acertos": 0, "erros": 0}
+    target_str = target_date.strftime("%d/%m/%Y")
+    for activity in history:
+        try:
+            act_date_str = activity.get('data', '').split(' ')[0]
+            if act_date_str == target_str:
+                result_str = activity.get('resultado', '')
+                match = re.search(r'(\d+)/(\d+)', result_str)
+                if match:
+                    acertos = int(match.group(1))
+                    total = int(match.group(2))
+                    erros = max(0, total - acertos)
+                    stats['total'] += total
+                    stats['acertos'] += acertos
+                    stats['erros'] += erros
+        except:
+            continue
+    return stats
+
+# ESTILIZAÇÃO GERAL (Clean Design)
+st.markdown("""
+    <style>
+    .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
+    p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
+    .stcaption { color: #2e2c2b !important; opacity: 0.8; }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] { background-color: #E3DFD3; border-right: 1px solid #dcd8cc; }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #9E0000 !important; }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #2e2c2b !important; }
+    
+    /* Botões */
+    .stButton > button {
+        background-color: #E3DFD3; color: #9E0000; border: 1px solid #E3DFD3;
+        border-radius: 6px; font-weight: 700; text-transform: uppercase;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); padding: 0.6rem 1.2rem;
+    }
+    .stButton > button:hover {
+        background-color: #E3DFD3 !important; color: #9E0000 !important;
+        border: 1px solid #9E0000 !important; transform: translateY(-2px);
+    }
+    
+    /* Inputs */
+    .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div {
+        background-color: #FFFFFF; color: #2e2c2b; border: 1px solid #E3DFD3;
+    }
+    
+    /* Cards */
+    .battle-card, .master-card {
+        background-color: #FFFFFF; border: 1px solid #E3DFD3; border-radius: 8px;
+        padding: 20px; margin-bottom: 20px; text-align: center; transition: all 0.3s ease;
+    }
+    .battle-card.locked { opacity: 0.6; filter: grayscale(100%); background-color: #F0F0F0; }
+    .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
+    .master-card:hover { border-color: #9E0000; transform: translateY(-3px); }
+
+    /* Doctore Card (Questão) */
+    .doctore-card {
+        background-color: #FFFFFF; border: 1px solid #E3DFD3; border-left: 5px solid #9E0000;
+        border-radius: 6px; padding: 40px; margin-bottom: 30px;
+        display: block; width: 50% !important; min-width: 600px !important;
+        margin-left: auto !important; margin-right: auto !important;
+        text-align: left !important; font-size: 22px !important; color: #2e2c2b !important;
+    }
+    
+    /* Stats */
+    .stat-box { background-color: #FFFFFF; border: 1px solid #E3DFD3; border-radius: 6px; padding: 12px; text-align: center; margin-bottom: 10px; }
+    .stat-value { font-size: 1.5em; font-weight: 800; color: #9E0000; }
+    .stat-header { font-size: 1.1em; font-weight: bold; color: #9E0000; margin-top: 20px; border-bottom: 1px solid #E3DFD3; }
+    .feedback-box { background-color: #Fdfdfd; padding: 20px; border-radius: 4px; margin-top: 20px; border: 1px solid #E3DFD3; text-align: left; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# 3. CONFIGURAÇÃO DE DADOS & OPONENTES
+# -----------------------------------------------------------------------------
+DEFAULT_ARENA_DATA = {
+    "stats": {"total_questoes": 0, "total_acertos": 0, "total_erros": 0},
+    "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
+    "historico_atividades": []
+}
+DEFAULT_DOCTORE_DB = {"praetorium": {"nome": "Mestre Exemplo", "descricao": "Se o JSON falhar.", "imagem": "", "materias": {}}}
+
+def get_avatar_image(local_file, fallback_url):
+    if os.path.exists(local_file): return local_file
+    return fallback_url
+
+# LISTA ATUALIZADA DE OPONENTES (6 CHEFES)
+OPONENTS_DB = [
+    {"id": 1, "nome": "O Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.", "avatar_url": get_avatar_image("1_leao_velho.png", ""), "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7},
+    {"id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável.", "avatar_url": get_avatar_image("touro.jpg", ""), "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), "img_derrota": get_avatar_image("derrota_touro.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
+    {"id": 3, "nome": "Leproso", "descricao": "A doença que corrói a alma.", "avatar_url": get_avatar_image("leproso.jpg", ""), "img_vitoria": get_avatar_image("vitoria_leproso.jpg", ""), "img_derrota": get_avatar_image("derrota_leproso.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
+    {"id": 4, "nome": "Autanax, o domador canino", "descricao": "Ele comanda as feras com um olhar gelado.", "avatar_url": get_avatar_image("autanax.png", ""), "img_vitoria": get_avatar_image("vitoria_autanax.png", ""), "img_derrota": get_avatar_image("derrota_autanax.png", ""), "link_tec": "", "dificuldade": "Intermediário", "max_tempo": 30, "max_erros": 5},
+    {"id": 5, "nome": "Tanara, a infiel", "descricao": "Sua lealdade é comprada com sangue.", "avatar_url": get_avatar_image("tanara.png", ""), "img_vitoria": get_avatar_image("vitoria_tanara.png", ""), "img_derrota": get_avatar_image("derrota_tanara.png", ""), "link_tec": "", "dificuldade": "Difícil", "max_tempo": 30, "max_erros": 5},
+    {"id": 6, "nome": "Afezio, o renegado", "descricao": "Expulso do panteão, busca vingança.", "avatar_url": get_avatar_image("afezio.png", ""), "img_vitoria": get_avatar_image("vitoria_afezio.png", ""), "img_derrota": get_avatar_image("derrota_afezio.png", ""), "link_tec": "", "dificuldade": "Pesadelo", "max_tempo": 30, "max_erros": 5}
+]
+
+# -----------------------------------------------------------------------------
+# 4. CARGA DE DADOS DOCTORE (JSON)
+# -----------------------------------------------------------------------------
+@st.cache_data
+def load_doctore_data():
+    if not os.path.exists(QUESTOES_FILE): return DEFAULT_DOCTORE_DB 
+    try:
+        with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception: return DEFAULT_DOCTORE_DB
+
+DOCTORE_DB = load_doctore_data()
+
+# -----------------------------------------------------------------------------
+# 5. SISTEMA DE LOGIN E BANCO DE DADOS (INTEGRAÇÃO SEGURA)
+# -----------------------------------------------------------------------------
+def get_gsheets_client():
+    """Conecta ao Google e retorna o Cliente autenticado."""
+    if not LIBS_INSTALLED: return None
+    if "gcp_service_account" not in st.secrets: return None
+    
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    return gspread.authorize(credentials)
+
+def check_login(username, password):
+    """Verifica credenciais na aba 'Usuarios'."""
+    client = get_gsheets_client()
+    if not client: return False, "Erro de Biblioteca (ver logs)"
+    
+    try:
+        # Abre a aba 'Usuarios' para validar login
+        sheet = client.open(SHEET_NAME).worksheet("Usuarios")
+        records = sheet.get_all_records() # Assume cabecalho: Login, Senha, Nome
+        
+        for record in records:
+            if str(record.get('Login', '')).strip() == username and str(record.get('Senha', '')).strip() == password:
+                return True, record.get('Nome', 'Gladiador')
+        
+        return False, "Usuário ou senha incorretos."
+    except Exception as e:
+        return False, f"Erro ao acessar base de usuários: {str(e)}"
+
+def load_user_data(username):
+    """
+    Busca dados na aba PRINCIPAL (Sheet1).
+    Lê APENAS a Coluna C (Dados Arena), preservando a Coluna B (Mentor).
+    """
+    client = get_gsheets_client()
+    if not client: return DEFAULT_ARENA_DATA.copy(), None, "Erro libs"
+    
+    try:
+        sheet = client.open(SHEET_NAME).sheet1
+        # Procura o usuário na Coluna 1 (A)
+        cell = sheet.find(username, in_column=1)
+        
+        if cell:
+            # Lê Coluna 3 (C) - Dados da Arena
+            raw_data = sheet.cell(cell.row, 3).value 
+            
+            if not raw_data:
+                # Usuario existe mas nao tem dados da Arena
+                return DEFAULT_ARENA_DATA.copy(), cell.row, "Novo Registro"
+            
+            try:
+                data = json.loads(raw_data)
+                return data, cell.row, "Dados Carregados"
+            except:
+                return DEFAULT_ARENA_DATA.copy(), cell.row, "Erro no JSON"
+        else:
+            # Usuario logado na aba 'Usuarios' mas nao existe na 'Sheet1'
+            # Cria linha nova: [User, Vazio, DadosPadrao]
+            new_row = [username, "", json.dumps(DEFAULT_ARENA_DATA)]
+            sheet.append_row(new_row)
+            return DEFAULT_ARENA_DATA.copy(), len(sheet.get_all_values()), "Novo Usuário Criado"
+            
+    except Exception as e:
+        return DEFAULT_ARENA_DATA.copy(), None, f"Erro Sheets: {str(e)}"
+
+def save_data(row_idx, full_data):
+    """
+    Salva dados na aba PRINCIPAL (Sheet1).
+    Escreve APENAS na Coluna 3 (C).
+    """
+    client = get_gsheets_client()
+    if client and row_idx:
+        try:
+            sheet = client.open(SHEET_NAME).sheet1
+            sheet.update_cell(row_idx, 3, json.dumps(full_data))
+        except Exception as e:
+            print(f"Erro ao salvar: {e}")
+
+# -----------------------------------------------------------------------------
+# 6. TELA DE LOGIN
+# -----------------------------------------------------------------------------
+def login_screen():
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        if os.path.exists(HERO_IMG_FILE):
+            img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
+            st.markdown(f'<img src="data:image/jpg;base64,{img_b64}" style="width:100%; border-radius:10px; margin-bottom:20px;">', unsafe_allow_html=True)
+        
+        st.markdown("## 🛡️ Portão da Arena")
+        st.info("Utilize suas credenciais para acessar.")
+        
+        with st.form("login_form"):
+            user = st.text_input("Usuário (Login)")
+            pwd = st.text_input("Senha", type="password")
+            submitted = st.form_submit_button("ENTRAR NA ARENA", type="primary", use_container_width=True)
+            
+            if submitted:
+                if not user or not pwd:
+                    st.error("Preencha todos os campos.")
+                else:
+                    with st.spinner("Validando credenciais..."):
+                        success, result = check_login(user, pwd)
+                        if success:
+                            st.session_state['logged_in'] = True
+                            st.session_state['user_id'] = user
+                            st.session_state['user_name'] = result
+                            st.rerun()
+                        else:
+                            st.error(result)
+
+# -----------------------------------------------------------------------------
+# 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
-    # Inicializa estado de login
+    # Inicializa login
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
 
-    # --- FLUXO 1: NÃO LOGADO (Mostra Login) ---
+    # FLUXO 1: LOGIN
     if not st.session_state['logged_in']:
         login_screen()
         return
 
-    # --- FLUXO 2: LOGADO (Carrega Dados e Mostra App) ---
+    # FLUXO 2: APP LOGADO
     current_user = st.session_state['user_id']
     user_name = st.session_state['user_name']
 
-    # Carrega dados se ainda não carregou nesta sessão
+    # Carrega dados
     if 'arena_data' not in st.session_state:
         with st.spinner(f"Carregando dados de {user_name}..."):
             data, row, status = load_user_data(current_user)
@@ -25,7 +314,7 @@ def main():
 
     arena_data = st.session_state['arena_data']
     
-    # Garante estrutura mínima do JSON
+    # Estrutura JSON segura
     if "stats" not in arena_data: arena_data["stats"] = DEFAULT_ARENA_DATA["stats"].copy()
     if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"].copy()
     if "historico_atividades" not in arena_data: arena_data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"].copy()
@@ -33,75 +322,43 @@ def main():
     stats = arena_data['stats']
     hist = arena_data['historico_atividades']
 
-    # --- SIDEBAR (RESTAURADA COM CALENDÁRIO E CORES) ---
+    # --- SIDEBAR ---
     with st.sidebar:
         if os.path.exists(USER_AVATAR_FILE):
             st.image(USER_AVATAR_FILE, width=100)
-        else:
-            st.header(f"🏛️ {user_name}")
-
         st.markdown(f"### Olá, {user_name}")
         st.caption(f"ID: {current_user}")
         
-        # Botões de Controle
-        c_refresh, c_logout = st.columns(2)
-        if c_refresh.button("🔄"):
+        if st.button("🔄 Recarregar Dados"):
             st.cache_data.clear()
             del st.session_state['arena_data']
             st.rerun()
-        if c_logout.button("🚪 Sair"):
+            
+        if st.button("🚪 SAIR (Logout)"):
             st.session_state.clear()
             st.rerun()
             
         st.divider()
-        
-        # --- 1. DESEMPENHO GLOBAL (ESTILO MENTOR) ---
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         
-        st.markdown(f"""<div class='stat-box'><div class='stat-value'>{stats['total_questoes']}</div><div class='stat-label'>Total Geral</div></div>""", unsafe_allow_html=True)
-        
-        if stats['total_questoes'] > 0:
-            perc = (stats['total_acertos'] / stats['total_questoes']) * 100
-        else:
-            perc = 0
-        st.markdown(f"**Aproveitamento Geral:** {perc:.1f}%")
-        st.progress(perc / 100)
+        st.markdown("<div class='stat-header'>📅 Hoje</div>", unsafe_allow_html=True)
+        daily_stats = calculate_daily_stats(hist, datetime.now())
+        st.markdown(f"**Atividades:** {daily_stats['total']}")
+        st.markdown(f"**Acertos:** {daily_stats['acertos']}")
 
-        # --- 2. DESEMPENHO DIÁRIO (RESTAURADO) ---
-        st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
-        
-        # Seletor de Data
-        selected_date = st.date_input("Filtrar Data:", datetime.now(), format="DD/MM/YYYY")
-        
-        # Cálculo Dinâmico
-        daily_stats = calculate_daily_stats(hist, selected_date)
-        
-        d1, d2 = st.columns(2)
-        d1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{daily_stats['acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
-        d2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{daily_stats['erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
-        
-        st.markdown(f"""<div class='stat-box'><div class='stat-value'>{daily_stats['total']}</div><div class='stat-label'>Questões Hoje</div></div>""", unsafe_allow_html=True)
-        
-        if daily_stats['total'] > 0:
-            d_perc = (daily_stats['acertos'] / daily_stats['total']) * 100
-        else:
-            d_perc = 0.0
-        st.markdown(f"**Eficiência Diária:** {d_perc:.1f}%")
-        st.progress(d_perc / 100)
-
-    # --- HERO HEADER ---
+    # --- HERO ---
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""
-        <div class="full-width-hero" style="background-color: #FFF8DC; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;">
+        <div style="background-color: #FFF8DC; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;">
             <img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;">
         </div>
         """, unsafe_allow_html=True)
 
-    # --- TABS PRINCIPAIS ---
+    # --- TABS ---
     tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
@@ -128,9 +385,6 @@ def main():
 
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
-        
-        # Exibe página atual
-        c_info.markdown(f"<div style='text-align:center; padding-top:10px;'>Página {st.session_state['coliseum_page'] + 1} de {total_pages}</div>", unsafe_allow_html=True)
 
         for opp in page_opponents:
             is_locked = opp['id'] > fase_max
@@ -167,7 +421,7 @@ def main():
                     elif is_completed:
                         st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Status Image (Prepare-se / Vitória / Derrota)
+            # Status Image
             status_img = None
             if is_completed: status_img = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
@@ -345,3 +599,6 @@ def main():
             st.dataframe(pd.DataFrame(hist[::-1]), use_container_width=True, hide_index=True)
         else:
             st.info("Sem histórico.")
+
+if __name__ == "__main__":
+    main()
