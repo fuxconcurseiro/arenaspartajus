@@ -432,6 +432,15 @@ def main():
 
     # --- SIDEBAR ---
     with st.sidebar:
+        logo_path = "logo_spartajus.jpg"  # Certifique-se que o arquivo está na raiz ou ajuste o caminho
+
+# Verifica se a imagem existe para evitar que o app quebre (Erro FileNotFoundError)
+if os.path.exists(logo_path):
+    # Renderiza a imagem respeitando a largura da coluna/sidebar
+    st.image(logo_path, use_container_width=True) 
+else:
+    # Opcional: Renderiza um título texto caso a imagem falhe (Fallback)
+    st.markdown("### 🏛️ SpartaJus")
         if os.path.exists(USER_AVATAR_FILE):
             st.image(USER_AVATAR_FILE, use_container_width=True)
         
@@ -751,3 +760,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
