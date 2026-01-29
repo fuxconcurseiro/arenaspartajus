@@ -100,12 +100,10 @@ st.markdown("""
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
     /* CAMUFLAGEM DE SEGURANÇA (Para eliminar barra branca) */
-    /* Camufla inputs residuais para a cor do fundo */
     .stTextInput > div > div {
         background-color: #F5F4EF !important;
         border-color: #F5F4EF !important;
     }
-    /* Remove fundo branco de containers vazios */
     div[data-testid="stVerticalBlock"] > div {
         background-color: transparent !important;
     }
@@ -135,17 +133,16 @@ st.markdown("""
         transition: all 0.3s ease; 
         padding: 0.6rem 1.2rem;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        text-decoration: none; /* Remove sublinhado de links */
+        text-decoration: none;
         display: inline-flex;
         justify-content: center;
         align-items: center;
     }
     
-    /* HOVER: Mantém fundo bege, apenas borda e texto ganham destaque */
     .stButton > button:hover, .stLinkButton > a:hover {
-        background-color: #E3DFD3 !important; /* Fundo não muda */
-        color: #9E0000 !important;            /* Texto vermelho vivo */
-        border: 1px solid #9E0000 !important; /* Borda vermelha aparece */
+        background-color: #E3DFD3 !important; 
+        color: #9E0000 !important;            
+        border: 1px solid #9E0000 !important; 
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(158, 0, 0, 0.1);
     }
@@ -155,7 +152,7 @@ st.markdown("""
         transform: translateY(0px);
     }
 
-    /* BOTÃO DE LOGIN (Formulário) - Maior, mas mesmas cores */
+    /* BOTÃO DE LOGIN (Formulário) */
     [data-testid="stForm"] button {
         height: 60px;
         font-size: 20px !important;
@@ -169,22 +166,20 @@ st.markdown("""
         border: 1px solid #9E0000 !important;
         color: #9E0000 !important;
     }
-    /* ---------------------------------------------------- */
     
-    /* Inputs (Especificidade para manter inputs funcionais visíveis se necessário) */
+    /* Inputs */
     .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div {
         background-color: #FFFFFF; color: #2e2c2b; border: 1px solid #E3DFD3;
     }
     
     /* Cards */
-    /* AJUSTE: Margin-top específico para colapsar espaço */
     .battle-card, .master-card {
         background-color: #FFFFFF; 
         border: 1px solid #E3DFD3; 
         border-radius: 8px;
         padding: 20px; 
         margin-bottom: 20px; 
-        margin-top: 10px; /* Garante proximidade com o título */
+        margin-top: 10px;
         text-align: center; 
         transition: all 0.3s ease;
     }
@@ -408,7 +403,6 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # HERO HEADER CORRIGIDO (Background Unificado #F5F4EF)
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""<div style="background-color: #F5F4EF; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
@@ -419,7 +413,7 @@ def main():
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        # Título Hard-Coded (Cor Vermelha e sem margens ruins)
+        # Título Hard-Coded
         st.markdown("<h3 style='color: #9E0000;'>🗺️ A Jornada do Gladiador</h3>", unsafe_allow_html=True)
         
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
@@ -532,7 +526,7 @@ def main():
                 if st.button("Próximo ➡️"): st.session_state['coliseum_page'] += 1; st.rerun()
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE
+    # TAB 2: DOCTORE (LIMPEZA CIRÚRGICA)
     # -------------------------------------------------------------------------
     with tab_doctore:
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
@@ -545,6 +539,7 @@ def main():
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
+                        # ABERTURA DO CARD (SEM NADA ANTES)
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         
