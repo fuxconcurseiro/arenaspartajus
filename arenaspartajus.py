@@ -228,12 +228,12 @@ def get_avatar_image(local_file, fallback_url):
     return fallback_url
 
 OPONENTS_DB = [
-    {"id": 1, "nome": "Velho Leão", "descricao": "Suas garras estão gastas, sua perna necrosada, mas sua experiência é mortal.", "avatar_url": get_avatar_image("1_leao_velho.png", ""), "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7},
-    {"id": 2, "nome": "Beuzebu", "descricao": "A fúria é incontrolável.", "avatar_url": get_avatar_image("touro.jpg", ""), "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), "img_derrota": get_avatar_image("derrota_touro.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
+    {"id": 1, "nome": "Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.", "avatar_url": get_avatar_image("1_leao_velho.png", ""), "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7},
+    {"id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável.", "avatar_url": get_avatar_image("touro.jpg", ""), "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), "img_derrota": get_avatar_image("derrota_touro.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
     {"id": 3, "nome": "Leproso", "descricao": "A doença que corrói a alma.", "avatar_url": get_avatar_image("leproso.jpg", ""), "img_vitoria": get_avatar_image("vitoria_leproso.jpg", ""), "img_derrota": get_avatar_image("derrota_leproso.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
     {"id": 4, "nome": "Autanax, o domador canino", "descricao": "Ele comanda as feras com um olhar gelado.", "avatar_url": get_avatar_image("autanax.png", ""), "img_vitoria": get_avatar_image("vitoria_autanax.png", ""), "img_derrota": get_avatar_image("derrota_autanax.png", ""), "link_tec": "", "dificuldade": "Intermediário", "max_tempo": 30, "max_erros": 5},
     {"id": 5, "nome": "Tanara, a infiel", "descricao": "Sua lealdade é comprada com sangue.", "avatar_url": get_avatar_image("tanara.png", ""), "img_vitoria": get_avatar_image("vitoria_tanara.png", ""), "img_derrota": get_avatar_image("derrota_tanara.png", ""), "link_tec": "", "dificuldade": "Difícil", "max_tempo": 30, "max_erros": 5},
-    {"id": 6, "nome": "Afezio, o renegado", "descricao": "Expulso do grupo, busca vingança.", "avatar_url": get_avatar_image("afezio.png", ""), "img_vitoria": get_avatar_image("vitoria_afezio.png", ""), "img_derrota": get_avatar_image("derrota_afezio.png", ""), "link_tec": "", "dificuldade": "Pesadelo", "max_tempo": 30, "max_erros": 5}
+    {"id": 6, "nome": "Afezio, o renegado", "descricao": "Expulso do panteão, busca vingança.", "avatar_url": get_avatar_image("afezio.png", ""), "img_vitoria": get_avatar_image("vitoria_afezio.png", ""), "img_derrota": get_avatar_image("derrota_afezio.png", ""), "link_tec": "", "dificuldade": "Pesadelo", "max_tempo": 30, "max_erros": 5}
 ]
 
 # -----------------------------------------------------------------------------
@@ -408,9 +408,10 @@ def main():
             st.session_state.clear()
             st.rerun()
 
+    # HERO HEADER CORRIGIDO (Background Unificado #F5F4EF)
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
-        st.markdown(f"""<div style="background-color: #FFF8DC; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div style="background-color: #F5F4EF; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
 
     tab_batalha, tab_doctore, tab_historico = st.tabs(["🏛️ Coliseum", "🦉 Doctore", "📜 Histórico"])
 
@@ -655,4 +656,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
