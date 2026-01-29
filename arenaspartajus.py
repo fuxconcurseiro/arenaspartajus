@@ -68,6 +68,12 @@ def render_centered_image(img_path, width=None):
     </div>
     """, unsafe_allow_html=True)
 
+def render_red_header(text):
+    """
+    Usa HTML H3 com estilo inline para garantir a cor vermelha #9E0000.
+    """
+    st.markdown(f"<h3 style='color: #9E0000 !important; font-weight: 700; margin-top: 5px; margin-bottom: 5px;'>{text}</h3>", unsafe_allow_html=True)
+
 def calculate_daily_stats(history, target_date):
     stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
@@ -88,13 +94,15 @@ def calculate_daily_stats(history, target_date):
             continue
     return stats
 
-# ESTILIZAÇÃO GERAL
+# ESTILIZAÇÃO GERAL (Visual Clean + Botões Corrigidos + Link Button Padronizado)
 st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
-    /* Backup CSS Global (ainda útil para outros elementos) */
+    /* Títulos Globais em Vermelho */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
+    
+    /* Texto do Corpo em Grafite */
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
     .stcaption { color: #2e2c2b !important; opacity: 0.8; }
     
@@ -103,8 +111,11 @@ st.markdown("""
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #9E0000 !important; }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #2e2c2b !important; }
     
-    /* Botões */
-    .stButton > button {
+    /* ----------------------------------------------------------------- */
+    /* BOTÕES E LINKS (Design Clean Unificado)                           */
+    /* Aplica o mesmo estilo para st.button e st.link_button (.stLinkButton > a) */
+    /* ----------------------------------------------------------------- */
+    .stButton > button, .stLinkButton > a {
         background-color: #E3DFD3 !important;
         color: #9E0000 !important;
         border: 1px solid #E3DFD3 !important;
@@ -114,22 +125,27 @@ st.markdown("""
         transition: all 0.3s ease; 
         padding: 0.6rem 1.2rem;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        text-decoration: none; /* Remove sublinhado de links */
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
     }
     
-    .stButton > button:hover {
-        background-color: #E3DFD3 !important; 
-        color: #9E0000 !important;            
-        border: 1px solid #9E0000 !important; 
+    /* HOVER: Mantém fundo bege, apenas borda e texto ganham destaque */
+    .stButton > button:hover, .stLinkButton > a:hover {
+        background-color: #E3DFD3 !important; /* Fundo não muda */
+        color: #9E0000 !important;            /* Texto vermelho vivo */
+        border: 1px solid #9E0000 !important; /* Borda vermelha aparece */
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(158, 0, 0, 0.1);
     }
     
-    .stButton > button:active {
+    .stButton > button:active, .stLinkButton > a:active {
         background-color: #dcd8cc !important;
         transform: translateY(0px);
     }
 
-    /* Botão de Login (Formulário) */
+    /* BOTÃO DE LOGIN (Formulário) - Maior, mas mesmas cores */
     [data-testid="stForm"] button {
         height: 60px;
         font-size: 20px !important;
@@ -143,6 +159,7 @@ st.markdown("""
         border: 1px solid #9E0000 !important;
         color: #9E0000 !important;
     }
+    /* ---------------------------------------------------- */
     
     /* Inputs */
     .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div {
@@ -158,7 +175,7 @@ st.markdown("""
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
     .master-card:hover { border-color: #9E0000; transform: translateY(-3px); }
 
-    /* Doctore Card */
+    /* Doctore Card (Questão) */
     .doctore-card {
         background-color: #FFFFFF; border: 1px solid #E3DFD3; border-left: 5px solid #9E0000;
         border-radius: 6px; padding: 40px; margin-bottom: 30px;
@@ -184,6 +201,7 @@ DEFAULT_ARENA_DATA = {
     "historico_atividades": []
 }
 
+# BACKUP EM CASO DE FALHA NO JSON
 DEFAULT_DOCTORE_DB = {
     "praetorium": {"nome": "Praetorium Lex", "descricao": "Fallback.", "imagem": "praetorium.jpg", "materias": {}}
 }
@@ -206,25 +224,14 @@ OPONENTS_DB = [
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
-    data = DEFAULT_DOCTORE_DB
+    """Carrega JSON."""
     if os.path.exists(QUESTOES_FILE):
         try:
             with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                return json.load(f)
         except Exception:
-            pass
-            
-    # PATCH para garantir nomes corretos
-    for key, master_info in data.items():
-        nome_atual = master_info.get('nome', '')
-        if "Praetorium" in nome_atual or key == "praetorium":
-            data[key]['nome'] = "Praetorium Lex"
-        elif "Sara" in nome_atual or key == "sara" or key == "sara_oracula":
-            data[key]['nome'] = "Sara Orácula"
-        elif "Primus" in nome_atual or key == "primus" or key == "primus_revisao":
-            data[key]['nome'] = "Primus Savage"
-            
-    return data
+            return DEFAULT_DOCTORE_DB
+    return DEFAULT_DOCTORE_DB
 
 DOCTORE_DB = load_doctore_data()
 
@@ -358,6 +365,9 @@ def main():
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         
+        # AJUSTE 2: CAIXA DE TOTAL GLOBAL
+        st.markdown(f"""<div class='stat-box'><div class='stat-value'>{stats['total_questoes']}</div><div class='stat-label'>Total de Questões</div></div>""", unsafe_allow_html=True)
+        
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
         selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
         daily_stats = calculate_daily_stats(hist, selected_date)
@@ -401,13 +411,7 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        c_prev, c_info, c_next = st.columns([1, 4, 1])
-        with c_prev:
-            if st.session_state['coliseum_page'] > 0:
-                if st.button("⬅️ Anterior"): st.session_state['coliseum_page'] -= 1; st.rerun()
-        with c_next:
-            if st.session_state['coliseum_page'] < total_pages - 1:
-                if st.button("Próximo ➡️"): st.session_state['coliseum_page'] += 1; st.rerun()
+        # AJUSTE 3: PAGINAÇÃO DO TOPO REMOVIDA (Limpeza Visual)
 
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
@@ -500,6 +504,15 @@ def main():
                             time.sleep(1.5)
                             del st.session_state['active_battle_id']
                             st.rerun()
+
+        # Navegação no Rodapé (MANTIDA)
+        c_prev, c_info, c_next = st.columns([1, 4, 1])
+        with c_prev:
+            if st.session_state['coliseum_page'] > 0:
+                if st.button("⬅️ Anterior"): st.session_state['coliseum_page'] -= 1; st.rerun()
+        with c_next:
+            if st.session_state['coliseum_page'] < total_pages - 1:
+                if st.button("Próximo ➡️"): st.session_state['coliseum_page'] += 1; st.rerun()
 
     # -------------------------------------------------------------------------
     # TAB 2: DOCTORE
