@@ -50,10 +50,6 @@ def get_base64_of_bin_file(bin_file):
         return None
 
 def render_centered_image(img_path, width=None):
-    """
-    Renderiza imagem. Se width for None, usa CSS responsivo (max-width: 400px).
-    Caso contrário, usa largura fixa em pixels.
-    """
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
@@ -71,6 +67,10 @@ def render_centered_image(img_path, width=None):
         <img src="{src}" style="{style_attr} border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
     </div>
     """, unsafe_allow_html=True)
+
+def render_red_header(text):
+    """Função auxiliar para garantir a cor vermelha nos nomes."""
+    st.markdown(f"<h3 style='color: #9E0000 !important; margin-top: 0;'>{text}</h3>", unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
     stats = {"total": 0, "acertos": 0, "erros": 0}
@@ -92,10 +92,12 @@ def calculate_daily_stats(history, target_date):
             continue
     return stats
 
-# ESTILIZAÇÃO GERAL (Clean Design + Ajustes Login)
+# ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    
+    /* Hierarquia de Cores */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
     .stcaption { color: #2e2c2b !important; opacity: 0.8; }
@@ -116,7 +118,7 @@ st.markdown("""
         border: 1px solid #9E0000 !important; transform: translateY(-2px);
     }
 
-    /* AJUSTE 1: Botão de Login (Formulário) Maior */
+    /* Botão de Login (Formulário) Maior */
     [data-testid="stForm"] button {
         min-height: 60px;
         font-size: 20px !important;
@@ -169,44 +171,16 @@ DEFAULT_ARENA_DATA = {
     "historico_atividades": []
 }
 
-# AJUSTE 4: Atualização de Nomes no Backup (Primus Savage e Praetorium Lex)
+# BACKUP EM CASO DE FALHA NO JSON
 DEFAULT_DOCTORE_DB = {
-    "praetorium": {
-        "nome": "Praetorium Lex", # Renomeado
-        "descricao": "O Guardião das Leis e do Processo Legislativo.", 
-        "imagem": "praetorium.jpg", 
-        "materias": {
-            "Direito Constitucional": {
-                "Organização Político-Administrativa": [
-                     {"id": 21, "texto": "Nos termos da Constituição da República, a câmara de vereadores não é competente para apreciar matéria eleitoral nem matéria criminal.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)"}
-                ]
-            }
-        }
-    },
-    "sara_oracula": {
-      "nome": "Sara Orácula", # Renomeado
-      "descricao": "A Voz dos Tribunais.",
-      "imagem": "sara.png",
-      "materias": {
-        "STF - Constitucional": {
-          "Súmula Vinculante": [
-            {
-              "id": 8000,
-              "texto": "O Supremo Tribunal Federal poderá, de ofício ou por provocação, mediante decisão de dois terços dos seus membros, após reiteradas decisões sobre matéria constitucional, aprovar súmula...",
-              "gabarito": "Certo",
-              "explicacao": "<strong>Metadados:</strong> Constituição Federal, Art. 103-A."
-            }
-          ]
-        }
-      }
-    }
+    "praetorium": {"nome": "Praetorium Lex", "descricao": "Fallback.", "imagem": "praetorium.jpg", "materias": {}}
 }
 
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
     return fallback_url
 
-# AJUSTE 4: Atualização de Nomes na Lista de Oponentes (Velho Leão)
+# LISTA CORRIGIDA DE OPONENTES (NOMES ATUALIZADOS)
 OPONENTS_DB = [
     {"id": 1, "nome": "Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.", "avatar_url": get_avatar_image("1_leao_velho.png", ""), "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7},
     {"id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável.", "avatar_url": get_avatar_image("touro.jpg", ""), "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), "img_derrota": get_avatar_image("derrota_touro.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
@@ -217,69 +191,72 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE (JSON)
+# 4. CARGA DE DADOS DOCTORE (COM CORREÇÃO DE NOMES FORÇADA)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
-    if not os.path.exists(QUESTOES_FILE): return DEFAULT_DOCTORE_DB 
-    try:
-        with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception: return DEFAULT_DOCTORE_DB
+    """Carrega JSON e aplica patch nos nomes se necessário."""
+    data = DEFAULT_DOCTORE_DB
+    
+    if os.path.exists(QUESTOES_FILE):
+        try:
+            with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            pass # Mantém default se erro
+            
+    # PATCH: Forçar renomeação na memória após carregar o arquivo
+    # Isso garante que mesmo se o JSON tiver nomes antigos, a tela mostre os novos
+    NAME_OVERRIDES = {
+        "praetorium": "Praetorium Lex",
+        "sara_oracula": "Sara Orácula",
+        "primus_revisao": "Primus Savage",
+        # Adicione chaves antigas se houver divergência no JSON
+        "sara": "Sara Orácula",
+        "primus": "Primus Savage"
+    }
+    
+    for key, new_name in NAME_OVERRIDES.items():
+        if key in data:
+            data[key]['nome'] = new_name
+            
+    return data
 
 DOCTORE_DB = load_doctore_data()
 
 # -----------------------------------------------------------------------------
-# 5. SISTEMA DE LOGIN E BANCO DE DADOS (INTEGRAÇÃO SEGURA)
+# 5. SISTEMA DE LOGIN E BANCO DE DADOS
 # -----------------------------------------------------------------------------
 def get_gsheets_client():
-    """Conecta ao Google e retorna o Cliente autenticado."""
     if not LIBS_INSTALLED: return None
     if "gcp_service_account" not in st.secrets: return None
-    
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds_dict = dict(st.secrets["gcp_service_account"])
     credentials = Credentials.from_service_account_info(creds_dict, scopes=scope)
     return gspread.authorize(credentials)
 
 def check_login(username, password):
-    """Verifica credenciais na aba 'Usuarios'."""
     client = get_gsheets_client()
     if not client: return False, "Erro de Biblioteca (ver logs)"
-    
     try:
-        # Abre a aba 'Usuarios' para validar login
         sheet = client.open(SHEET_NAME).worksheet("Usuarios")
-        records = sheet.get_all_records() # Assume cabecalho: Login, Senha, Nome
-        
+        records = sheet.get_all_records()
         for record in records:
             if str(record.get('Login', '')).strip() == username and str(record.get('Senha', '')).strip() == password:
                 return True, record.get('Nome', 'Gladiador')
-        
         return False, "Usuário ou senha incorretos."
     except Exception as e:
         return False, f"Erro ao acessar base de usuários: {str(e)}"
 
 def load_user_data(username):
-    """
-    Busca dados na aba PRINCIPAL (Sheet1).
-    Lê APENAS a Coluna C (Dados Arena), preservando a Coluna B (Mentor).
-    """
     client = get_gsheets_client()
     if not client: return DEFAULT_ARENA_DATA.copy(), None, "Erro libs"
-    
     try:
         sheet = client.open(SHEET_NAME).sheet1
-        # Procura o usuário na Coluna 1 (A)
         cell = sheet.find(username, in_column=1)
-        
         if cell:
-            # Lê Coluna 3 (C) - Dados da Arena
             raw_data = sheet.cell(cell.row, 3).value 
-            
-            if not raw_data:
-                return DEFAULT_ARENA_DATA.copy(), cell.row, "Novo Registro"
-            
+            if not raw_data: return DEFAULT_ARENA_DATA.copy(), cell.row, "Novo Registro"
             try:
                 data = json.loads(raw_data)
                 return data, cell.row, "Dados Carregados"
@@ -289,15 +266,10 @@ def load_user_data(username):
             new_row = [username, "", json.dumps(DEFAULT_ARENA_DATA)]
             sheet.append_row(new_row)
             return DEFAULT_ARENA_DATA.copy(), len(sheet.get_all_values()), "Novo Usuário Criado"
-            
     except Exception as e:
         return DEFAULT_ARENA_DATA.copy(), None, f"Erro Sheets: {str(e)}"
 
 def save_data(row_idx, full_data):
-    """
-    Salva dados na aba PRINCIPAL (Sheet1).
-    Escreve APENAS na Coluna 3 (C).
-    """
     client = get_gsheets_client()
     if client and row_idx:
         try:
@@ -322,7 +294,6 @@ def login_screen():
         with st.form("login_form"):
             user = st.text_input("Usuário (Login)")
             pwd = st.text_input("Senha", type="password")
-            # AJUSTE 1: Botão grande (CSS cuidará do tamanho, aqui garantimos primary e full width)
             submitted = st.form_submit_button("ENTRAR NA ARENA", type="primary", use_container_width=True)
             
             if submitted:
@@ -343,20 +314,15 @@ def login_screen():
 # 7. APP PRINCIPAL
 # -----------------------------------------------------------------------------
 def main():
-    # Inicializa login
-    if 'logged_in' not in st.session_state:
-        st.session_state['logged_in'] = False
+    if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 
-    # FLUXO 1: LOGIN
     if not st.session_state['logged_in']:
         login_screen()
         return
 
-    # FLUXO 2: APP LOGADO
     current_user = st.session_state['user_id']
     user_name = st.session_state['user_name']
 
-    # Carrega dados
     if 'arena_data' not in st.session_state:
         with st.spinner(f"Carregando dados de {user_name}..."):
             data, row, status = load_user_data(current_user)
@@ -365,8 +331,6 @@ def main():
             st.session_state['status'] = status
 
     arena_data = st.session_state['arena_data']
-    
-    # Estrutura JSON segura
     if "stats" not in arena_data: arena_data["stats"] = DEFAULT_ARENA_DATA["stats"].copy()
     if "progresso_arena" not in arena_data: arena_data["progresso_arena"] = DEFAULT_ARENA_DATA["progresso_arena"].copy()
     if "historico_atividades" not in arena_data: arena_data["historico_atividades"] = DEFAULT_ARENA_DATA["historico_atividades"].copy()
@@ -387,7 +351,6 @@ def main():
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         
-        # --- DESEMPENHO DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
         selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
         daily_stats = calculate_daily_stats(hist, selected_date)
@@ -397,52 +360,38 @@ def main():
         d2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{daily_stats['erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         st.markdown(f"""<div class='stat-box'><div class='stat-value'>{daily_stats['total']}</div><div class='stat-label'>Total do Dia</div></div>""", unsafe_allow_html=True)
         
-        if daily_stats['total'] > 0:
-            d_perc = (daily_stats['acertos'] / daily_stats['total']) * 100
-        else:
-            d_perc = 0.0
+        if daily_stats['total'] > 0: d_perc = (daily_stats['acertos'] / daily_stats['total']) * 100
+        else: d_perc = 0.0
         st.markdown(f"**Eficiência:** {d_perc:.1f}%")
         st.progress(d_perc / 100)
 
         st.divider()
-        # AJUSTE 2: Botões movidos para o final
         if st.button("🔄 Recarregar Dados"):
             st.cache_data.clear()
             del st.session_state['arena_data']
             st.rerun()
-            
         if st.button("🚪 SAIR (Logout)"):
             st.session_state.clear()
             st.rerun()
 
-    # --- HERO ---
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
-        st.markdown(f"""
-        <div style="background-color: #FFF8DC; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;">
-            <img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;">
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div style="background-color: #FFF8DC; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
 
-    # --- TABS ---
-    # AJUSTE 3: Renomeação de Aba
     tab_batalha, tab_doctore, tab_historico = st.tabs(["🏛️ Coliseum", "🦉 Doctore", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
-    # TAB 1: BATALHA (PAGINAÇÃO + BLOQUEIO VISUAL)
+    # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        # AJUSTE 4: Título H3 (###) para cor vermelha automática
         st.markdown("### 🗺️ A Jornada do Gladiador")
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
 
-        # Paginação
         ITEMS_PER_PAGE = 3
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # Botões Navegação (Topo)
         c_prev, c_info, c_next = st.columns([1, 4, 1])
         with c_prev:
             if st.session_state['coliseum_page'] > 0:
@@ -465,17 +414,15 @@ def main():
             
             st.markdown(f"<div class='{css_class}'>", unsafe_allow_html=True)
             c_img, c_info, c_action = st.columns([1, 2, 1])
-            
-            with c_img:
-                render_centered_image(opp['avatar_url'])
+            with c_img: render_centered_image(opp['avatar_url'])
             
             with c_info:
-                # AJUSTE 4: Nome do Oponente com ### para cor vermelha
-                st.markdown(f"### {opp['nome']}")
+                # USO DA FUNÇÃO AUXILIAR PARA COR VERMELHA GARANTIDA
+                render_red_header(opp['nome'])
                 st.markdown(f"*{opp['descricao']}*")
                 
                 if is_locked:
-                    st.markdown("### 🔒 BLOQUEADO")
+                    render_red_header("🔒 BLOQUEADO")
                     st.caption("Vença os desafios anteriores para liberar.")
                 else:
                     if is_completed: st.markdown("✅ **CONQUISTADO**")
@@ -490,7 +437,6 @@ def main():
                     elif is_completed:
                         st.button("Refazer", key=f"redo_{opp['id']}")
             
-            # Status Image
             status_img = None
             if is_completed: status_img = opp['img_vitoria']
             elif is_current and st.session_state.get('last_result') == 'derrota' and st.session_state.get('last_opp_id') == opp['id']:
@@ -501,7 +447,6 @@ def main():
             if status_img: render_centered_image(status_img, width=400)
             st.markdown("</div>", unsafe_allow_html=True)
 
-            # Formulário de Batalha
             if st.session_state.get('active_battle_id') == opp['id']:
                 with st.expander("⚔️ CAMPO DE BATALHA", expanded=True):
                     st.info(f"Objetivo: {opp['max_tempo']} min | Máx {opp['max_erros']} erros.")
@@ -548,25 +493,24 @@ def main():
                             st.rerun()
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE (100% FUNCIONAL)
+    # TAB 2: DOCTORE
     # -------------------------------------------------------------------------
     with tab_doctore:
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
         
-        # 1. TELA DE SELEÇÃO
         if st.session_state['doctore_state'] == 'selection':
-            # AJUSTE 4: Título H3
             st.markdown("### 🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
-            
             cols = st.columns(2)
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
-                        # AJUSTE 4: Nome do Mestre com ###
-                        st.markdown(f"### {master['nome']}")
+                        
+                        # USO DA FUNÇÃO AUXILIAR PARA COR VERMELHA GARANTIDA
+                        render_red_header(master['nome'])
+                        
                         st.markdown(f"*{master['descricao']}*")
                         if st.button(f"Treinar", key=f"sel_{key}"):
                             st.session_state['selected_master'] = key
@@ -575,7 +519,6 @@ def main():
                             st.rerun()
                         st.markdown("</div>", unsafe_allow_html=True)
         
-        # 2. TELA DE TREINAMENTO
         elif st.session_state['doctore_state'] == 'training':
              if st.button("🔙 Voltar ao Panteão"):
                  st.session_state['doctore_state'] = 'selection'
@@ -585,15 +528,14 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             # AJUSTE 4: Nome do Mestre no Treino
-             st.markdown(f"### {master['nome']}")
+             # USO DA FUNÇÃO AUXILIAR PARA COR VERMELHA GARANTIDA
+             render_red_header(master['nome'])
              st.markdown("---")
              
              if 'doctore_session' not in st.session_state:
                  st.session_state['doctore_session'] = {"active": False, "questions": [], "idx": 0}
              ds = st.session_state['doctore_session']
              
-             # Filtros de Matéria
              if not ds['active']:
                  materias = list(master['materias'].keys())
                  if not materias:
@@ -608,8 +550,6 @@ def main():
                          random.shuffle(qs)
                          ds.update({"questions": qs, "idx": 0, "active": True, "wrong_ids": [], "mode": "normal"})
                          st.rerun()
-             
-             # Execução do Quiz
              else:
                  q_list = ds['questions']
                  idx = ds['idx']
@@ -657,7 +597,6 @@ def main():
                      st.success("Treino Finalizado!")
                      st.write(f"Erros: {len(ds['wrong_ids'])}")
                      
-                     # Botões Finais
                      c1, c2 = st.columns(2)
                      if c1.button("🏠 Novo Treino"):
                          ds['active'] = False
