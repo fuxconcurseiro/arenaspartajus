@@ -94,7 +94,7 @@ def calculate_daily_stats(history, target_date):
             continue
     return stats
 
-# ESTILIZAÇÃO GERAL (Visual Clean + Botões Corrigidos + Link Button Padronizado)
+# ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
@@ -113,7 +113,6 @@ st.markdown("""
     
     /* ----------------------------------------------------------------- */
     /* BOTÕES E LINKS (Design Clean Unificado)                           */
-    /* Aplica o mesmo estilo para st.button e st.link_button (.stLinkButton > a) */
     /* ----------------------------------------------------------------- */
     .stButton > button, .stLinkButton > a {
         background-color: #E3DFD3 !important;
@@ -365,7 +364,7 @@ def main():
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         
-        # AJUSTE 2: CAIXA DE TOTAL GLOBAL
+        # TOTAL GLOBAL
         st.markdown(f"""<div class='stat-box'><div class='stat-value'>{stats['total_questoes']}</div><div class='stat-label'>Total de Questões</div></div>""", unsafe_allow_html=True)
         
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
@@ -401,8 +400,12 @@ def main():
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        # Título Hard-Coded
-        st.markdown("<h3 style='color: #9E0000;'>🗺️ A Jornada do Gladiador</h3>", unsafe_allow_html=True)
+        # AJUSTE TIGHT LAYOUT: Margem negativa e zero padding
+        st.markdown("""
+        <h3 style='color: #9E0000; margin-bottom: -15px; padding-bottom: 0px;'>
+            🗺️ A Jornada do Gladiador
+        </h3>
+        """, unsafe_allow_html=True)
         
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
@@ -411,11 +414,7 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # AJUSTE 3: Barra divisória neutra em vez de navegação superior
-        st.markdown("""
-        <hr style="border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0), #E3DFD3, rgba(0, 0, 0, 0)); margin-top: 5px; margin-bottom: 25px;">
-        """, unsafe_allow_html=True)
-
+        # SEM NAVEGAÇÃO TOPO, SEM <HR>, LOOP DIRETO
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
 
