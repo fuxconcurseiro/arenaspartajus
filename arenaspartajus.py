@@ -211,12 +211,12 @@ def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
     return fallback_url
 
-# LISTA DE OPONENTES ATUALIZADA (ÁUDIOS LOCAIS)
+# LISTA DE OPONENTES ATUALIZADA (COPYWRITING REFINADO)
 OPONENTS_DB = [
     {
         "id": 1, 
         "nome": "Velho Leão", 
-        "descricao": "Suas garras estão gastas, mas sua experiência é mortal.", 
+        "descricao": "Suas garras estão gastas e a pata necrosada, mas sua experiência é mortal.", 
         "avatar_url": get_avatar_image("1_leao_velho.png", ""), 
         "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), 
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), 
@@ -227,7 +227,7 @@ OPONENTS_DB = [
     {
         "id": 2, 
         "nome": "Beuzebu", 
-        "descricao": "A fúria incontrolável.", 
+        "descricao": "Ele tem 2 melhores amigos e você nenhum.", 
         "avatar_url": get_avatar_image("touro.jpg", ""), 
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), 
         "img_derrota": get_avatar_image("derrota_touro.jpg", ""), 
@@ -238,7 +238,7 @@ OPONENTS_DB = [
     {
         "id": 3, 
         "nome": "Leproso", 
-        "descricao": "A doença que corrói a alma.", 
+        "descricao": "Expulso dos seus, busca vingança.", 
         "avatar_url": get_avatar_image("leproso.jpg", ""), 
         "img_vitoria": get_avatar_image("vitoria_leproso.jpg", ""), 
         "img_derrota": get_avatar_image("derrota_leproso.jpg", ""), 
@@ -469,6 +469,7 @@ def main():
             st.session_state.clear()
             st.rerun()
 
+    # HERO HEADER
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""<div style="background-color: #F5F4EF; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
