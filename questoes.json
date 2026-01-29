@@ -3,6 +3,8 @@
     "nome": "Praetorium Lex",
     "descricao": "O Guardião das Leis.",
     "imagem": "praetorium.jpg",
+    "especialidades": "Constitucional, Administrativo, Penal e Processo Penal",
+    "audio": "audios/praetorium.m4a",
     "materias": {
       "Direito Constitucional": {
         "Conceito e Fontes": [
@@ -578,6 +580,8 @@
     "nome": "Enam Criscis",
     "descricao": "A Sabedoria da Toga.",
     "imagem": "enam-criscis.png",
+    "especialidades": "Constitucional, Civil, Processo Civil e Empresarial",
+    "audio": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     "materias": {
       "Direitos Humanos": {
         "Geral": [
@@ -593,8 +597,10 @@
   },
   "parquet_tribunus": {
     "nome": "Parquet Tribunus",
-    "descricao": "O Defensor da Sociedade. Mestre das Promotorias de Justiça.",
+    "descricao": "O Defensor da Sociedade e custus legis.",
     "imagem": "parquet.jpg",
+    "especialidades": "Penal, Processo Penal e Direitos Difusos",
+    "audio": "audios/parquet.m4a",
     "materias": {
       "Direito Processual Coletivo": {
         "Ação Civil Pública": [
@@ -610,8 +616,10 @@
   },
   "noel_autarquicus": {
     "nome": "Noel Autarquicus",
-    "descricao": "O Guardião dos Municípios e Conselhos. Mestre da Administração Local.",
+    "descricao": "Mestre da Administração e Conselhos Locais.",
     "imagem": "noel.png",
+    "especialidades": "Administrativo e Leis Específicas",
+    "audio": "audios/noel.m4a",
     "materias": {
       "Direito Administrativo": {
         "Servidores Públicos": [
@@ -629,6 +637,8 @@
     "nome": "Sara Orácula",
     "descricao": "A Voz dos Tribunais.",
     "imagem": "sara.png",
+    "especialidades": "Jurisprudência do STF e STJ",
+    "audio": "audios/sara.m4a",
     "materias": {
       "STF - Constitucional": {
         "Súmula Vinculante": [
@@ -644,8 +654,10 @@
   },
   "primus_revisao": {
     "nome": "Primus Savage",
-    "descricao": "O Guardião das Falhas. Revise e forje sua vitória.",
+    "descricao": "Revise suas falhas e forje sua vitória.",
     "imagem": "primus.png",
+    "especialidades": "Todas as disciplinas possíveis",
+    "audio": "audios/primus.m4a",
     "materias": {
       "Erros do Direcionamento 7": {
         "Revisão Geral": [
