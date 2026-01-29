@@ -38,6 +38,9 @@ HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
 USER_AVATAR_FILE = "fux_concurseiro.png"
 PREPARE_SE_FILE = "prepare-se.jpg"
 
+# ÁUDIO PLACEHOLDER (Para quando o arquivo oficial não existir)
+AUDIO_PLACEHOLDER = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+
 # MAPA DE ESPECIALIDADES (Para injetar nos dados carregados)
 SPECIALTIES_MAP = {
     "praetorium": "Constitucional, Administrativo, Penal e Processo Penal",
@@ -48,12 +51,15 @@ SPECIALTIES_MAP = {
     "primus_revisao": "Todas as disciplinas possíveis"
 }
 
-# MAPA DE ÁUDIO (Para injetar nos dados carregados do JSON se não existirem lá)
-# Instrução: Coloque seus arquivos na pasta 'audios/' e atualize aqui ou no JSON.
-# Exemplo Local: "praetorium": "audios/praetorium.m4a"
-# Exemplo Web: "praetorium": "https://link.com/audio.mp3"
+# MAPA DE ÁUDIO (Mapeamento Exato Solicitado)
+# Arquivos locais na pasta 'audios/' ou Placeholder
 AUDIO_MAP = {
-    "praetorium": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    "praetorium": "audios/praetorium.m4a",
+    "parquet_tribunus": "audios/parquet.m4a",
+    "noel_autarquicus": "audios/noel.m4a",
+    "sara_oracula": "audios/sara.m4a",
+    "primus_revisao": "audios/primus.m4a",
+    "enam_criscis": AUDIO_PLACEHOLDER  # Placeholder conforme solicitado
 }
 
 # -----------------------------------------------------------------------------
@@ -235,7 +241,7 @@ DEFAULT_DOCTORE_DB = {
         "nome": "Praetorium Lex", 
         "especialidades": "Constitucional, Administrativo, Penal e Processo Penal", 
         "imagem": "praetorium.jpg", 
-        "audio": None, # Ex: "audios/praetorium.m4a"
+        "audio": "audios/praetorium.m4a",
         "materias": {}
     }
 }
@@ -245,8 +251,6 @@ def get_avatar_image(local_file, fallback_url):
     return fallback_url
 
 # LISTA DE OPONENTES COM CAMPO AUDIO
-# Instrução: Coloque os arquivos na pasta 'audios/' e atualize o campo "audio".
-# Exemplo: "audio": "audios/leao.m4a"
 OPONENTS_DB = [
     {
         "id": 1, 
@@ -257,7 +261,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7,
-        "audio": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" # Link Externo (Teste)
+        "audio": "audios/velho_leao.m4a" # Arquivo local
     },
     {
         "id": 2, 
@@ -268,7 +272,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_touro.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", 
         "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6,
-        "audio": None # Ex: "audios/beuzebu.m4a"
+        "audio": AUDIO_PLACEHOLDER # Placeholder
     },
     {
         "id": 3, 
@@ -279,7 +283,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_leproso.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI", 
         "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6,
-        "audio": None
+        "audio": AUDIO_PLACEHOLDER # Placeholder
     },
     {
         "id": 4, 
@@ -290,7 +294,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_autanax.png", ""), 
         "link_tec": "", 
         "dificuldade": "Intermediário", "max_tempo": 30, "max_erros": 5,
-        "audio": None
+        "audio": AUDIO_PLACEHOLDER # Placeholder
     },
     {
         "id": 5, 
@@ -301,7 +305,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_tanara.png", ""), 
         "link_tec": "", 
         "dificuldade": "Difícil", "max_tempo": 30, "max_erros": 5,
-        "audio": None
+        "audio": AUDIO_PLACEHOLDER # Placeholder
     },
     {
         "id": 6, 
@@ -312,12 +316,12 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_afezio.png", ""), 
         "link_tec": "", 
         "dificuldade": "Pesadelo", "max_tempo": 30, "max_erros": 5,
-        "audio": None
+        "audio": AUDIO_PLACEHOLDER # Placeholder
     }
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE
+# 4. CARGA DE DADOS DOCTORE (COM INJEÇÃO DE ESPECIALIDADES E ÁUDIO)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
@@ -338,7 +342,7 @@ def load_doctore_data():
         if key in AUDIO_MAP:
             data[key]['audio'] = AUDIO_MAP[key]
         else:
-            data[key]['audio'] = None # Previne erro de chave
+            data[key]['audio'] = None
         
         # Garante nomes corretos
         nome_atual = master_info.get('nome', '')
