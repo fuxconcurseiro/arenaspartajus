@@ -211,7 +211,7 @@ def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
     return fallback_url
 
-# LISTA DE OPONENTES ATUALIZADA (COPYWRITING REFINADO)
+# LISTA DE OPONENTES ATUALIZADA (COPYWRITING CORRIGIDO)
 OPONENTS_DB = [
     {
         "id": 1, 
@@ -227,7 +227,7 @@ OPONENTS_DB = [
     {
         "id": 2, 
         "nome": "Beuzebu", 
-        "descricao": "Ele tem 2 melhores amigos e você nenhum.", 
+        "descricao": "A fúria incontrolável.", # REVERTIDO
         "avatar_url": get_avatar_image("touro.jpg", ""), 
         "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), 
         "img_derrota": get_avatar_image("derrota_touro.jpg", ""), 
@@ -238,7 +238,7 @@ OPONENTS_DB = [
     {
         "id": 3, 
         "nome": "Leproso", 
-        "descricao": "Expulso dos seus, busca vingança.", 
+        "descricao": "A doença que corrói a alma.", # REVERTIDO
         "avatar_url": get_avatar_image("leproso.jpg", ""), 
         "img_vitoria": get_avatar_image("vitoria_leproso.jpg", ""), 
         "img_derrota": get_avatar_image("derrota_leproso.jpg", ""), 
@@ -249,7 +249,7 @@ OPONENTS_DB = [
     {
         "id": 4, 
         "nome": "Autanax, o domador canino", 
-        "descricao": "Ele comanda as feras com um olhar gelado.", 
+        "descricao": "Ele tem 2 melhores amigos e você nenhum.", # ATUALIZADO
         "avatar_url": get_avatar_image("autanax.png", ""), 
         "img_vitoria": get_avatar_image("vitoria_autanax.png", ""), 
         "img_derrota": get_avatar_image("derrota_autanax.png", ""), 
@@ -271,7 +271,7 @@ OPONENTS_DB = [
     {
         "id": 6, 
         "nome": "Afezio, o renegado", 
-        "descricao": "Expulso do panteão, busca vingança.", 
+        "descricao": "Expulso dos seus, busca por vingança.", # ATUALIZADO
         "avatar_url": get_avatar_image("afezio.png", ""), 
         "img_vitoria": get_avatar_image("vitoria_afezio.png", ""), 
         "img_derrota": get_avatar_image("derrota_afezio.png", ""), 
