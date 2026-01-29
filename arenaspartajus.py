@@ -70,10 +70,10 @@ def render_centered_image(img_path, width=None):
 
 def render_red_header(text):
     """
-    Usa HTML H3 com estilo inline para garantir a cor vermelha #9E0000.
-    O !important assegura que o CSS do Streamlit não sobrescreva.
+    CORREÇÃO DE COR: Usa tag <p> com estilo inline forçado (!important).
+    Isso evita que o tema padrão do Streamlit sobrescreva a cor vermelha.
     """
-    st.markdown(f"<h3 style='color: #9E0000 !important; font-weight: bold; margin-bottom: 5px;'>{text}</h3>", unsafe_allow_html=True)
+    st.markdown(f'<p style="color: #9E0000 !important; font-family: sans-serif; font-weight: 700; font-size: 1.5rem; margin-top: 10px; margin-bottom: 5px; line-height: 1.2;">{text}</p>', unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
     stats = {"total": 0, "acertos": 0, "erros": 0}
@@ -100,7 +100,7 @@ st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
-    /* Regras Globais de Tipografia */
+    /* Regras Globais */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
     .stcaption { color: #2e2c2b !important; opacity: 0.8; }
@@ -110,29 +110,46 @@ st.markdown("""
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #9E0000 !important; }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #2e2c2b !important; }
     
-    /* Botões Gerais */
+    /* ---------------------------------------------------- */
+    /* BOTÕES (Padrão Unificado: Bege com Texto Vermelho)   */
+    /* ---------------------------------------------------- */
     .stButton > button {
-        background-color: #E3DFD3; color: #9E0000; border: 1px solid #E3DFD3;
-        border-radius: 6px; font-weight: 700; text-transform: uppercase;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); padding: 0.6rem 1.2rem;
+        background-color: #E3DFD3 !important;
+        color: #9E0000 !important;
+        border: 1px solid #E3DFD3 !important;
+        border-radius: 6px; 
+        font-weight: 700; 
+        text-transform: uppercase;
+        transition: all 0.3s ease; 
+        padding: 0.6rem 1.2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+    
+    /* Hover Geral */
     .stButton > button:hover {
-        background-color: #E3DFD3 !important; color: #9E0000 !important;
-        border: 1px solid #9E0000 !important; transform: translateY(-2px);
+        background-color: #9E0000 !important; /* Inverte para fundo vermelho */
+        color: #F5F4EF !important;            /* Texto claro */
+        border: 1px solid #9E0000 !important;
+        transform: translateY(-2px);
     }
 
-    /* Botão de Login (Formulário) Maior */
+    /* CORREÇÃO BOTÃO DE LOGIN (Formulário) */
+    /* Aplica o mesmo estilo base, mas aumenta o tamanho */
     [data-testid="stForm"] button {
         min-height: 60px;
         font-size: 20px !important;
-        background-color: #9E0000 !important;
-        color: #F5F4EF !important;
-        border: none !important;
+        background-color: #E3DFD3 !important; /* Fundo Bege (Padrão) */
+        color: #9E0000 !important;            /* Texto Vermelho */
+        border: 2px solid #9E0000 !important; /* Borda levemente destacada */
     }
+    
     [data-testid="stForm"] button:hover {
-        background-color: #7A0000 !important;
+        background-color: #9E0000 !important; /* Fundo Vermelho no Hover */
+        color: #F5F4EF !important;            /* Texto Claro */
         transform: scale(1.02);
     }
+    
+    /* ---------------------------------------------------- */
     
     /* Inputs */
     .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div {
@@ -273,7 +290,8 @@ def login_screen():
             img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
             st.markdown(f'<img src="data:image/jpg;base64,{img_b64}" style="width:100%; border-radius:10px; margin-bottom:20px;">', unsafe_allow_html=True)
         
-        st.markdown("## 🛡️ Portão da Arena")
+        # Título Vermelho usando a nova função
+        render_red_header("🛡️ Portão da Arena")
         st.info("Utilize suas credenciais para acessar.")
         
         with st.form("login_form"):
@@ -403,7 +421,7 @@ def main():
             with c_img: render_centered_image(opp['avatar_url'])
             
             with c_info:
-                # USO DA FUNÇÃO RENDER RED HEADER
+                # USO DA FUNÇÃO DE COR CORRIGIDA
                 render_red_header(opp['nome'])
                 st.markdown(f"*{opp['descricao']}*")
                 
@@ -494,7 +512,7 @@ def main():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         
-                        # USO DA FUNÇÃO RENDER RED HEADER
+                        # USO DA FUNÇÃO DE COR CORRIGIDA
                         render_red_header(master['nome'])
                         
                         st.markdown(f"*{master['descricao']}*")
@@ -514,7 +532,7 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             # USO DA FUNÇÃO RENDER RED HEADER
+             # USO DA FUNÇÃO DE COR CORRIGIDA
              render_red_header(master['nome'])
              st.markdown("---")
              
