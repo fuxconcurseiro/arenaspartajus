@@ -38,6 +38,16 @@ HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
 USER_AVATAR_FILE = "fux_concurseiro.png"
 PREPARE_SE_FILE = "prepare-se.jpg"
 
+# MAPA DE ESPECIALIDADES (Para injetar nos dados carregados)
+SPECIALTIES_MAP = {
+    "praetorium": "Constitucional, Administrativo, Penal e Processo Penal",
+    "enam_criscis": "Constitucional, Civil, Processo Civil e Empresarial",
+    "parquet_tribunus": "Penal, Processo Penal e Direitos Difusos",
+    "noel_autarquicus": "Administrativo e Leis Específicas",
+    "sara_oracula": "Jurisprudência do STF e STJ",
+    "primus_revisao": "Todas as disciplinas possíveis"
+}
+
 # -----------------------------------------------------------------------------
 # 2. FUNÇÕES VISUAIS & UTILITÁRIOS
 # -----------------------------------------------------------------------------
@@ -63,7 +73,7 @@ def render_centered_image(img_path, width=None):
         style_attr = "width: 100%; max-width: 400px;"
 
     st.markdown(f"""
-    <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px;">
+    <div style="display: flex; justify-content: center; margin-top: 5px; margin-bottom: 15px;">
         <img src="{src}" style="{style_attr} border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
     </div>
     """, unsafe_allow_html=True)
@@ -99,7 +109,7 @@ st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
-    /* CAMUFLAGEM DE SEGURANÇA (Para eliminar barra branca) */
+    /* CAMUFLAGEM DE SEGURANÇA */
     .stTextInput > div > div {
         background-color: #F5F4EF !important;
         border-color: #F5F4EF !important;
@@ -120,9 +130,7 @@ st.markdown("""
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #9E0000 !important; }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #2e2c2b !important; }
     
-    /* ----------------------------------------------------------------- */
-    /* BOTÕES E LINKS (Design Clean Unificado)                           */
-    /* ----------------------------------------------------------------- */
+    /* Botões e Links */
     .stButton > button, .stLinkButton > a {
         background-color: #E3DFD3 !important;
         color: #9E0000 !important;
@@ -152,7 +160,7 @@ st.markdown("""
         transform: translateY(0px);
     }
 
-    /* BOTÃO DE LOGIN (Formulário) */
+    /* Botão de Login */
     [data-testid="stForm"] button {
         height: 60px;
         font-size: 20px !important;
@@ -187,7 +195,7 @@ st.markdown("""
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
     .master-card:hover { border-color: #9E0000; transform: translateY(-3px); }
 
-    /* Doctore Card (Questão) */
+    /* Doctore Card */
     .doctore-card {
         background-color: #FFFFFF; border: 1px solid #E3DFD3; border-left: 5px solid #9E0000;
         border-radius: 6px; padding: 40px; margin-bottom: 30px;
@@ -213,9 +221,9 @@ DEFAULT_ARENA_DATA = {
     "historico_atividades": []
 }
 
-# BACKUP EM CASO DE FALHA NO JSON
+# BACKUP ATUALIZADO
 DEFAULT_DOCTORE_DB = {
-    "praetorium": {"nome": "Praetorium Lex", "descricao": "Fallback.", "imagem": "praetorium.jpg", "materias": {}}
+    "praetorium": {"nome": "Praetorium Lex", "especialidades": "Constitucional, Administrativo, Penal e Processo Penal", "imagem": "praetorium.jpg", "materias": {}}
 }
 
 def get_avatar_image(local_file, fallback_url):
@@ -232,18 +240,35 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE
+# 4. CARGA DE DADOS DOCTORE (COM INJEÇÃO DE ESPECIALIDADES)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
-    """Carrega JSON."""
+    """Carrega JSON e injeta especialidades."""
+    data = DEFAULT_DOCTORE_DB
     if os.path.exists(QUESTOES_FILE):
         try:
             with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
         except Exception:
-            return DEFAULT_DOCTORE_DB
-    return DEFAULT_DOCTORE_DB
+            pass
+            
+    # INJEÇÃO DE ESPECIALIDADES E NOMES
+    for key, master_info in data.items():
+        # Injeta especialidade do mapa se a chave existir
+        if key in SPECIALTIES_MAP:
+            data[key]['especialidades'] = SPECIALTIES_MAP[key]
+        
+        # Garante nomes corretos (Backup de segurança)
+        nome_atual = master_info.get('nome', '')
+        if "Praetorium" in nome_atual or key == "praetorium":
+            data[key]['nome'] = "Praetorium Lex"
+        elif "Sara" in nome_atual or key == "sara" or key == "sara_oracula":
+            data[key]['nome'] = "Sara Orácula"
+        elif "Primus" in nome_atual or key == "primus" or key == "primus_revisao":
+            data[key]['nome'] = "Primus Savage"
+            
+    return data
 
 DOCTORE_DB = load_doctore_data()
 
@@ -403,6 +428,7 @@ def main():
             st.session_state.clear()
             st.rerun()
 
+    # HERO HEADER CORRIGIDO (Background Unificado #F5F4EF)
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""<div style="background-color: #F5F4EF; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
@@ -526,7 +552,7 @@ def main():
                 if st.button("Próximo ➡️"): st.session_state['coliseum_page'] += 1; st.rerun()
 
     # -------------------------------------------------------------------------
-    # TAB 2: DOCTORE (LIMPEZA CIRÚRGICA)
+    # TAB 2: DOCTORE (COM ESPECIALIDADES)
     # -------------------------------------------------------------------------
     with tab_doctore:
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
@@ -539,8 +565,27 @@ def main():
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
-                        # ABERTURA DO CARD (SEM NADA ANTES)
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
+                        
+                        # INSERÇÃO DAS ESPECIALIDADES (SUBSTITUINDO BARRA BRANCA)
+                        if 'especialidades' in master:
+                            st.markdown(f"""
+                            <div style="
+                                background-color: #E3DFD3;
+                                color: #5D4037;
+                                padding: 6px 10px;
+                                border-radius: 6px;
+                                text-align: center;
+                                font-size: 0.8rem;
+                                font-weight: 600;
+                                margin-bottom: 8px;
+                                border: 1px solid #D7CCC8;
+                                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+                            ">
+                                📚 {master['especialidades']}
+                            </div>
+                            """, unsafe_allow_html=True)
+
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         
                         # NOME MESTRE HARD-CODED
