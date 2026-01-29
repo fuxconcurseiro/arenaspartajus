@@ -49,6 +49,7 @@ SPECIALTIES_MAP = {
 }
 
 # MAPA DE ÁUDIO (Para injetar nos dados carregados)
+# Exemplo de uso: "praetorium": "audios/praetorium_intro.m4a"
 AUDIO_MAP = {
     "praetorium": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
 }
@@ -228,7 +229,13 @@ DEFAULT_ARENA_DATA = {
 
 # BACKUP ATUALIZADO
 DEFAULT_DOCTORE_DB = {
-    "praetorium": {"nome": "Praetorium Lex", "especialidades": "Constitucional, Administrativo, Penal e Processo Penal", "imagem": "praetorium.jpg", "materias": {}}
+    "praetorium": {
+        "nome": "Praetorium Lex", 
+        "especialidades": "Constitucional, Administrativo, Penal e Processo Penal", 
+        "imagem": "praetorium.jpg", 
+        "audio": "audios/praetorium.m4a", # Exemplo de caminho relativo
+        "materias": {}
+    }
 }
 
 def get_avatar_image(local_file, fallback_url):
@@ -245,7 +252,8 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7,
-        "audio": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" # Áudio de teste
+        # Exemplo URL Externa
+        "audio": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
     },
     {
         "id": 2, 
@@ -256,7 +264,8 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_touro.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", 
         "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6,
-        "audio": None
+        # Exemplo Caminho Relativo (M4A)
+        "audio": "audios/beuzebu_intro.m4a" 
     },
     {
         "id": 3, 
@@ -330,7 +339,7 @@ def load_doctore_data():
         else:
             data[key]['audio'] = None
         
-        # Garante nomes corretos (Backup de segurança)
+        # Garante nomes corretos
         nome_atual = master_info.get('nome', '')
         if "Praetorium" in nome_atual or key == "praetorium":
             data[key]['nome'] = "Praetorium Lex"
@@ -499,7 +508,7 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # HERO HEADER CORRIGIDO (Background Unificado #F5F4EF)
+    # HERO HEADER
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""<div style="background-color: #F5F4EF; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
@@ -510,7 +519,6 @@ def main():
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        # Título Hard-Coded
         st.markdown("<h3 style='color: #9E0000;'>🗺️ A Jornada do Gladiador</h3>", unsafe_allow_html=True)
         
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
@@ -520,7 +528,6 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # ZERO ESPAÇO, ZERO COLUNAS AQUI. INÍCIO DIRETO DO LOOP.
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
 
@@ -537,12 +544,21 @@ def main():
             c_img, c_info, c_action = st.columns([1, 2, 1])
             with c_img: 
                 render_centered_image(opp['avatar_url'])
-                # PLAYER DE ÁUDIO NO CARD (COLISEUM)
-                if opp.get('audio'):
-                    st.audio(opp['audio'], format='audio/mp3')
+                
+                # PLAYER HÍBRIDO (Coliseum)
+                audio_path = opp.get('audio')
+                if audio_path:
+                    # 1. Verifica se é link externo
+                    if audio_path.startswith('http'):
+                        st.audio(audio_path)
+                    # 2. Verifica se é arquivo local
+                    elif os.path.exists(audio_path):
+                        _, ext = os.path.splitext(audio_path)
+                        # Define MIME type para m4a ou mp3
+                        mime_type = 'audio/mp4' if 'm4a' in ext.lower() else 'audio/mp3'
+                        st.audio(audio_path, format=mime_type)
             
             with c_info:
-                # NOME OPONENTE HARD-CODED
                 st.markdown(f"<h3 style='color: #9E0000;'>{opp['nome']}</h3>", unsafe_allow_html=True)
                 st.markdown(f"*{opp['descricao']}*")
                 
@@ -633,7 +649,6 @@ def main():
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
         
         if st.session_state['doctore_state'] == 'selection':
-            # Título Hard-Coded
             st.markdown("<h3 style='color: #9E0000;'>🏛️ O Panteão dos Mestres</h3>", unsafe_allow_html=True)
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             cols = st.columns(2)
@@ -642,7 +657,7 @@ def main():
                     with st.container():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         
-                        # INSERÇÃO DAS ESPECIALIDADES
+                        # ESPECIALIDADES
                         if 'especialidades' in master:
                             st.markdown(f"""
                             <div style="
@@ -663,11 +678,19 @@ def main():
 
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         
-                        # PLAYER DE ÁUDIO NO CARD (DOCTORE)
-                        if master.get('audio'):
-                            st.audio(master['audio'], format='audio/mp3')
+                        # PLAYER HÍBRIDO (Doctore)
+                        audio_path = master.get('audio')
+                        if audio_path:
+                            # 1. Verifica se é link externo
+                            if audio_path.startswith('http'):
+                                st.audio(audio_path)
+                            # 2. Verifica se é arquivo local
+                            elif os.path.exists(audio_path):
+                                _, ext = os.path.splitext(audio_path)
+                                # Define MIME type para m4a ou mp3
+                                mime_type = 'audio/mp4' if 'm4a' in ext.lower() else 'audio/mp3'
+                                st.audio(audio_path, format=mime_type)
 
-                        # NOME MESTRE HARD-CODED
                         st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
                         
                         st.markdown(f"*{master['descricao']}*")
@@ -687,7 +710,6 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             # NOME MESTRE TREINO HARD-CODED
              st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
              st.markdown("---")
              
@@ -730,7 +752,7 @@ def main():
                              st.session_state['doc_revealed'] = True
                              is_correct = (ans == q['gabarito'])
                              
-                             stats['total_questoes'] += 1 # Correção: Incremento unitário
+                             stats['total_questoes'] += 1 
                              if is_correct: stats['total_acertos'] += 1
                              else:
                                  stats['total_erros'] += 1
