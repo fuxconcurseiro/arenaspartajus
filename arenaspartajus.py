@@ -61,7 +61,6 @@ def render_centered_image(img_path, width=None):
         if b64:
             src = f"data:image/{ext};base64,{b64}"
     
-    # Lógica de redimensionamento corrigida
     if width:
         style_attr = f"width: {width}px;"
     else:
@@ -93,7 +92,7 @@ def calculate_daily_stats(history, target_date):
             continue
     return stats
 
-# ESTILIZAÇÃO GERAL (Clean Design)
+# ESTILIZAÇÃO GERAL (Clean Design + Ajustes Login)
 st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
@@ -106,7 +105,7 @@ st.markdown("""
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #9E0000 !important; }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #2e2c2b !important; }
     
-    /* Botões */
+    /* Botões Gerais */
     .stButton > button {
         background-color: #E3DFD3; color: #9E0000; border: 1px solid #E3DFD3;
         border-radius: 6px; font-weight: 700; text-transform: uppercase;
@@ -115,6 +114,19 @@ st.markdown("""
     .stButton > button:hover {
         background-color: #E3DFD3 !important; color: #9E0000 !important;
         border: 1px solid #9E0000 !important; transform: translateY(-2px);
+    }
+
+    /* AJUSTE 1: Botão de Login (Formulário) Maior */
+    [data-testid="stForm"] button {
+        min-height: 60px;
+        font-size: 20px !important;
+        background-color: #9E0000 !important;
+        color: #F5F4EF !important;
+        border: none !important;
+    }
+    [data-testid="stForm"] button:hover {
+        background-color: #7A0000 !important;
+        transform: scale(1.02);
     }
     
     /* Inputs */
@@ -156,15 +168,47 @@ DEFAULT_ARENA_DATA = {
     "progresso_arena": {"fase_maxima_desbloqueada": 1, "fases_vencidas": []},
     "historico_atividades": []
 }
-DEFAULT_DOCTORE_DB = {"praetorium": {"nome": "Mestre Exemplo", "descricao": "Se o JSON falhar.", "imagem": "", "materias": {}}}
+
+# AJUSTE 4: Atualização de Nomes no Backup (Primus Savage e Praetorium Lex)
+DEFAULT_DOCTORE_DB = {
+    "praetorium": {
+        "nome": "Praetorium Lex", # Renomeado
+        "descricao": "O Guardião das Leis e do Processo Legislativo.", 
+        "imagem": "praetorium.jpg", 
+        "materias": {
+            "Direito Constitucional": {
+                "Organização Político-Administrativa": [
+                     {"id": 21, "texto": "Nos termos da Constituição da República, a câmara de vereadores não é competente para apreciar matéria eleitoral nem matéria criminal.", "gabarito": "Certo", "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)"}
+                ]
+            }
+        }
+    },
+    "sara_oracula": {
+      "nome": "Sara Orácula", # Renomeado
+      "descricao": "A Voz dos Tribunais.",
+      "imagem": "sara.png",
+      "materias": {
+        "STF - Constitucional": {
+          "Súmula Vinculante": [
+            {
+              "id": 8000,
+              "texto": "O Supremo Tribunal Federal poderá, de ofício ou por provocação, mediante decisão de dois terços dos seus membros, após reiteradas decisões sobre matéria constitucional, aprovar súmula...",
+              "gabarito": "Certo",
+              "explicacao": "<strong>Metadados:</strong> Constituição Federal, Art. 103-A."
+            }
+          ]
+        }
+      }
+    }
+}
 
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
     return fallback_url
 
-# LISTA ATUALIZADA DE OPONENTES (6 CHEFES)
+# AJUSTE 4: Atualização de Nomes na Lista de Oponentes (Velho Leão)
 OPONENTS_DB = [
-    {"id": 1, "nome": "O Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.", "avatar_url": get_avatar_image("1_leao_velho.png", ""), "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7},
+    {"id": 1, "nome": "Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.", "avatar_url": get_avatar_image("1_leao_velho.png", ""), "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7},
     {"id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável.", "avatar_url": get_avatar_image("touro.jpg", ""), "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), "img_derrota": get_avatar_image("derrota_touro.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
     {"id": 3, "nome": "Leproso", "descricao": "A doença que corrói a alma.", "avatar_url": get_avatar_image("leproso.jpg", ""), "img_vitoria": get_avatar_image("vitoria_leproso.jpg", ""), "img_derrota": get_avatar_image("derrota_leproso.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
     {"id": 4, "nome": "Autanax, o domador canino", "descricao": "Ele comanda as feras com um olhar gelado.", "avatar_url": get_avatar_image("autanax.png", ""), "img_vitoria": get_avatar_image("vitoria_autanax.png", ""), "img_derrota": get_avatar_image("derrota_autanax.png", ""), "link_tec": "", "dificuldade": "Intermediário", "max_tempo": 30, "max_erros": 5},
@@ -234,7 +278,6 @@ def load_user_data(username):
             raw_data = sheet.cell(cell.row, 3).value 
             
             if not raw_data:
-                # Usuario existe mas nao tem dados da Arena
                 return DEFAULT_ARENA_DATA.copy(), cell.row, "Novo Registro"
             
             try:
@@ -243,8 +286,6 @@ def load_user_data(username):
             except:
                 return DEFAULT_ARENA_DATA.copy(), cell.row, "Erro no JSON"
         else:
-            # Usuario logado na aba 'Usuarios' mas nao existe na 'Sheet1'
-            # Cria linha nova: [User, Vazio, DadosPadrao]
             new_row = [username, "", json.dumps(DEFAULT_ARENA_DATA)]
             sheet.append_row(new_row)
             return DEFAULT_ARENA_DATA.copy(), len(sheet.get_all_values()), "Novo Usuário Criado"
@@ -281,6 +322,7 @@ def login_screen():
         with st.form("login_form"):
             user = st.text_input("Usuário (Login)")
             pwd = st.text_input("Senha", type="password")
+            # AJUSTE 1: Botão grande (CSS cuidará do tamanho, aqui garantimos primary e full width)
             submitted = st.form_submit_button("ENTRAR NA ARENA", type="primary", use_container_width=True)
             
             if submitted:
@@ -332,31 +374,22 @@ def main():
     stats = arena_data['stats']
     hist = arena_data['historico_atividades']
 
-    # --- SIDEBAR (CORRIGIDA) ---
+    # --- SIDEBAR ---
     with st.sidebar:
         if os.path.exists(USER_AVATAR_FILE):
-            st.image(USER_AVATAR_FILE, use_container_width=True) # Correção 1: Largura responsiva
+            st.image(USER_AVATAR_FILE, use_container_width=True)
         st.markdown(f"### Olá, {user_name}")
         st.caption(f"ID: {current_user}")
         
-        if st.button("🔄 Recarregar Dados"):
-            st.cache_data.clear()
-            del st.session_state['arena_data']
-            st.rerun()
-            
-        if st.button("🚪 SAIR (Logout)"):
-            st.session_state.clear()
-            st.rerun()
-            
         st.divider()
         st.markdown("<div class='stat-header'>📊 Desempenho Global</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         
-        # --- DESEMPENHO DIÁRIO (CORRIGIDO) ---
+        # --- DESEMPENHO DIÁRIO ---
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
-        selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY") # Correção 2: Seletor
+        selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
         daily_stats = calculate_daily_stats(hist, selected_date)
         
         d1, d2 = st.columns(2)
@@ -369,7 +402,18 @@ def main():
         else:
             d_perc = 0.0
         st.markdown(f"**Eficiência:** {d_perc:.1f}%")
-        st.progress(d_perc / 100) # Correção 2: Barra de Progresso
+        st.progress(d_perc / 100)
+
+        st.divider()
+        # AJUSTE 2: Botões movidos para o final
+        if st.button("🔄 Recarregar Dados"):
+            st.cache_data.clear()
+            del st.session_state['arena_data']
+            st.rerun()
+            
+        if st.button("🚪 SAIR (Logout)"):
+            st.session_state.clear()
+            st.rerun()
 
     # --- HERO ---
     if os.path.exists(HERO_IMG_FILE):
@@ -381,12 +425,14 @@ def main():
         """, unsafe_allow_html=True)
 
     # --- TABS ---
-    tab_batalha, tab_doctore, tab_historico = st.tabs(["Combates no Coliseum", "🦉 Doctore", "📜 Histórico"])
+    # AJUSTE 3: Renomeação de Aba
+    tab_batalha, tab_doctore, tab_historico = st.tabs(["🏛️ Coliseum", "🦉 Doctore", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
     # TAB 1: BATALHA (PAGINAÇÃO + BLOQUEIO VISUAL)
     # -------------------------------------------------------------------------
     with tab_batalha:
+        # AJUSTE 4: Título H3 (###) para cor vermelha automática
         st.markdown("### 🗺️ A Jornada do Gladiador")
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
@@ -421,9 +467,10 @@ def main():
             c_img, c_info, c_action = st.columns([1, 2, 1])
             
             with c_img:
-                render_centered_image(opp['avatar_url']) # Agora ajusta automaticamente
+                render_centered_image(opp['avatar_url'])
             
             with c_info:
+                # AJUSTE 4: Nome do Oponente com ### para cor vermelha
                 st.markdown(f"### {opp['nome']}")
                 st.markdown(f"*{opp['descricao']}*")
                 
@@ -508,12 +555,17 @@ def main():
         
         # 1. TELA DE SELEÇÃO
         if st.session_state['doctore_state'] == 'selection':
+            # AJUSTE 4: Título H3
+            st.markdown("### 🏛️ O Panteão dos Mestres")
+            st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
+            
             cols = st.columns(2)
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
+                        # AJUSTE 4: Nome do Mestre com ###
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
                         if st.button(f"Treinar", key=f"sel_{key}"):
@@ -533,7 +585,8 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             st.markdown(f"## {master['nome']}")
+             # AJUSTE 4: Nome do Mestre no Treino
+             st.markdown(f"### {master['nome']}")
              st.markdown("---")
              
              if 'doctore_session' not in st.session_state:
