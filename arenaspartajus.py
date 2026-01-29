@@ -37,6 +37,7 @@ QUESTOES_FILE = "questoes.json"
 HERO_IMG_FILE = "Arena_Spartajus_Logo_3.jpg"
 USER_AVATAR_FILE = "fux_concurseiro.png"
 PREPARE_SE_FILE = "prepare-se.jpg"
+LOGO_SPARTAJUS = "logo_spartajus.jpg"  # Nova logo migrada
 
 # ÁUDIO PLACEHOLDER (Para quando o arquivo oficial não existir)
 AUDIO_PLACEHOLDER = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
@@ -430,8 +431,15 @@ def main():
     stats = arena_data['stats']
     hist = arena_data['historico_atividades']
 
-    # --- SIDEBAR ---
+    # --- SIDEBAR (IDENTIDADE VISUAL ATUALIZADA) ---
     with st.sidebar:
+        # 1. LOGO MIGRADA (ACIMA DO AVATAR)
+        if os.path.exists(LOGO_SPARTAJUS):
+            st.image(LOGO_SPARTAJUS, use_container_width=True)
+        else:
+            st.markdown("<h1 style='color: #9E0000; text-align: center; margin-bottom: 10px;'>🏛️ SpartaJus</h1>", unsafe_allow_html=True)
+
+        # 2. AVATAR DO USUÁRIO
         if os.path.exists(USER_AVATAR_FILE):
             st.image(USER_AVATAR_FILE, use_container_width=True)
         
