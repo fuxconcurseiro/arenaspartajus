@@ -4,7 +4,7 @@
     "descricao": "O Guardião das Leis e do Processo Legislativo.",
     "imagem": "praetorium.jpg",
     "materias": {
-    "Direito Constitucional": {
+      "Direito Constitucional": {
         "Conceito e Fontes": [
           {
             "id": 1000,
@@ -225,7 +225,7 @@
             "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)<br><br><strong>Texto Original Correto:</strong> O princípio constitucional [...] não exclui a possibilidade do tratamento diferenciado.<br><br><strong>Análise do Erro:</strong> O princípio da igualdade material permite discriminações positivas para equiparar desiguais (ex: licença-maternidade, aposentadoria, Lei Maria da Penha)."
           }
         ],
-"Direitos Sociais e dos Trabalhadores": [
+        "Direitos Sociais e dos Trabalhadores": [
           {
             "id": 2000,
             "texto": "A jornada de seis horas para o trabalho realizado em turnos ininterruptos de revezamento poderá ser aumentada ou reduzida mediante negociação coletiva.",
@@ -323,7 +323,7 @@
             "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2021 / ALECE"
           }
         ],
-"Da Organização Político-Administrativa": [
+        "Da Organização Político-Administrativa": [
           {
             "id": 3000,
             "texto": "A República Federativa do Brasil organiza-se política e administrativamente em estados, municípios, Distrito Federal e União, que se aliam em união indissolúvel para a formação de um Estado Federal ou Federação.",
@@ -457,7 +457,7 @@
             "explicacao": "<strong>Metadados:</strong> CEBRASPE (CESPE) / 2002 / AL (CAM DEP)<br><br><strong>Texto Original Correto:</strong> É vedada a acumulação [...] exceto, quando houver compatibilidade de horários, a de dois cargos de professor...<br><br><strong>Análise do Erro:</strong> A acumulação de dois cargos de professor é uma das exceções constitucionais permitidas (art. 37, XVI)."
           }
         ],
-"Poder Legislativo (Estrutura e Atribuições)": [
+        "Poder Legislativo (Estrutura e Atribuições)": [
           {
             "id": 4000,
             "texto": "Via de regra, em cada Casa do Congresso Nacional, assim como nas suas comissões, estando presente a maioria absoluta de seus membros, as deliberações serão tomadas por maioria dos votos.",
