@@ -69,8 +69,11 @@ def render_centered_image(img_path, width=None):
     """, unsafe_allow_html=True)
 
 def render_red_header(text):
-    """Função auxiliar para garantir a cor vermelha nos nomes."""
-    st.markdown(f"<h3 style='color: #9E0000 !important; margin-top: 0;'>{text}</h3>", unsafe_allow_html=True)
+    """
+    Usa HTML H3 com estilo inline para garantir a cor vermelha #9E0000.
+    O !important assegura que o CSS do Streamlit não sobrescreva.
+    """
+    st.markdown(f"<h3 style='color: #9E0000 !important; font-weight: bold; margin-bottom: 5px;'>{text}</h3>", unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
     stats = {"total": 0, "acertos": 0, "erros": 0}
@@ -97,7 +100,7 @@ st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
-    /* Hierarquia de Cores */
+    /* Regras Globais de Tipografia */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
     .stcaption { color: #2e2c2b !important; opacity: 0.8; }
@@ -191,36 +194,18 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE (COM CORREÇÃO DE NOMES FORÇADA)
+# 4. CARGA DE DADOS DOCTORE
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
-    """Carrega JSON e aplica patch nos nomes se necessário."""
-    data = DEFAULT_DOCTORE_DB
-    
+    """Carrega JSON."""
     if os.path.exists(QUESTOES_FILE):
         try:
             with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                return json.load(f)
         except Exception:
-            pass # Mantém default se erro
-            
-    # PATCH: Forçar renomeação na memória após carregar o arquivo
-    # Isso garante que mesmo se o JSON tiver nomes antigos, a tela mostre os novos
-    NAME_OVERRIDES = {
-        "praetorium": "Praetorium Lex",
-        "sara_oracula": "Sara Orácula",
-        "primus_revisao": "Primus Savage",
-        # Adicione chaves antigas se houver divergência no JSON
-        "sara": "Sara Orácula",
-        "primus": "Primus Savage"
-    }
-    
-    for key, new_name in NAME_OVERRIDES.items():
-        if key in data:
-            data[key]['nome'] = new_name
-            
-    return data
+            return DEFAULT_DOCTORE_DB
+    return DEFAULT_DOCTORE_DB
 
 DOCTORE_DB = load_doctore_data()
 
@@ -342,7 +327,8 @@ def main():
     with st.sidebar:
         if os.path.exists(USER_AVATAR_FILE):
             st.image(USER_AVATAR_FILE, use_container_width=True)
-        st.markdown(f"### Olá, {user_name}")
+        
+        render_red_header(f"Olá, {user_name}")
         st.caption(f"ID: {current_user}")
         
         st.divider()
@@ -384,7 +370,7 @@ def main():
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        st.markdown("### 🗺️ A Jornada do Gladiador")
+        render_red_header("🗺️ A Jornada do Gladiador")
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
 
@@ -417,7 +403,7 @@ def main():
             with c_img: render_centered_image(opp['avatar_url'])
             
             with c_info:
-                # USO DA FUNÇÃO AUXILIAR PARA COR VERMELHA GARANTIDA
+                # USO DA FUNÇÃO RENDER RED HEADER
                 render_red_header(opp['nome'])
                 st.markdown(f"*{opp['descricao']}*")
                 
@@ -499,7 +485,7 @@ def main():
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
         
         if st.session_state['doctore_state'] == 'selection':
-            st.markdown("### 🏛️ O Panteão dos Mestres")
+            render_red_header("🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             cols = st.columns(2)
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
@@ -508,7 +494,7 @@ def main():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         
-                        # USO DA FUNÇÃO AUXILIAR PARA COR VERMELHA GARANTIDA
+                        # USO DA FUNÇÃO RENDER RED HEADER
                         render_red_header(master['nome'])
                         
                         st.markdown(f"*{master['descricao']}*")
@@ -528,7 +514,7 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             # USO DA FUNÇÃO AUXILIAR PARA COR VERMELHA GARANTIDA
+             # USO DA FUNÇÃO RENDER RED HEADER
              render_red_header(master['nome'])
              st.markdown("---")
              
@@ -571,7 +557,7 @@ def main():
                              st.session_state['doc_revealed'] = True
                              is_correct = (ans == q['gabarito'])
                              
-                             stats['total_questoes'] += 1
+                             stats['total_questoes'] += total
                              if is_correct: stats['total_acertos'] += 1
                              else:
                                  stats['total_erros'] += 1
