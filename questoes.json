@@ -3,6 +3,7 @@
     "nome": "Praetorium Lex",
     "descricao": "O Guardião das Leis e do Processo Legislativo.",
     "imagem": "praetorium.jpg",
+    "materias": {
     "Direito Constitucional": {
         "Conceito e Fontes": [
           {
