@@ -49,7 +49,11 @@ def get_base64_of_bin_file(bin_file):
     except Exception:
         return None
 
-def render_centered_image(img_path, width=200):
+def render_centered_image(img_path, width=None):
+    """
+    Renderiza imagem. Se width for None, usa CSS responsivo (max-width: 400px).
+    Caso contrário, usa largura fixa em pixels.
+    """
     src = img_path
     if os.path.exists(img_path):
         ext = img_path.split('.')[-1]
@@ -57,9 +61,15 @@ def render_centered_image(img_path, width=200):
         if b64:
             src = f"data:image/{ext};base64,{b64}"
     
+    # Lógica de redimensionamento corrigida
+    if width:
+        style_attr = f"width: {width}px;"
+    else:
+        style_attr = "width: 100%; max-width: 400px;"
+
     st.markdown(f"""
     <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px;">
-        <img src="{src}" style="width: {width}px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        <img src="{src}" style="{style_attr} border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
     </div>
     """, unsafe_allow_html=True)
 
@@ -322,10 +332,10 @@ def main():
     stats = arena_data['stats']
     hist = arena_data['historico_atividades']
 
-    # --- SIDEBAR ---
+    # --- SIDEBAR (CORRIGIDA) ---
     with st.sidebar:
         if os.path.exists(USER_AVATAR_FILE):
-            st.image(USER_AVATAR_FILE, width=100)
+            st.image(USER_AVATAR_FILE, use_container_width=True) # Correção 1: Largura responsiva
         st.markdown(f"### Olá, {user_name}")
         st.caption(f"ID: {current_user}")
         
@@ -344,10 +354,22 @@ def main():
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         
-        st.markdown("<div class='stat-header'>📅 Hoje</div>", unsafe_allow_html=True)
-        daily_stats = calculate_daily_stats(hist, datetime.now())
-        st.markdown(f"**Atividades:** {daily_stats['total']}")
-        st.markdown(f"**Acertos:** {daily_stats['acertos']}")
+        # --- DESEMPENHO DIÁRIO (CORRIGIDO) ---
+        st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
+        selected_date = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY") # Correção 2: Seletor
+        daily_stats = calculate_daily_stats(hist, selected_date)
+        
+        d1, d2 = st.columns(2)
+        d1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{daily_stats['acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
+        d2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{daily_stats['erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class='stat-box'><div class='stat-value'>{daily_stats['total']}</div><div class='stat-label'>Total do Dia</div></div>""", unsafe_allow_html=True)
+        
+        if daily_stats['total'] > 0:
+            d_perc = (daily_stats['acertos'] / daily_stats['total']) * 100
+        else:
+            d_perc = 0.0
+        st.markdown(f"**Eficiência:** {d_perc:.1f}%")
+        st.progress(d_perc / 100) # Correção 2: Barra de Progresso
 
     # --- HERO ---
     if os.path.exists(HERO_IMG_FILE):
@@ -399,7 +421,7 @@ def main():
             c_img, c_info, c_action = st.columns([1, 2, 1])
             
             with c_img:
-                render_centered_image(opp['avatar_url'])
+                render_centered_image(opp['avatar_url']) # Agora ajusta automaticamente
             
             with c_info:
                 st.markdown(f"### {opp['nome']}")
@@ -491,7 +513,7 @@ def main():
                 with cols[idx % 2]:
                     with st.container():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
-                        if master.get('imagem'): render_centered_image(master['imagem'])
+                        if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         st.markdown(f"### {master['nome']}")
                         st.markdown(f"*{master['descricao']}*")
                         if st.button(f"Treinar", key=f"sel_{key}"):
