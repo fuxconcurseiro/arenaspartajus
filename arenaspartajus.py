@@ -48,8 +48,10 @@ SPECIALTIES_MAP = {
     "primus_revisao": "Todas as disciplinas possíveis"
 }
 
-# MAPA DE ÁUDIO (Para injetar nos dados carregados)
-# Exemplo de uso: "praetorium": "audios/praetorium_intro.m4a"
+# MAPA DE ÁUDIO (Para injetar nos dados carregados do JSON se não existirem lá)
+# Instrução: Coloque seus arquivos na pasta 'audios/' e atualize aqui ou no JSON.
+# Exemplo Local: "praetorium": "audios/praetorium.m4a"
+# Exemplo Web: "praetorium": "https://link.com/audio.mp3"
 AUDIO_MAP = {
     "praetorium": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
 }
@@ -233,7 +235,7 @@ DEFAULT_DOCTORE_DB = {
         "nome": "Praetorium Lex", 
         "especialidades": "Constitucional, Administrativo, Penal e Processo Penal", 
         "imagem": "praetorium.jpg", 
-        "audio": "audios/praetorium.m4a", # Exemplo de caminho relativo
+        "audio": None, # Ex: "audios/praetorium.m4a"
         "materias": {}
     }
 }
@@ -242,6 +244,9 @@ def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
     return fallback_url
 
+# LISTA DE OPONENTES COM CAMPO AUDIO
+# Instrução: Coloque os arquivos na pasta 'audios/' e atualize o campo "audio".
+# Exemplo: "audio": "audios/leao.m4a"
 OPONENTS_DB = [
     {
         "id": 1, 
@@ -252,8 +257,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7,
-        # Exemplo URL Externa
-        "audio": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
+        "audio": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" # Link Externo (Teste)
     },
     {
         "id": 2, 
@@ -264,8 +268,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_touro.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", 
         "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6,
-        # Exemplo Caminho Relativo (M4A)
-        "audio": "audios/beuzebu_intro.m4a" 
+        "audio": None # Ex: "audios/beuzebu.m4a"
     },
     {
         "id": 3, 
@@ -314,7 +317,7 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE (COM INJEÇÃO DE ESPECIALIDADES E ÁUDIO)
+# 4. CARGA DE DADOS DOCTORE
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
@@ -329,15 +332,13 @@ def load_doctore_data():
             
     # INJEÇÃO DE METADADOS
     for key, master_info in data.items():
-        # Injeta especialidade
         if key in SPECIALTIES_MAP:
             data[key]['especialidades'] = SPECIALTIES_MAP[key]
             
-        # Injeta Áudio
         if key in AUDIO_MAP:
             data[key]['audio'] = AUDIO_MAP[key]
         else:
-            data[key]['audio'] = None
+            data[key]['audio'] = None # Previne erro de chave
         
         # Garante nomes corretos
         nome_atual = master_info.get('nome', '')
@@ -519,6 +520,7 @@ def main():
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
+        # Título Hard-Coded
         st.markdown("<h3 style='color: #9E0000;'>🗺️ A Jornada do Gladiador</h3>", unsafe_allow_html=True)
         
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
@@ -528,6 +530,7 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
+        # ZERO ESPAÇO, ZERO COLUNAS AQUI. INÍCIO DIRETO DO LOOP.
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
 
@@ -559,6 +562,7 @@ def main():
                         st.audio(audio_path, format=mime_type)
             
             with c_info:
+                # NOME OPONENTE HARD-CODED
                 st.markdown(f"<h3 style='color: #9E0000;'>{opp['nome']}</h3>", unsafe_allow_html=True)
                 st.markdown(f"*{opp['descricao']}*")
                 
@@ -649,6 +653,7 @@ def main():
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
         
         if st.session_state['doctore_state'] == 'selection':
+            # Título Hard-Coded
             st.markdown("<h3 style='color: #9E0000;'>🏛️ O Panteão dos Mestres</h3>", unsafe_allow_html=True)
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             cols = st.columns(2)
@@ -657,7 +662,7 @@ def main():
                     with st.container():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         
-                        # ESPECIALIDADES
+                        # INSERÇÃO DAS ESPECIALIDADES
                         if 'especialidades' in master:
                             st.markdown(f"""
                             <div style="
@@ -691,6 +696,7 @@ def main():
                                 mime_type = 'audio/mp4' if 'm4a' in ext.lower() else 'audio/mp3'
                                 st.audio(audio_path, format=mime_type)
 
+                        # NOME MESTRE HARD-CODED
                         st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
                         
                         st.markdown(f"*{master['descricao']}*")
@@ -710,6 +716,7 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
+             # NOME MESTRE TREINO HARD-CODED
              st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
              st.markdown("---")
              
@@ -752,7 +759,7 @@ def main():
                              st.session_state['doc_revealed'] = True
                              is_correct = (ans == q['gabarito'])
                              
-                             stats['total_questoes'] += 1 
+                             stats['total_questoes'] += 1 # Correção: Incremento unitário
                              if is_correct: stats['total_acertos'] += 1
                              else:
                                  stats['total_erros'] += 1
