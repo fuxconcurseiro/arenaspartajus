@@ -411,7 +411,10 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # AJUSTE 3: PAGINAÇÃO DO TOPO REMOVIDA (Limpeza Visual)
+        # AJUSTE 3: Barra divisória neutra em vez de navegação superior
+        st.markdown("""
+        <hr style="border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0), #E3DFD3, rgba(0, 0, 0, 0)); margin-top: 5px; margin-bottom: 25px;">
+        """, unsafe_allow_html=True)
 
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
