@@ -68,13 +68,6 @@ def render_centered_image(img_path, width=None):
     </div>
     """, unsafe_allow_html=True)
 
-def render_red_header(text):
-    """
-    Usa Markdown H3 (###) conforme solicitado, mas reforçado com HTML 
-    para garantir a cor vermelha caso o tema padrão tente sobrescrever.
-    """
-    st.markdown(f"<h3 style='color: #9E0000 !important; font-weight: 700; margin-top: 5px; margin-bottom: 5px;'>{text}</h3>", unsafe_allow_html=True)
-
 def calculate_daily_stats(history, target_date):
     stats = {"total": 0, "acertos": 0, "erros": 0}
     target_str = target_date.strftime("%d/%m/%Y")
@@ -95,15 +88,13 @@ def calculate_daily_stats(history, target_date):
             continue
     return stats
 
-# ESTILIZAÇÃO GERAL (Visual Clean + Botões Corrigidos)
+# ESTILIZAÇÃO GERAL
 st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
-    /* Títulos Globais em Vermelho */
+    /* Backup CSS Global (ainda útil para outros elementos) */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
-    
-    /* Texto do Corpo em Grafite */
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
     .stcaption { color: #2e2c2b !important; opacity: 0.8; }
     
@@ -112,9 +103,7 @@ st.markdown("""
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #9E0000 !important; }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #2e2c2b !important; }
     
-    /* ---------------------------------------------------- */
-    /* BOTÕES (Design Clean - Fundo Bege, Borda Vermelha)   */
-    /* ---------------------------------------------------- */
+    /* Botões */
     .stButton > button {
         background-color: #E3DFD3 !important;
         color: #9E0000 !important;
@@ -127,11 +116,10 @@ st.markdown("""
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     
-    /* HOVER: Mantém fundo bege, apenas borda e texto ganham destaque */
     .stButton > button:hover {
-        background-color: #E3DFD3 !important; /* Fundo não muda */
-        color: #9E0000 !important;            /* Texto vermelho vivo */
-        border: 1px solid #9E0000 !important; /* Borda vermelha aparece */
+        background-color: #E3DFD3 !important; 
+        color: #9E0000 !important;            
+        border: 1px solid #9E0000 !important; 
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(158, 0, 0, 0.1);
     }
@@ -141,11 +129,10 @@ st.markdown("""
         transform: translateY(0px);
     }
 
-    /* BOTÃO DE LOGIN (Formulário) - Maior, mas mesmas cores */
+    /* Botão de Login (Formulário) */
     [data-testid="stForm"] button {
         height: 60px;
         font-size: 20px !important;
-        /* Herda as cores definidas acima, mas reforçamos por segurança */
         background-color: #E3DFD3 !important; 
         color: #9E0000 !important;
         border: 1px solid #E3DFD3 !important;
@@ -156,7 +143,6 @@ st.markdown("""
         border: 1px solid #9E0000 !important;
         color: #9E0000 !important;
     }
-    /* ---------------------------------------------------- */
     
     /* Inputs */
     .stTextInput > div > div > input, .stNumberInput > div > div > input, .stSelectbox > div > div > div {
@@ -172,7 +158,7 @@ st.markdown("""
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
     .master-card:hover { border-color: #9E0000; transform: translateY(-3px); }
 
-    /* Doctore Card (Questão) */
+    /* Doctore Card */
     .doctore-card {
         background-color: #FFFFFF; border: 1px solid #E3DFD3; border-left: 5px solid #9E0000;
         border-radius: 6px; padding: 40px; margin-bottom: 30px;
@@ -198,7 +184,6 @@ DEFAULT_ARENA_DATA = {
     "historico_atividades": []
 }
 
-# BACKUP COM NOMES CORRETOS
 DEFAULT_DOCTORE_DB = {
     "praetorium": {"nome": "Praetorium Lex", "descricao": "Fallback.", "imagem": "praetorium.jpg", "materias": {}}
 }
@@ -207,7 +192,6 @@ def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
     return fallback_url
 
-# LISTA CORRIGIDA DE OPONENTES (NOMES ATUALIZADOS)
 OPONENTS_DB = [
     {"id": 1, "nome": "Velho Leão", "descricao": "Suas garras estão gastas, mas sua experiência é mortal.", "avatar_url": get_avatar_image("1_leao_velho.png", ""), "img_vitoria": get_avatar_image("vitoria_leao_velho.jpg", ""), "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7},
     {"id": 2, "nome": "Beuzebu", "descricao": "A fúria incontrolável.", "avatar_url": get_avatar_image("touro.jpg", ""), "img_vitoria": get_avatar_image("vitoria_touro.jpg", ""), "img_derrota": get_avatar_image("derrota_touro.jpg", ""), "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6},
@@ -218,13 +202,11 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE (COM CORREÇÃO DE NOMES FORÇADA)
+# 4. CARGA DE DADOS DOCTORE
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
-    """Carrega JSON e aplica patch VARRENDO O CONTEÚDO para garantir nomes novos."""
     data = DEFAULT_DOCTORE_DB
-    
     if os.path.exists(QUESTOES_FILE):
         try:
             with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
@@ -232,10 +214,9 @@ def load_doctore_data():
         except Exception:
             pass
             
-    # PATCH: Força os nomes corretos mesmo se o JSON for antigo
+    # PATCH para garantir nomes corretos
     for key, master_info in data.items():
         nome_atual = master_info.get('nome', '')
-        # Verifica substrings para identificar o mestre e atualizar
         if "Praetorium" in nome_atual or key == "praetorium":
             data[key]['nome'] = "Praetorium Lex"
         elif "Sara" in nome_atual or key == "sara" or key == "sara_oracula":
@@ -311,7 +292,8 @@ def login_screen():
             img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
             st.markdown(f'<img src="data:image/jpg;base64,{img_b64}" style="width:100%; border-radius:10px; margin-bottom:20px;">', unsafe_allow_html=True)
         
-        render_red_header("🛡️ Portão da Arena")
+        # Título Vermelho Hard-coded
+        st.markdown("<h3 style='color: #9E0000;'>🛡️ Portão da Arena</h3>", unsafe_allow_html=True)
         st.info("Utilize suas credenciais para acessar.")
         
         with st.form("login_form"):
@@ -366,7 +348,8 @@ def main():
         if os.path.exists(USER_AVATAR_FILE):
             st.image(USER_AVATAR_FILE, use_container_width=True)
         
-        render_red_header(f"Olá, {user_name}")
+        # Nome do usuário Vermelho Hard-coded
+        st.markdown(f"<h3 style='color: #9E0000;'>Olá, {user_name}</h3>", unsafe_allow_html=True)
         st.caption(f"ID: {current_user}")
         
         st.divider()
@@ -389,7 +372,6 @@ def main():
         st.markdown(f"**Eficiência:** {d_perc:.1f}%")
         st.progress(d_perc / 100)
 
-        # AJUSTE 3: BOTÕES NO FINAL DA SIDEBAR
         st.divider()
         if st.button("🔄 Recarregar Dados"):
             st.cache_data.clear()
@@ -403,15 +385,15 @@ def main():
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""<div style="background-color: #FFF8DC; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
 
-    # AJUSTE 4: ABA RENOMEADA
     tab_batalha, tab_doctore, tab_historico = st.tabs(["🏛️ Coliseum", "🦉 Doctore", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        # AJUSTE 4: TÍTULO H3
-        render_red_header("🗺️ A Jornada do Gladiador")
+        # Título Hard-Coded
+        st.markdown("<h3 style='color: #9E0000;'>🗺️ A Jornada do Gladiador</h3>", unsafe_allow_html=True)
+        
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
 
@@ -444,12 +426,12 @@ def main():
             with c_img: render_centered_image(opp['avatar_url'])
             
             with c_info:
-                # AJUSTE 4: NOME EM VERMELHO
-                render_red_header(opp['nome'])
+                # NOME OPONENTE HARD-CODED
+                st.markdown(f"<h3 style='color: #9E0000;'>{opp['nome']}</h3>", unsafe_allow_html=True)
                 st.markdown(f"*{opp['descricao']}*")
                 
                 if is_locked:
-                    render_red_header("🔒 BLOQUEADO")
+                    st.markdown("<h3 style='color: #9E0000;'>🔒 BLOQUEADO</h3>", unsafe_allow_html=True)
                     st.caption("Vença os desafios anteriores para liberar.")
                 else:
                     if is_completed: st.markdown("✅ **CONQUISTADO**")
@@ -526,8 +508,8 @@ def main():
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
         
         if st.session_state['doctore_state'] == 'selection':
-            # AJUSTE 4: Título H3 Vermelho
-            render_red_header("🏛️ O Panteão dos Mestres")
+            # Título Hard-Coded
+            st.markdown("<h3 style='color: #9E0000;'>🏛️ O Panteão dos Mestres</h3>", unsafe_allow_html=True)
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             cols = st.columns(2)
             for idx, (key, master) in enumerate(DOCTORE_DB.items()):
@@ -536,8 +518,8 @@ def main():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         
-                        # AJUSTE 4: Nome H3 Vermelho
-                        render_red_header(master['nome'])
+                        # NOME MESTRE HARD-CODED
+                        st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
                         
                         st.markdown(f"*{master['descricao']}*")
                         if st.button(f"Treinar", key=f"sel_{key}"):
@@ -556,8 +538,8 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             # AJUSTE 4: Nome H3 Vermelho
-             render_red_header(master['nome'])
+             # NOME MESTRE TREINO HARD-CODED
+             st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
              st.markdown("---")
              
              if 'doctore_session' not in st.session_state:
