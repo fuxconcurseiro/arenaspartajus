@@ -417,7 +417,7 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # LIMPEZA CIRÚRGICA: NENHUM CÓDIGO AQUI ENTRE TÍTULO E LOOP
+        # ZERO ESPAÇO, ZERO COLUNAS AQUI. INÍCIO DIRETO DO LOOP.
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
 
