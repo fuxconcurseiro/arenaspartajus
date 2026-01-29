@@ -166,9 +166,16 @@ st.markdown("""
     }
     
     /* Cards */
+    /* AJUSTE: Margin-top específico para colapsar espaço */
     .battle-card, .master-card {
-        background-color: #FFFFFF; border: 1px solid #E3DFD3; border-radius: 8px;
-        padding: 20px; margin-bottom: 20px; text-align: center; transition: all 0.3s ease;
+        background-color: #FFFFFF; 
+        border: 1px solid #E3DFD3; 
+        border-radius: 8px;
+        padding: 20px; 
+        margin-bottom: 20px; 
+        margin-top: 10px; /* Garante proximidade com o título */
+        text-align: center; 
+        transition: all 0.3s ease;
     }
     .battle-card.locked { opacity: 0.6; filter: grayscale(100%); background-color: #F0F0F0; }
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
@@ -400,12 +407,8 @@ def main():
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        # AJUSTE TIGHT LAYOUT: Margem negativa e zero padding
-        st.markdown("""
-        <h3 style='color: #9E0000; margin-bottom: -15px; padding-bottom: 0px;'>
-            🗺️ A Jornada do Gladiador
-        </h3>
-        """, unsafe_allow_html=True)
+        # Título Hard-Coded (Cor Vermelha e sem margens ruins)
+        st.markdown("<h3 style='color: #9E0000;'>🗺️ A Jornada do Gladiador</h3>", unsafe_allow_html=True)
         
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
@@ -414,7 +417,7 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # SEM NAVEGAÇÃO TOPO, SEM <HR>, LOOP DIRETO
+        # LIMPEZA CIRÚRGICA: NENHUM CÓDIGO AQUI ENTRE TÍTULO E LOOP
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
 
