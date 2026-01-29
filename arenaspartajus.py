@@ -41,7 +41,7 @@ PREPARE_SE_FILE = "prepare-se.jpg"
 # ÁUDIO PLACEHOLDER (Para quando o arquivo oficial não existir)
 AUDIO_PLACEHOLDER = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
 
-# MAPA DE ESPECIALIDADES (Para injetar nos dados carregados)
+# MAPA DE ESPECIALIDADES
 SPECIALTIES_MAP = {
     "praetorium": "Constitucional, Administrativo, Penal e Processo Penal",
     "enam_criscis": "Constitucional, Civil, Processo Civil e Empresarial",
@@ -51,15 +51,14 @@ SPECIALTIES_MAP = {
     "primus_revisao": "Todas as disciplinas possíveis"
 }
 
-# MAPA DE ÁUDIO (Mapeamento Exato Solicitado)
-# Arquivos locais na pasta 'audios/' ou Placeholder
+# MAPA DE ÁUDIO (Doctores)
 AUDIO_MAP = {
     "praetorium": "audios/praetorium.m4a",
     "parquet_tribunus": "audios/parquet.m4a",
     "noel_autarquicus": "audios/noel.m4a",
     "sara_oracula": "audios/sara.m4a",
     "primus_revisao": "audios/primus.m4a",
-    "enam_criscis": AUDIO_PLACEHOLDER  # Placeholder conforme solicitado
+    "enam_criscis": AUDIO_PLACEHOLDER 
 }
 
 # -----------------------------------------------------------------------------
@@ -93,9 +92,6 @@ def render_centered_image(img_path, width=None):
     """, unsafe_allow_html=True)
 
 def render_red_header(text):
-    """
-    Usa HTML H3 com estilo inline para garantir a cor vermelha #9E0000.
-    """
     st.markdown(f"<h3 style='color: #9E0000 !important; font-weight: 700; margin-top: 5px; margin-bottom: 5px;'>{text}</h3>", unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
@@ -124,18 +120,11 @@ st.markdown("""
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
     /* CAMUFLAGEM DE SEGURANÇA */
-    .stTextInput > div > div {
-        background-color: #F5F4EF !important;
-        border-color: #F5F4EF !important;
-    }
-    div[data-testid="stVerticalBlock"] > div {
-        background-color: transparent !important;
-    }
+    .stTextInput > div > div { background-color: #F5F4EF !important; border-color: #F5F4EF !important; }
+    div[data-testid="stVerticalBlock"] > div { background-color: transparent !important; }
 
-    /* Títulos Globais em Vermelho */
+    /* Títulos e Textos */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
-    
-    /* Texto do Corpo em Grafite */
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
     .stcaption { color: #2e2c2b !important; opacity: 0.8; }
     
@@ -146,46 +135,30 @@ st.markdown("""
     
     /* Botões e Links */
     .stButton > button, .stLinkButton > a {
-        background-color: #E3DFD3 !important;
-        color: #9E0000 !important;
-        border: 1px solid #E3DFD3 !important;
-        border-radius: 6px; 
-        font-weight: 700; 
-        text-transform: uppercase;
-        transition: all 0.3s ease; 
-        padding: 0.6rem 1.2rem;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        text-decoration: none;
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
+        background-color: #E3DFD3 !important; color: #9E0000 !important;
+        border: 1px solid #E3DFD3 !important; border-radius: 6px; 
+        font-weight: 700; text-transform: uppercase;
+        transition: all 0.3s ease; padding: 0.6rem 1.2rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-decoration: none;
+        display: inline-flex; justify-content: center; align-items: center;
     }
-    
     .stButton > button:hover, .stLinkButton > a:hover {
-        background-color: #E3DFD3 !important; 
-        color: #9E0000 !important;            
-        border: 1px solid #9E0000 !important; 
-        transform: translateY(-2px);
+        background-color: #E3DFD3 !important; color: #9E0000 !important;            
+        border: 1px solid #9E0000 !important; transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(158, 0, 0, 0.1);
     }
-    
     .stButton > button:active, .stLinkButton > a:active {
-        background-color: #dcd8cc !important;
-        transform: translateY(0px);
+        background-color: #dcd8cc !important; transform: translateY(0px);
     }
 
     /* Botão de Login */
     [data-testid="stForm"] button {
-        height: 60px;
-        font-size: 20px !important;
-        background-color: #E3DFD3 !important; 
-        color: #9E0000 !important;
+        height: 60px; font-size: 20px !important;
+        background-color: #E3DFD3 !important; color: #9E0000 !important;
         border: 1px solid #E3DFD3 !important;
     }
-    
     [data-testid="stForm"] button:hover {
-        background-color: #E3DFD3 !important;
-        border: 1px solid #9E0000 !important;
+        background-color: #E3DFD3 !important; border: 1px solid #9E0000 !important;
         color: #9E0000 !important;
     }
     
@@ -196,14 +169,9 @@ st.markdown("""
     
     /* Cards */
     .battle-card, .master-card {
-        background-color: #FFFFFF; 
-        border: 1px solid #E3DFD3; 
-        border-radius: 8px;
-        padding: 20px; 
-        margin-bottom: 20px; 
-        margin-top: 10px;
-        text-align: center; 
-        transition: all 0.3s ease;
+        background-color: #FFFFFF; border: 1px solid #E3DFD3; border-radius: 8px;
+        padding: 20px; margin-bottom: 20px; margin-top: 10px;
+        text-align: center; transition: all 0.3s ease;
     }
     .battle-card.locked { opacity: 0.6; filter: grayscale(100%); background-color: #F0F0F0; }
     .battle-card.victory { border-left: 4px solid #2E8B57; background-color: #FAFCFA; }
@@ -235,22 +203,15 @@ DEFAULT_ARENA_DATA = {
     "historico_atividades": []
 }
 
-# BACKUP ATUALIZADO
 DEFAULT_DOCTORE_DB = {
-    "praetorium": {
-        "nome": "Praetorium Lex", 
-        "especialidades": "Constitucional, Administrativo, Penal e Processo Penal", 
-        "imagem": "praetorium.jpg", 
-        "audio": "audios/praetorium.m4a",
-        "materias": {}
-    }
+    "praetorium": {"nome": "Praetorium Lex", "especialidades": "Constitucional, Administrativo, Penal e Processo Penal", "imagem": "praetorium.jpg", "audio": "audios/praetorium.m4a", "materias": {}}
 }
 
 def get_avatar_image(local_file, fallback_url):
     if os.path.exists(local_file): return local_file
     return fallback_url
 
-# LISTA DE OPONENTES COM CAMPO AUDIO
+# LISTA DE OPONENTES ATUALIZADA (ÁUDIOS LOCAIS)
 OPONENTS_DB = [
     {
         "id": 1, 
@@ -261,7 +222,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_leao_velho.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5r1Ng", 
         "dificuldade": "Desafio Inicial", "max_tempo": 60, "max_erros": 7,
-        "audio": "audios/velho_leao.m4a" # Arquivo local
+        "audio": "audios/velho_leao.m4a"
     },
     {
         "id": 2, 
@@ -272,7 +233,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_touro.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIKB", 
         "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6,
-        "audio": AUDIO_PLACEHOLDER # Placeholder
+        "audio": "audios/beuzebu.m4a"
     },
     {
         "id": 3, 
@@ -283,7 +244,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_leproso.jpg", ""), 
         "link_tec": "https://www.tecconcursos.com.br/caderno/Q5rIWI", 
         "dificuldade": "Desafio Inicial", "max_tempo": 40, "max_erros": 6,
-        "audio": AUDIO_PLACEHOLDER # Placeholder
+        "audio": "audios/leproso.m4a"
     },
     {
         "id": 4, 
@@ -294,7 +255,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_autanax.png", ""), 
         "link_tec": "", 
         "dificuldade": "Intermediário", "max_tempo": 30, "max_erros": 5,
-        "audio": AUDIO_PLACEHOLDER # Placeholder
+        "audio": AUDIO_PLACEHOLDER
     },
     {
         "id": 5, 
@@ -305,7 +266,7 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_tanara.png", ""), 
         "link_tec": "", 
         "dificuldade": "Difícil", "max_tempo": 30, "max_erros": 5,
-        "audio": AUDIO_PLACEHOLDER # Placeholder
+        "audio": AUDIO_PLACEHOLDER
     },
     {
         "id": 6, 
@@ -316,12 +277,12 @@ OPONENTS_DB = [
         "img_derrota": get_avatar_image("derrota_afezio.png", ""), 
         "link_tec": "", 
         "dificuldade": "Pesadelo", "max_tempo": 30, "max_erros": 5,
-        "audio": AUDIO_PLACEHOLDER # Placeholder
+        "audio": AUDIO_PLACEHOLDER
     }
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE (COM INJEÇÃO DE ESPECIALIDADES E ÁUDIO)
+# 4. CARGA DE DADOS DOCTORE
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
@@ -334,7 +295,6 @@ def load_doctore_data():
         except Exception:
             pass
             
-    # INJEÇÃO DE METADADOS
     for key, master_info in data.items():
         if key in SPECIALTIES_MAP:
             data[key]['especialidades'] = SPECIALTIES_MAP[key]
@@ -344,7 +304,6 @@ def load_doctore_data():
         else:
             data[key]['audio'] = None
         
-        # Garante nomes corretos
         nome_atual = master_info.get('nome', '')
         if "Praetorium" in nome_atual or key == "praetorium":
             data[key]['nome'] = "Praetorium Lex"
@@ -421,8 +380,7 @@ def login_screen():
             img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
             st.markdown(f'<img src="data:image/jpg;base64,{img_b64}" style="width:100%; border-radius:10px; margin-bottom:20px;">', unsafe_allow_html=True)
         
-        # Título Vermelho Hard-coded
-        st.markdown("<h3 style='color: #9E0000;'>🛡️ Portão da Arena</h3>", unsafe_allow_html=True)
+        render_red_header("🛡️ Portão da Arena")
         st.info("Utilize suas credenciais para acessar.")
         
         with st.form("login_form"):
@@ -477,8 +435,7 @@ def main():
         if os.path.exists(USER_AVATAR_FILE):
             st.image(USER_AVATAR_FILE, use_container_width=True)
         
-        # Nome do usuário Vermelho Hard-coded
-        st.markdown(f"<h3 style='color: #9E0000;'>Olá, {user_name}</h3>", unsafe_allow_html=True)
+        render_red_header(f"Olá, {user_name}")
         st.caption(f"ID: {current_user}")
         
         st.divider()
@@ -487,7 +444,6 @@ def main():
         c1.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#006400'>{stats['total_acertos']}</div><div class='stat-label'>Acertos</div></div>""", unsafe_allow_html=True)
         c2.markdown(f"""<div class='stat-box'><div class='stat-value' style='color:#8B0000'>{stats['total_erros']}</div><div class='stat-label'>Erros</div></div>""", unsafe_allow_html=True)
         
-        # TOTAL GLOBAL
         st.markdown(f"""<div class='stat-box'><div class='stat-value'>{stats['total_questoes']}</div><div class='stat-label'>Total de Questões</div></div>""", unsafe_allow_html=True)
         
         st.markdown("<div class='stat-header'>📅 Desempenho Diário</div>", unsafe_allow_html=True)
@@ -513,7 +469,6 @@ def main():
             st.session_state.clear()
             st.rerun()
 
-    # HERO HEADER
     if os.path.exists(HERO_IMG_FILE):
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""<div style="background-color: #F5F4EF; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
@@ -524,7 +479,6 @@ def main():
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
-        # Título Hard-Coded
         st.markdown("<h3 style='color: #9E0000;'>🗺️ A Jornada do Gladiador</h3>", unsafe_allow_html=True)
         
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
@@ -534,7 +488,6 @@ def main():
         if 'coliseum_page' not in st.session_state: st.session_state['coliseum_page'] = 0
         total_pages = (len(OPONENTS_DB) - 1) // ITEMS_PER_PAGE + 1
         
-        # ZERO ESPAÇO, ZERO COLUNAS AQUI. INÍCIO DIRETO DO LOOP.
         start_idx = st.session_state['coliseum_page'] * ITEMS_PER_PAGE
         page_opponents = OPONENTS_DB[start_idx : start_idx + ITEMS_PER_PAGE]
 
@@ -555,18 +508,14 @@ def main():
                 # PLAYER HÍBRIDO (Coliseum)
                 audio_path = opp.get('audio')
                 if audio_path:
-                    # 1. Verifica se é link externo
                     if audio_path.startswith('http'):
                         st.audio(audio_path)
-                    # 2. Verifica se é arquivo local
                     elif os.path.exists(audio_path):
                         _, ext = os.path.splitext(audio_path)
-                        # Define MIME type para m4a ou mp3
                         mime_type = 'audio/mp4' if 'm4a' in ext.lower() else 'audio/mp3'
                         st.audio(audio_path, format=mime_type)
             
             with c_info:
-                # NOME OPONENTE HARD-CODED
                 st.markdown(f"<h3 style='color: #9E0000;'>{opp['nome']}</h3>", unsafe_allow_html=True)
                 st.markdown(f"*{opp['descricao']}*")
                 
@@ -657,7 +606,6 @@ def main():
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
         
         if st.session_state['doctore_state'] == 'selection':
-            # Título Hard-Coded
             st.markdown("<h3 style='color: #9E0000;'>🏛️ O Panteão dos Mestres</h3>", unsafe_allow_html=True)
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             cols = st.columns(2)
@@ -666,7 +614,6 @@ def main():
                     with st.container():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         
-                        # INSERÇÃO DAS ESPECIALIDADES
                         if 'especialidades' in master:
                             st.markdown(f"""
                             <div style="
@@ -690,17 +637,13 @@ def main():
                         # PLAYER HÍBRIDO (Doctore)
                         audio_path = master.get('audio')
                         if audio_path:
-                            # 1. Verifica se é link externo
                             if audio_path.startswith('http'):
                                 st.audio(audio_path)
-                            # 2. Verifica se é arquivo local
                             elif os.path.exists(audio_path):
                                 _, ext = os.path.splitext(audio_path)
-                                # Define MIME type para m4a ou mp3
                                 mime_type = 'audio/mp4' if 'm4a' in ext.lower() else 'audio/mp3'
                                 st.audio(audio_path, format=mime_type)
 
-                        # NOME MESTRE HARD-CODED
                         st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
                         
                         st.markdown(f"*{master['descricao']}*")
@@ -720,7 +663,6 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             # NOME MESTRE TREINO HARD-CODED
              st.markdown(f"<h3 style='color: #9E0000;'>{master['nome']}</h3>", unsafe_allow_html=True)
              st.markdown("---")
              
@@ -763,7 +705,7 @@ def main():
                              st.session_state['doc_revealed'] = True
                              is_correct = (ans == q['gabarito'])
                              
-                             stats['total_questoes'] += 1 # Correção: Incremento unitário
+                             stats['total_questoes'] += 1 
                              if is_correct: stats['total_acertos'] += 1
                              else:
                                  stats['total_erros'] += 1
