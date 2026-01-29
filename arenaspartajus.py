@@ -70,10 +70,10 @@ def render_centered_image(img_path, width=None):
 
 def render_red_header(text):
     """
-    CORREÇÃO DE COR: Usa tag <p> com estilo inline forçado (!important).
-    Isso evita que o tema padrão do Streamlit sobrescreva a cor vermelha.
+    Usa Markdown H3 (###) conforme solicitado, mas reforçado com HTML 
+    para garantir a cor vermelha caso o tema padrão tente sobrescrever.
     """
-    st.markdown(f'<p style="color: #9E0000 !important; font-family: sans-serif; font-weight: 700; font-size: 1.5rem; margin-top: 10px; margin-bottom: 5px; line-height: 1.2;">{text}</p>', unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color: #9E0000 !important; font-weight: 700; margin-top: 5px; margin-bottom: 5px;'>{text}</h3>", unsafe_allow_html=True)
 
 def calculate_daily_stats(history, target_date):
     stats = {"total": 0, "acertos": 0, "erros": 0}
@@ -95,13 +95,15 @@ def calculate_daily_stats(history, target_date):
             continue
     return stats
 
-# ESTILIZAÇÃO GERAL
+# ESTILIZAÇÃO GERAL (Visual Clean + Botões Corrigidos)
 st.markdown("""
     <style>
     .stApp { background-color: #F5F4EF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
-    /* Regras Globais */
+    /* Títulos Globais em Vermelho */
     h1, h2, h3, h4, h5, h6, strong, b { color: #9E0000 !important; }
+    
+    /* Texto do Corpo em Grafite */
     p, label, li, span, .stMarkdown, .stText, div[data-testid="stMarkdownContainer"] p { color: #2e2c2b !important; }
     .stcaption { color: #2e2c2b !important; opacity: 0.8; }
     
@@ -111,7 +113,7 @@ st.markdown("""
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #2e2c2b !important; }
     
     /* ---------------------------------------------------- */
-    /* BOTÕES (Padrão Unificado: Bege com Texto Vermelho)   */
+    /* BOTÕES (Design Clean - Fundo Bege, Borda Vermelha)   */
     /* ---------------------------------------------------- */
     .stButton > button {
         background-color: #E3DFD3 !important;
@@ -122,33 +124,38 @@ st.markdown("""
         text-transform: uppercase;
         transition: all 0.3s ease; 
         padding: 0.6rem 1.2rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     
-    /* Hover Geral */
+    /* HOVER: Mantém fundo bege, apenas borda e texto ganham destaque */
     .stButton > button:hover {
-        background-color: #9E0000 !important; /* Inverte para fundo vermelho */
-        color: #F5F4EF !important;            /* Texto claro */
-        border: 1px solid #9E0000 !important;
+        background-color: #E3DFD3 !important; /* Fundo não muda */
+        color: #9E0000 !important;            /* Texto vermelho vivo */
+        border: 1px solid #9E0000 !important; /* Borda vermelha aparece */
         transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(158, 0, 0, 0.1);
+    }
+    
+    .stButton > button:active {
+        background-color: #dcd8cc !important;
+        transform: translateY(0px);
     }
 
-    /* CORREÇÃO BOTÃO DE LOGIN (Formulário) */
-    /* Aplica o mesmo estilo base, mas aumenta o tamanho */
+    /* BOTÃO DE LOGIN (Formulário) - Maior, mas mesmas cores */
     [data-testid="stForm"] button {
-        min-height: 60px;
+        height: 60px;
         font-size: 20px !important;
-        background-color: #E3DFD3 !important; /* Fundo Bege (Padrão) */
-        color: #9E0000 !important;            /* Texto Vermelho */
-        border: 2px solid #9E0000 !important; /* Borda levemente destacada */
+        /* Herda as cores definidas acima, mas reforçamos por segurança */
+        background-color: #E3DFD3 !important; 
+        color: #9E0000 !important;
+        border: 1px solid #E3DFD3 !important;
     }
     
     [data-testid="stForm"] button:hover {
-        background-color: #9E0000 !important; /* Fundo Vermelho no Hover */
-        color: #F5F4EF !important;            /* Texto Claro */
-        transform: scale(1.02);
+        background-color: #E3DFD3 !important;
+        border: 1px solid #9E0000 !important;
+        color: #9E0000 !important;
     }
-    
     /* ---------------------------------------------------- */
     
     /* Inputs */
@@ -191,7 +198,7 @@ DEFAULT_ARENA_DATA = {
     "historico_atividades": []
 }
 
-# BACKUP EM CASO DE FALHA NO JSON
+# BACKUP COM NOMES CORRETOS
 DEFAULT_DOCTORE_DB = {
     "praetorium": {"nome": "Praetorium Lex", "descricao": "Fallback.", "imagem": "praetorium.jpg", "materias": {}}
 }
@@ -211,18 +218,32 @@ OPONENTS_DB = [
 ]
 
 # -----------------------------------------------------------------------------
-# 4. CARGA DE DADOS DOCTORE
+# 4. CARGA DE DADOS DOCTORE (COM CORREÇÃO DE NOMES FORÇADA)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_doctore_data():
-    """Carrega JSON."""
+    """Carrega JSON e aplica patch VARRENDO O CONTEÚDO para garantir nomes novos."""
+    data = DEFAULT_DOCTORE_DB
+    
     if os.path.exists(QUESTOES_FILE):
         try:
             with open(QUESTOES_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
         except Exception:
-            return DEFAULT_DOCTORE_DB
-    return DEFAULT_DOCTORE_DB
+            pass
+            
+    # PATCH: Força os nomes corretos mesmo se o JSON for antigo
+    for key, master_info in data.items():
+        nome_atual = master_info.get('nome', '')
+        # Verifica substrings para identificar o mestre e atualizar
+        if "Praetorium" in nome_atual or key == "praetorium":
+            data[key]['nome'] = "Praetorium Lex"
+        elif "Sara" in nome_atual or key == "sara" or key == "sara_oracula":
+            data[key]['nome'] = "Sara Orácula"
+        elif "Primus" in nome_atual or key == "primus" or key == "primus_revisao":
+            data[key]['nome'] = "Primus Savage"
+            
+    return data
 
 DOCTORE_DB = load_doctore_data()
 
@@ -290,7 +311,6 @@ def login_screen():
             img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
             st.markdown(f'<img src="data:image/jpg;base64,{img_b64}" style="width:100%; border-radius:10px; margin-bottom:20px;">', unsafe_allow_html=True)
         
-        # Título Vermelho usando a nova função
         render_red_header("🛡️ Portão da Arena")
         st.info("Utilize suas credenciais para acessar.")
         
@@ -369,6 +389,7 @@ def main():
         st.markdown(f"**Eficiência:** {d_perc:.1f}%")
         st.progress(d_perc / 100)
 
+        # AJUSTE 3: BOTÕES NO FINAL DA SIDEBAR
         st.divider()
         if st.button("🔄 Recarregar Dados"):
             st.cache_data.clear()
@@ -382,12 +403,14 @@ def main():
         img_b64 = get_base64_of_bin_file(HERO_IMG_FILE)
         st.markdown(f"""<div style="background-color: #FFF8DC; border-bottom: 4px solid #DAA520; display:flex; justify-content:center; height:250px; overflow:hidden;"><img src="data:image/jpg;base64,{img_b64}" style="height:100%; width:auto;"></div>""", unsafe_allow_html=True)
 
+    # AJUSTE 4: ABA RENOMEADA
     tab_batalha, tab_doctore, tab_historico = st.tabs(["🏛️ Coliseum", "🦉 Doctore", "📜 Histórico"])
 
     # -------------------------------------------------------------------------
     # TAB 1: BATALHA
     # -------------------------------------------------------------------------
     with tab_batalha:
+        # AJUSTE 4: TÍTULO H3
         render_red_header("🗺️ A Jornada do Gladiador")
         fase_max = arena_data['progresso_arena']['fase_maxima_desbloqueada']
         fases_vencidas = arena_data['progresso_arena']['fases_vencidas']
@@ -421,7 +444,7 @@ def main():
             with c_img: render_centered_image(opp['avatar_url'])
             
             with c_info:
-                # USO DA FUNÇÃO DE COR CORRIGIDA
+                # AJUSTE 4: NOME EM VERMELHO
                 render_red_header(opp['nome'])
                 st.markdown(f"*{opp['descricao']}*")
                 
@@ -503,6 +526,7 @@ def main():
         if 'doctore_state' not in st.session_state: st.session_state['doctore_state'] = 'selection'
         
         if st.session_state['doctore_state'] == 'selection':
+            # AJUSTE 4: Título H3 Vermelho
             render_red_header("🏛️ O Panteão dos Mestres")
             st.markdown("Escolha seu mentor e especialize-se em uma carreira.")
             cols = st.columns(2)
@@ -512,7 +536,7 @@ def main():
                         st.markdown("<div class='master-card'>", unsafe_allow_html=True)
                         if master.get('imagem'): render_centered_image(master['imagem'], width=400)
                         
-                        # USO DA FUNÇÃO DE COR CORRIGIDA
+                        # AJUSTE 4: Nome H3 Vermelho
                         render_red_header(master['nome'])
                         
                         st.markdown(f"*{master['descricao']}*")
@@ -532,7 +556,7 @@ def main():
              master = DOCTORE_DB.get(master_key)
              if not master: st.rerun()
              
-             # USO DA FUNÇÃO DE COR CORRIGIDA
+             # AJUSTE 4: Nome H3 Vermelho
              render_red_header(master['nome'])
              st.markdown("---")
              
@@ -575,7 +599,7 @@ def main():
                              st.session_state['doc_revealed'] = True
                              is_correct = (ans == q['gabarito'])
                              
-                             stats['total_questoes'] += total
+                             stats['total_questoes'] += 1 # Correção: Incremento unitário
                              if is_correct: stats['total_acertos'] += 1
                              else:
                                  stats['total_erros'] += 1
