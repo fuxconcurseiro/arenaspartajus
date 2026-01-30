@@ -59,7 +59,7 @@ AUDIO_MAP = {
     "noel_autarquicus": "audios/noel.m4a",
     "sara_oracula": "audios/sara.m4a",
     "primus_revisao": "audios/primus.m4a",
-    "enam_criscis": AUDIO_PLACEHOLDER 
+    "enam_criscis": "audios/enam.m4a" 
 }
 
 # -----------------------------------------------------------------------------
@@ -758,3 +758,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
